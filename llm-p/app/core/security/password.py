@@ -3,6 +3,7 @@ import hmac
 import secrets
 
 from app.core.config import SETTINGS
+from loguru import logger
 
 
 
@@ -48,7 +49,7 @@ def get_password_hash(password: str) -> str:
         iterations=SETTINGS.password.pbkdf2_iterations,
         algorithm=_HASH_ALGORITHM,
         salt=salt,
-        hash=key
+        hash=key.hex()
     )
     return password_hash
 
@@ -80,5 +81,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         computed_hash = key.hex()
         return hmac.compare_digest(computed_hash, original_hash)
 
-    except (ValueError, KeyError, IndexError):
+    except (ValueError, KeyError, IndexError) as err:
+        logger.error(f"Cannot verify password: {err}")
         return False
