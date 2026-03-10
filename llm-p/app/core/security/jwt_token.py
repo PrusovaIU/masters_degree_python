@@ -1,14 +1,19 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 
 from app.core.config import SETTINGS
 from enum import Enum
 from loguru import logger
 
 
+ # Unix epoch time
+_UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+
 class TokenDataKeys(str, Enum):
+    """Ключи данных в токене"""
     SUB = "sub"
     ROLE = "role"
     EXP = "exp"
@@ -23,6 +28,15 @@ class TokenError(Exception):
 class TokenVerifyError(TokenError):
     """Ошибка верификации токена"""
     pass
+
+
+def _total_seconds(dt: datetime) -> int:
+    """
+    :param dt: datetime
+    :return: количество секунд с 01.01.1970.
+    """
+    total = (dt - _UNIX_EPOCH).total_seconds()
+    return int(total)
 
 
 def create_access_token(
@@ -45,15 +59,16 @@ def create_access_token(
 
     :return: JWT токен.
     """
-    expire: datetime = datetime.now(timezone.utc) + expires_delta \
-        if expires_delta \
-        else SETTINGS.jwt.access_token_expires
+    if not expires_delta:
+        expires_delta = SETTINGS.jwt.access_token_expires
+
+    expire: datetime = datetime.now(timezone.utc) + expires_delta
 
     token_data = {
         TokenDataKeys.SUB.value: str(user_id),
         TokenDataKeys.ROLE.value: role,
-        TokenDataKeys.EXP.value: int(expire.timestamp()),
-        TokenDataKeys.IAT.value: int(datetime.now(timezone.utc).timestamp())
+        TokenDataKeys.EXP.value: _total_seconds(expire),
+        TokenDataKeys.IAT.value: _total_seconds(datetime.now(timezone.utc))
     }
 
     if payload:
@@ -62,7 +77,7 @@ def create_access_token(
     return jwt.encode(
         token_data,
         SETTINGS.jwt.secret,
-        algorithm=SETTINGS.jwt.algorithm
+        algorithm=SETTINGS.jwt.alg
     )
 
 
@@ -83,6 +98,10 @@ def verify_access_token(token: str) -> dict[str, Any]:
             algorithms=[SETTINGS.jwt.alg]
         )
         return payload
+
+    except ExpiredSignatureError:
+        logger.error("Token expired")
+        raise TokenVerifyError("Token expired")
     except JWTError as err:
         logger.error(f"Verify token error: {err}")
         raise TokenVerifyError("Invalid token")
