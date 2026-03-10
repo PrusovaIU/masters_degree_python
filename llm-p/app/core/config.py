@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, BaseModel
@@ -25,21 +26,27 @@ class OpenRouterSettings(BaseModel):
     )
 
 
-class Settings(BaseSettings):
+class PasswordSettings(BaseModel):
     """
-    Конфигурация приложения
-    Все настройки загружаются из переменных окружения или файла .env
+    Схема настроек хэширования пароля
     """
-
-    # Общие настройки приложения
-    app_name: str = Field(
-        # default="llm-p",
-        description="Название приложения"
+    pbkdf2_iterations: int = Field(
+        default=600000,
+        description="Количество итераций для PBKDF2"
+    )
+    salt_len: int = Field(
+        default=32,
+        description="Длина соли в байтах"
+    )
+    hash_len: int = Field(
+        default=32,
+        description="Длина выходного хеша в байтах"
     )
 
-    # Настройки JWT
-    jwt_secret: str = Field(description="Путь к секретному ключу для JWT")
-    jwt_alg: str = Field(
+
+class JWTSettings(BaseModel):
+    secret: str = Field(description="Путь к ключу для JWT")
+    alg: str = Field(
         default="HS256",
         description="Алгоритм подписи JWT токенов"
     )
@@ -48,6 +55,25 @@ class Settings(BaseSettings):
         description="Время жизни access token в минутах"
     )
 
+    @property
+    def access_token_expires(self) -> timedelta:
+        return timedelta(minutes=self.access_token_expire_minutes)
+
+
+class Settings(BaseSettings):
+    """
+    Конфигурация приложения
+    Все настройки загружаются из переменных окружения или файла .env
+    """
+
+    # Общие настройки приложения
+    app_name: str = Field(
+        default="llm-p",
+        description="Название приложения"
+    )
+
+    jwt: JWTSettings
+
     # Настройки базы данных
     sqlite_path: str = Field(
         default="./app.db",
@@ -55,6 +81,7 @@ class Settings(BaseSettings):
     )
 
     openrouter: OpenRouterSettings
+    password: PasswordSettings
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -71,4 +98,4 @@ class Settings(BaseSettings):
         return f"sqlite+aiosqlite:///{self.sqlite_path}"
 
 
-settings = Settings(_env_file="/home/hex/git/masters_degree_python/llm-p/.env")
+SETTINGS = Settings()
