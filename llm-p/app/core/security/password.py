@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import secrets
 
-from app.core.config import SETTINGS
+from app.core.config import settings
 from loguru import logger
 
 
@@ -15,7 +15,7 @@ _PASSWD_HASH_FORMAT = "{iterations}${algorithm}${salt}${hash}"
 def _generate_hash(
         password: bytes,
         salt: bytes,
-        iterations: int = SETTINGS.password.pbkdf2_iterations
+        iterations: int = settings.password.pbkdf2_iterations
 ) -> bytes:
     """
     Генерация хеша пароля.
@@ -30,7 +30,7 @@ def _generate_hash(
         password,
         salt,
         iterations,
-        dklen=SETTINGS.password.hash_len
+        dklen=settings.password.hash_len
     )
 
 
@@ -42,11 +42,11 @@ def get_password_hash(password: str) -> str:
 
     :return: Хеш пароля в hex формате iterations$algorithm$salt$hash
     """
-    salt: str = secrets.token_hex(SETTINGS.password.salt_len)
+    salt: str = secrets.token_hex(settings.password.salt_len)
     salt_bytes = bytes.fromhex(salt)
     key = _generate_hash(password.encode("utf-8"), salt_bytes)
     password_hash = _PASSWD_HASH_FORMAT.format(
-        iterations=SETTINGS.password.pbkdf2_iterations,
+        iterations=settings.password.pbkdf2_iterations,
         algorithm=_HASH_ALGORITHM,
         salt=salt,
         hash=key.hex()

@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from jose import jwt, JWTError, ExpiredSignatureError
 
-from app.core.config import SETTINGS
+from app.core.config import settings
 from enum import Enum
 from loguru import logger
 
@@ -60,7 +60,7 @@ def create_access_token(
     :return: JWT токен.
     """
     if not expires_delta:
-        expires_delta = SETTINGS.jwt.access_token_expires
+        expires_delta = settings.jwt.access_token_expires
 
     expire: datetime = datetime.now(timezone.utc) + expires_delta
 
@@ -76,8 +76,8 @@ def create_access_token(
 
     return jwt.encode(
         token_data,
-        SETTINGS.jwt.secret,
-        algorithm=SETTINGS.jwt.alg
+        settings.jwt.secret,
+        algorithm=settings.jwt.alg
     )
 
 
@@ -94,8 +94,8 @@ def verify_access_token(token: str) -> dict[str, Any]:
     try:
         payload = jwt.decode(
             token,
-            SETTINGS.jwt.secret,
-            algorithms=[SETTINGS.jwt.alg]
+            settings.jwt.secret,
+            algorithms=[settings.jwt.alg]
         )
         return payload
 
