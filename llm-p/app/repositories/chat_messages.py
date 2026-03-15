@@ -28,6 +28,8 @@ class ChatMessageRepository:
         :param content: Текст сообщения.
 
         :return: созданное сообщение
+
+        :raises CreateMessageException: если не удалось создать сообщение.
         """
         message = ChatMessage(
             user_id=user_id,
@@ -38,16 +40,16 @@ class ChatMessageRepository:
             self._session.add(message)
             await self._session.commit()
             await self._session.refresh(message)
-        except IntegrityError:
+        except IntegrityError as err:
             err_txt = f"unknown user_id={user_id}"
-            logger.error(f"Cannot create chat message: {err_txt}")
+            logger.error(f"Cannot create chat message: {err_txt} ({err})")
             raise chat_messages_errors.CreateMessageException(err_txt)
         except SQLAlchemyError as err:
             logger.error(
                 f"Cannot create chat message: {err} "
                 f"({err.__class__.__name__})"
             )
-            raise chat_messages_errors.CreateMessageException(err)
+            raise chat_messages_errors.CreateMessageException(err) from err
         return message
 
     async def get_user_messages(
@@ -77,15 +79,8 @@ class ChatMessageRepository:
         """
         Удалить всю историю сообщений пользователя.
 
-        :param user_id: ID пользователя
+        :param user_id: ID пользователя.
         """
-        stmt = (delete(ChatMessage)
-                .where(ChatMessage.user_id == user_id)
-                .returning(ChatMessage.id))
-        result: Result = await self._session.execute(stmt)
-        deleted_count: Sequence[Row] = result.fetchall()
+        stmt = delete(ChatMessage).where(ChatMessage.user_id == user_id)
+        await self._session.execute(stmt)
         await self._session.commit()
-        if not deleted_count:
-            raise chat_messages_errors.DeleteMessageException(
-                f"unknown user_id={user_id}"
-            )

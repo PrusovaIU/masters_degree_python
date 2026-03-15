@@ -10,8 +10,3 @@ class ChatMessagesException(AppException):
 class CreateMessageException(ChatMessagesException):
     """Исключение при создании сообщения"""
     pass
-
-
-class DeleteMessageException(ChatMessagesException):
-    """Исключение при удалении сообщения"""
-    pass

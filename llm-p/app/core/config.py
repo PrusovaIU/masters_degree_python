@@ -11,7 +11,7 @@ class OpenRouterSettings(BaseModel):
     api_key: Optional[str] = Field(
         description="API ключ для OpenRouter"
     )
-    base_sql: str = Field(
+    base_url: str = Field(
         default="https://openrouter.ai/api/v1",
         description="Базовый URL OpenRouter API"
     )
@@ -23,6 +23,9 @@ class OpenRouterSettings(BaseModel):
     app_name: Optional[str] = Field(
         default="llm-fastapi-openrouter",
         description="Заголовок приложения для OpenRouter"
+    )
+    referer: Optional[str] = Field(
+
     )
 
 

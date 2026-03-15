@@ -1,7 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.db.models import User
+from app.core.errors import user as user_errors
+from loguru import logger
 
 
 class UserRepository:
@@ -17,8 +20,16 @@ class UserRepository:
         :param user_id: ID пользователя.
 
         :return: пользователь, если найден, иначе None.
+
+        :raises UserNotFound: Если пользователь не найден.
         """
-        return await self._session.get(User, user_id)
+        user: User | None = await self._session.get(User, user_id)
+        if not user:
+            err_txt = f"user_id={user_id}"
+            logger.error(f"Unknown user {err_txt}")
+            raise user_errors.UserNotFound(err_txt)
+        return user
+
 
     async def get_by_email(self, email: str) -> User | None:
         """
@@ -27,10 +38,17 @@ class UserRepository:
         :param email: Email пользователя
 
         :return: пользователь, если найден, иначе None.
+
+        :raises UserNotFound: Если пользователь не найден.
         """
         stmt = select(User).where(User.email == email)
         result = await self._session.execute(stmt)
-        return result.scalar_one_or_none()
+        user: User | None = result.scalar_one_or_none()
+        if not user:
+            err_txt = f"email={email}"
+            logger.error(f"Unknown user {err_txt}")
+            raise user_errors.UserNotFound(err_txt)
+        return user
 
     async def create(
             self,
@@ -52,7 +70,17 @@ class UserRepository:
             password_hash=password_hash,
             role=role
         )
-        self._session.add(user)
-        await self._session.commit()
-        await self._session.refresh(user)
+        try:
+            self._session.add(user)
+            await self._session.commit()
+            await self._session.refresh(user)
+        except IntegrityError as err:
+            err_txt = f"email={email}, role={role}"
+            logger.error(f"User already exists {err_txt}")
+            raise user_errors.UserAlreadyExists(err_txt) from err
+        except SQLAlchemyError as err:
+            err_txt = f"email={email}, role={role}"
+            logger.error(f"Failed to create user {err_txt} "
+                         f"({err.__class__.__name__})")
+            raise user_errors.CreateUserError(err_txt) from err
         return user
