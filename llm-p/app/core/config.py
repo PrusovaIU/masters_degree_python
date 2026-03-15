@@ -101,4 +101,4 @@ class Settings(BaseSettings):
         return f"sqlite+aiosqlite:///{self.sqlite_path}"
 
 
-SETTINGS = Settings()
+settings = Settings()
