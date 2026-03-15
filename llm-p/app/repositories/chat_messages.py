@@ -1,7 +1,11 @@
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, Result, Row
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.db.models import ChatMessage
+from app.core.errors import chat_messages as chat_messages_errors
+from loguru import logger
+from collections.abc import Sequence
 
 
 class ChatMessageRepository:
@@ -30,9 +34,20 @@ class ChatMessageRepository:
             role=role,
             content=content
         )
-        self._session.add(message)
-        await self._session.commit()
-        await self._session.refresh(message)
+        try:
+            self._session.add(message)
+            await self._session.commit()
+            await self._session.refresh(message)
+        except IntegrityError:
+            err_txt = f"unknown user_id={user_id}"
+            logger.error(f"Cannot create chat message: {err_txt}")
+            raise chat_messages_errors.CreateMessageException(err_txt)
+        except SQLAlchemyError as err:
+            logger.error(
+                f"Cannot create chat message: {err} "
+                f"({err.__class__.__name__})"
+            )
+            raise chat_messages_errors.CreateMessageException(err)
         return message
 
     async def get_user_messages(
@@ -46,8 +61,8 @@ class ChatMessageRepository:
         :param user_id: ID пользователя
         :param limit: Количество сообщений (по умолчанию 10)
 
-        :retur: list[ChatMessage]: список сообщений, отсортированных по
-            времени создания (от старых к новым)
+        :return: список сообщений, отсортированных по времени создания
+            (от старых к новым).
         """
         stmt = (
             select(ChatMessage)
@@ -64,6 +79,13 @@ class ChatMessageRepository:
 
         :param user_id: ID пользователя
         """
-        stmt = delete(ChatMessage).where(ChatMessage.user_id == user_id)
-        await self._session.execute(stmt)
+        stmt = (delete(ChatMessage)
+                .where(ChatMessage.user_id == user_id)
+                .returning(ChatMessage.id))
+        result: Result = await self._session.execute(stmt)
+        deleted_count: Sequence[Row] = result.fetchall()
         await self._session.commit()
+        if not deleted_count:
+            raise chat_messages_errors.DeleteMessageException(
+                f"unknown user_id={user_id}"
+            )
