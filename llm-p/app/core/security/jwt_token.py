@@ -40,7 +40,7 @@ def _total_seconds(dt: datetime) -> int:
 
 
 def create_access_token(
-        user_id: str,
+        user_id: int,
         role: str,
         expires_delta: Optional[timedelta] = None,
         payload: Optional[dict[str, Any]] = None
