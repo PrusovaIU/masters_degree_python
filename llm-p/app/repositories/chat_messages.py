@@ -9,7 +9,11 @@ from collections.abc import Sequence
 
 
 class ChatMessageRepository:
-    """Репозиторий для работы с таблицей chat_message."""
+    """
+    Репозиторий для работы с таблицей chat_message.
+
+    :param session: асинхронная сессия SQLAlchemy.
+    """
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -27,9 +31,10 @@ class ChatMessageRepository:
         :param role: Роль отправителя.
         :param content: Текст сообщения.
 
-        :return: созданное сообщение
+        :return: Созданное сообщение
 
-        :raises CreateMessageException: если не удалось создать сообщение.
+        :raises app.core.chat_messages.CreateMessageException:
+            если не удалось создать сообщение.
         """
         message = ChatMessage(
             user_id=user_id,
@@ -63,7 +68,7 @@ class ChatMessageRepository:
         :param user_id: ID пользователя
         :param limit: Количество сообщений (по умолчанию 10)
 
-        :return: список сообщений, отсортированных по времени создания
+        :return: Список сообщений, отсортированных по времени создания
             (от старых к новым).
         """
         stmt = (

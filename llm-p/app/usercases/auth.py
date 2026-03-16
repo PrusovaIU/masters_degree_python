@@ -3,7 +3,7 @@ from app.repositories.user import UserRepository
 from app.core.security.password import verify_password, get_password_hash
 from app.core.security.jwt_token import create_access_token
 from app.schemas.user import UserPublic
-from app.core.errors import auth as errors
+from app.core.errors import usercase_auth as errors
 from app.core.config import settings
 from loguru import logger
 
