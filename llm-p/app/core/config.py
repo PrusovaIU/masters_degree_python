@@ -24,8 +24,10 @@ class OpenRouterSettings(BaseModel):
         default="llm-fastapi-openrouter",
         description="Заголовок приложения для OpenRouter"
     )
-    referer: Optional[str] = Field(
-
+    referer: Optional[str] = Field()
+    request_timeout: int = Field(
+        default=10,
+        description="Таймаут запроса в секундах"
     )
 
 
