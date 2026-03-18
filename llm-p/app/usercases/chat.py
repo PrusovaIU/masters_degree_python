@@ -82,14 +82,14 @@ class ChatUseCase:
         messages = await self._form_message(
             user_id, user_role, prompt, system, max_history
         )
-        answer: str = await self._openrouter_client.chat_completion(
-            messages=messages,
-            temperature=temperature
-        )
         await self._message_repo.create(
             user_id=user_id,
             role=user_role,
             content=prompt
+        )
+        answer: str = await self._openrouter_client.chat_completion(
+            messages=messages,
+            temperature=temperature
         )
         await self._message_repo.create(
             user_id=user_id,
