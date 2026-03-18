@@ -1,3 +1,4 @@
+"""Исключения, используемые при работе с JWT"""
 from .base import AppException
 
 

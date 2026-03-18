@@ -1,3 +1,4 @@
+"""Исключения для usecase авторизации."""
 from .base import AppException
 
 

@@ -1,3 +1,4 @@
+"""Исключения для usecase чата."""
 from .base import AppException
 
 
