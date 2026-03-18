@@ -13,7 +13,11 @@ from app.core.errors import usecase_auth as errors
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.post("/register", response_model=UserPublic)
+@router.post(
+    "/register",
+    response_model=UserPublic,
+    description="Регистрация нового пользователя."
+)
 async def register(
         user_data: RegisterRequest,
         auth_usecase: AuthUsecaseDependency
@@ -40,7 +44,11 @@ async def register(
     return user
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    description="Вход в систему (OAuth2 совместимый)."
+)
 async def login(
         data: Annotated[OAuth2PasswordRequestForm, Depends()],
         auth_usecase: AuthUsecaseDependency
@@ -67,7 +75,11 @@ async def login(
     return TokenResponse(access_token=access_token)
 
 
-@router.get("/me", response_model=UserPublic)
+@router.get(
+    "/me",
+    response_model=UserPublic,
+    description="Получить информацию о текущем пользователе."
+)
 async def get_my_profile(
         user_id: UserIdDependency,
         auth_usecase: AuthUsecaseDependency

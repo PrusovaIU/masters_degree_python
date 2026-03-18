@@ -8,7 +8,11 @@ from app.db.models.chat_message import ChatMessage
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-@router.post("", response_model=ChatResponse)
+@router.post(
+    "",
+    response_model=ChatResponse,
+    description="Отправить сообщение в чат и получить ответ от LLM."
+)
 async def send_message(
         chat_request: ChatRequest,
         user_data: UserDataDependency,
@@ -40,7 +44,11 @@ async def send_message(
     return ChatResponse(answer=answer)
 
 
-@router.get("/history", response_model=list[ChatMessage])
+@router.get(
+    "/history",
+    response_model=list[ChatMessage],
+    description="Получить историю сообщений текущего пользователя."
+)
 async def get_chat_history(
         user_id: UserIdDependency,
         chat_usecase: ChatUsecaseDependency,
@@ -58,7 +66,11 @@ async def get_chat_history(
     return await chat_usecase.history(user_id, limit)
 
 
-@router.delete("/history", response_model=DeleteChatHistoryResponse)
+@router.delete(
+    "/history",
+    response_model=DeleteChatHistoryResponse,
+    description="Очистить всю историю сообщений текущего пользователя."
+)
 async def clear_chat_history(
         user_id: UserIdDependency,
         chat_usecase: ChatUsecaseDependency
