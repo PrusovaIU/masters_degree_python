@@ -80,12 +80,16 @@ class ChatMessageRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
-    async def delete_user_history(self, user_id: int) -> None:
+    async def delete_user_history(self, user_id: int) -> int:
         """
         Удалить всю историю сообщений пользователя.
 
         :param user_id: ID пользователя.
+        :return: Количество удаленных сообщений.
         """
-        stmt = delete(ChatMessage).where(ChatMessage.user_id == user_id)
-        await self._session.execute(stmt)
+        stmt = (delete(ChatMessage).
+                where(ChatMessage.user_id == user_id).
+                returning(ChatMessage.id))
+        result = await self._session.execute(stmt)
         await self._session.commit()
+        return len(result.scalars().all())

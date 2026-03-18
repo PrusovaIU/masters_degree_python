@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
+from dataclasses import dataclass
 
 
 class UserPublic(BaseModel):
@@ -12,3 +13,10 @@ class UserPublic(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+@dataclass
+class UserData:
+    """Данные о пользователе, необходимые для работы с LLM."""
+    user_id: int
+    user_role: str

@@ -3,11 +3,11 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-from jose import jwt
-from app.core.config import settings
+from app.core.security.jwt_token import verify_access_token
 from app.core.errors.jwt import TokenVerifyError
 from app.consts.jwt_token import TokenDataKeys
 from loguru import logger
+from app.schemas.user import UserData
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -15,25 +15,21 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 AUTH_HEADERS = {"WWW-Authenticate": "Bearer"}
 
 
-async def get_current_user_id(
-        token: Annotated[str, Depends(oauth2_scheme)]
-) -> int:
+def _get_user_data(token: str) -> UserData:
     """
-    Получение ID текущего пользователя из JWT токена.
+    Получение данных пользователя из JWT токена.
 
     :param token: JWT токен.
-
-    :return: ID пользователя
+    :return: Данные пользователя.
 
     :raises HTTPException: Если токен невалидный.
     """
     try:
-        payload = jwt.decode(
-            token,
-            settings.jwt.secret,
-            algorithms=[settings.jwt.algorithm]
+        payload = verify_access_token(token)
+        user_data = UserData(
+            user_id=int(payload[TokenDataKeys.SUB]),
+            user_role=payload[TokenDataKeys.ROLE]
         )
-        user_id: str = payload[TokenDataKeys.SUB]
     except TokenVerifyError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -50,7 +46,38 @@ async def get_current_user_id(
             detail="Invalid token",
             headers=AUTH_HEADERS
         )
-    return int(user_id)
+    return user_data
+
+
+def get_current_user_id(
+        token: Annotated[str, Depends(oauth2_scheme)]
+) -> int:
+    """
+    Получение ID текущего пользователя из JWT токена.
+
+    :param token: JWT токен.
+
+    :return: ID пользователя
+
+    :raises HTTPException: Если токен невалидный.
+    """
+    user_data = _get_user_data(token)
+    return user_data.user_id
+
+
+def get_current_user(
+        token: Annotated[str, Depends(oauth2_scheme)]
+) -> UserData:
+    """
+    Получение данных текущего пользователя из JWT токена.
+
+    :param token: JWT токен.
+    :return: Данные пользователя.
+
+    :raises HTTPException: Если токен невалидный.
+    """
+    return _get_user_data(token)
 
 
 UserIdDependency = Annotated[int, Depends(get_current_user_id)]
+UserDataDependency = Annotated[UserData, Depends(get_current_user)]

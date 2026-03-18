@@ -97,3 +97,28 @@ class ChatUseCase:
             content=answer
         )
         return answer
+
+    async def history(
+            self,
+            user_id: int,
+            max_history: int = 10
+    ) -> list[ChatMessage]:
+        """
+        Получение истории сообщений пользователя.
+
+        :param user_id: ID пользователя.
+        :param max_history: Максимальная длина истории.
+        :return: Список сообщений.
+        """
+        return await self._message_repo.get_user_messages(
+            user_id, max_history
+        )
+
+    async def clear_history(self, user_id: int) -> int:
+        """
+        Очистка истории сообщений пользователя.
+
+        :param user_id: ID пользователя.
+        :return: Количество удаленных сообщений.
+        """
+        return await self._message_repo.delete_user_history(user_id)

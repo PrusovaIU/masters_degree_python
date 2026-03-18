@@ -30,3 +30,11 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     """Схема ответа чата."""
     answer: str = Field(description="Ответ модели на запрос пользователя")
+
+
+class DeleteChatHistoryResponse(BaseModel):
+    """Схема ответа на запрос удаления истории чата."""
+    deleted_messages_amount: int = Field(
+        ge=0,
+        description="Количество удаленных сообщений"
+    )
