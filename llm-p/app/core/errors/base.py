@@ -17,17 +17,18 @@ class BaseAppException(Exception):
         return f"{self._title}: {self._message}"
 
     @property
-    def title(self):
+    def title(self) -> str:
+        """
+        :return: Заголовок исключения.
+        """
         return self._title
 
     @property
-    def message(self):
+    def message(self) -> str:
+        """
+        :return: Сообщение исключения.
+        """
         return self._message
-
-    def detail(self) -> dict:
-        return {
-            "detail": self.__str__()
-        }
 
 
 class AppException(BaseAppException):
