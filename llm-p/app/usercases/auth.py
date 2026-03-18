@@ -53,8 +53,11 @@ class AuthUseCase:
 
         :return: JWT токен.
 
-        :raises InvalidCredentialsError: Если email не существует или
-            пароль неверный.
+        :raises app.core.errors.usercase_auth.InvalidCredentialsError:
+            Если email не существует или пароль неверный.
+
+        :raises app.core.errors.jwt.CreateTokenError: Если не удалось создать
+            токен.
         """
         user: User | None = await self._user_repo.get_by_email(email)
         if not user:
@@ -81,7 +84,8 @@ class AuthUseCase:
 
         :return: Данные пользователя
 
-        :raises UserNotFoundError: Если пользователь не найден
+        :raises app.core.errors.usercase_auth.UserNotFoundError:
+            Если пользователь не найден
         """
         user = await self._user_repo.get_by_id(user_id)
         if not user:

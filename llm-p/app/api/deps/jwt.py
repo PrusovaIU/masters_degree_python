@@ -12,7 +12,7 @@ from loguru import logger
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-_AUTH_HEADERS = {"WWW-Authenticate": "Bearer"}
+AUTH_HEADERS = {"WWW-Authenticate": "Bearer"}
 
 
 async def get_current_user_id(
@@ -38,7 +38,7 @@ async def get_current_user_id(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=err.message,
-            headers=_AUTH_HEADERS
+            headers=AUTH_HEADERS
         )
     except KeyError as err:
         logger.error(
@@ -48,7 +48,7 @@ async def get_current_user_id(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-            headers=_AUTH_HEADERS
+            headers=AUTH_HEADERS
         )
     return int(user_id)
 
