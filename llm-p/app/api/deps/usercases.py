@@ -1,6 +1,7 @@
 from app.usercases.auth import AuthUseCase
 from app.usercases.chat import ChatUseCase
-from .db import UserRepoDependency, MessageRepoDependency, OpenRouterClientDependency
+from .db import UserRepoDependency, MessageRepoDependency
+from . import OpenRouterClientDependency
 from typing import Annotated
 
 from fastapi import Depends

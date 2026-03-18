@@ -51,3 +51,6 @@ async def get_current_user_id(
             headers=_AUTH_HEADERS
         )
     return int(user_id)
+
+
+UserIdDependency = Annotated[int, Depends(get_current_user_id)]

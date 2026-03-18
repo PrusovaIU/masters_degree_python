@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.user import UserRepository
 from app.repositories.chat_messages import ChatMessageRepository
-from app.services.openrouter_client import OpenRouterClient
 from app.db.session import AsyncSessionLocal
 
 
@@ -41,19 +40,8 @@ async def get_chat_message_repository(
     return ChatMessageRepository(session)
 
 
-async def get_openrouter_client() -> OpenRouterClient:
-    """
-    :return: Клиент для работы с OpenRouter API.
-    """
-    return OpenRouterClient()
-
-
 MessageRepoDependency = Annotated[
     ChatMessageRepository,
     Depends(get_chat_message_repository)
-]
-OpenRouterClientDependency = Annotated[
-    OpenRouterClient,
-    Depends(get_openrouter_client)
 ]
 UserRepoDependency = Annotated[UserRepository, Depends(get_user_repository)]
