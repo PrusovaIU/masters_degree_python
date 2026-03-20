@@ -231,9 +231,13 @@ CORS__CREDENTIALS=
 
 ## Запуск
 
-Необходимо создать файл конфигурации .env и расположить его в директории с проектом рядом с файлом pyproject.toml.
+Перед запуском убедитесь, что в корневой директории проекта (рядом с файлом pyproject.toml) создан файл конфигурации 
+*.env* с необходимыми параметрами конфигурации.
 
-### Установка uv
+### 1. Установка uv
+
+`uv` — это быстрый менеджер пакетов и инструмент для управления виртуальными окружениями. 
+Если uv еще не установлен, установите его с помощью команды:
 
 ```shell
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -241,16 +245,41 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### Инициализация виртуального окружения
 
+Создайте и синхронизируйте виртуальное окружение с зависимостями проекта:
+
 ```shell
 uv sync
 ```
 
-### Запуск проекта
+Эта команда создаст виртуальное окружение и установит все зависимости, указанные в `pyproject.toml`.
+
+### Запуск сервера
+
+Запустите сервер с помощью команды:
 
 ```shell
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
-, где
-    
-    * host - хост, на котором будет запущен сервис;
-    * port - порт, на котором будет запущен сервис.
+
+**Параметры запуска**
+
+| Параметр | Описание                        | Значение по умолчанию |
+|----------|---------------------------------|-----------------------|
+| host     | Хост сервера                    | 127.0.0.1             |
+| port     | Порт сервера                    | 8000                  |
+
+При успешном запуске в терминале появятся логи, аналогичные следующим:
+
+```shell
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+INFO:     Will watch for changes in these directories: ['/home/hex/git/masters_degree_python/llm-p']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [17002] using WatchFiles
+INFO:     Started server process [17004]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+После запуска сервера перейдите в браузере по хосту `http://localhost:8000/docs`:
+
+![opeapi.png](docs/img/opeapi.png)
