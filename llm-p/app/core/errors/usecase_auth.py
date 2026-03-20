@@ -4,7 +4,9 @@ from .base import AppException
 
 class UserAlreadyExistsError(AppException):
     """Пользователь с таким email уже существует."""
-    pass
+    @property
+    def message(self) -> str:
+        return f"User \"{self._message}\" already exists."
 
 
 class InvalidCredentialsError(AppException):

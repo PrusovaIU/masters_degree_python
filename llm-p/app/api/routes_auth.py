@@ -8,6 +8,7 @@ from app.schemas.user import UserPublic
 from .deps import AuthUsecaseDependency, AUTH_HEADERS, UserIdDependency
 from app.consts.roles import Roles
 from app.core.errors import usecase_auth as errors
+from app.schemas.error_detail import ErrorDetail
 
 
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -16,7 +17,14 @@ auth_router = APIRouter(prefix="/auth", tags=["authentication"])
 @auth_router.post(
     "/register",
     response_model=UserPublic,
-    description="Регистрация нового пользователя."
+    summary="Регистрация нового пользователя.",
+    description="Регистрация нового пользователя.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_409_CONFLICT: {
+            "model": ErrorDetail
+        }
+    }
 )
 async def register(
         user_data: RegisterRequest,
@@ -39,7 +47,7 @@ async def register(
     except errors.UserAlreadyExistsError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=err.message
+            detail=err.detail.model_dump()
         )
     return user
 

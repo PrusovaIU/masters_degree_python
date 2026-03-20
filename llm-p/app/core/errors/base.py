@@ -1,3 +1,5 @@
+from app.schemas.error_detail import Detail
+
 class BaseAppException(Exception):
     """
     Базовый класс исключений.
@@ -29,6 +31,10 @@ class BaseAppException(Exception):
         :return: Сообщение исключения.
         """
         return self._message
+
+    @property
+    def detail(self) -> Detail:
+        return Detail(title=self.title, message=self.message)
 
 
 class AppException(BaseAppException):

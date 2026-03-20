@@ -285,3 +285,5 @@ INFO:     Application startup complete.
 
 ![opeapi.png](docs/img/opeapi.png)
 
+## Регистрация пользователя
+
