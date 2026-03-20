@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ChatRequest(BaseModel):
@@ -38,3 +38,14 @@ class DeleteChatHistoryResponse(BaseModel):
         ge=0,
         description="Количество удаленных сообщений"
     )
+
+
+class ChatMessageResponse(BaseModel):
+    """Схема для сообщения чата."""
+    id: int = Field(description="ID сообщения")
+    user_id: int = Field(description="ID пользователя")
+    role: str = Field(description="Роль пользователя")
+    content: str = Field(description="Текст сообщения")
+    created_at: str = Field(description="Дата и время создания сообщения")
+
+    model_config = ConfigDict(from_attributes=True)

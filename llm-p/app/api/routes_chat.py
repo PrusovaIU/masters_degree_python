@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.schemas.chat import ChatRequest, ChatResponse, DeleteChatHistoryResponse
-from deps import UserDataDependency, ChatUsecaseDependency, UserIdDependency
+from app.api.deps import UserDataDependency, ChatUsecaseDependency, UserIdDependency
 from app.core.errors.openrouter_client import OpenRouterClientException
-from app.db.models.chat_message import ChatMessage
+from app.schemas.chat import ChatMessageResponse
 
 chat_router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -46,7 +46,7 @@ async def send_message(
 
 @chat_router.get(
     "/history",
-    response_model=list[ChatMessage],
+    response_model=list[ChatMessageResponse],
     description="Получить историю сообщений текущего пользователя."
 )
 async def get_chat_history(

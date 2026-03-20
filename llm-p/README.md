@@ -18,7 +18,6 @@ JWT__ACCESS_TOKEN_EXPIRE_MINUTES=
 OPENROUTER__API_KEY=
 OPENROUTER__BASE_URL=
 OPENROUTER__MODEL=
-OPENROUTER__SITE_URL=
 OPENROUTER__APP_NAME=
 OPENROUTER__REFERER=
 OPENROUTER__REQUEST_TIMEOUT=
@@ -132,12 +131,6 @@ CORS__CREDENTIALS=
             <td>Модель OpenRouter по умолчанию</td>
         </tr>
         <tr>
-            <td>site_url</td>
-            <td>str</td>
-            <td>—</td>
-            <td>URL сайта для OpenRouter (обязательный параметр)</td>
-        </tr>
-        <tr>
             <td>app_name</td>
             <td>Optional[str]</td>
             <td>"llm-fastapi-openrouter"</td>
@@ -235,3 +228,29 @@ CORS__CREDENTIALS=
         </tr>
     </tbody>
 </table>
+
+## Запуск
+
+Необходимо создать файл конфигурации .env и расположить его в директории с проектом рядом с файлом pyproject.toml.
+
+### Установка uv
+
+```shell
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### Инициализация виртуального окружения
+
+```shell
+uv sync
+```
+
+### Запуск проекта
+
+```shell
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+, где
+    
+    * host - хост, на котором будет запущен сервис;
+    * port - порт, на котором будет запущен сервис.
