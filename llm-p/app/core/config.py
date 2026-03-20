@@ -98,7 +98,7 @@ class Settings(BaseSettings):
     )
 
     env: str = Field(
-        default="local",
+        default="prod",
         description="Текущее окружение"
     )
 
