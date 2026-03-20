@@ -287,3 +287,4 @@ INFO:     Application startup complete.
 
 ## Регистрация пользователя
 
+[Инструкция](docs/registration/registration.md)
