@@ -1,4 +1,5 @@
 
+
 ## Конфигурация
 
 **Шаблон файла .env:**
@@ -283,3 +284,4 @@ INFO:     Application startup complete.
 После запуска сервера перейдите в браузере по хосту `http://localhost:8000/docs`:
 
 ![opeapi.png](docs/img/opeapi.png)
+

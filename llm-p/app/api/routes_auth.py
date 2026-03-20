@@ -34,7 +34,7 @@ async def register(
         user: UserPublic = await auth_usecase.register(
             email=user_data.email,
             password=user_data.password,
-            role=Roles.USER
+            role=Roles.user
         )
     except errors.UserAlreadyExistsError as err:
         raise HTTPException(

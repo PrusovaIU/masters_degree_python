@@ -4,8 +4,7 @@ from pydantic import BaseModel, EmailStr, Field
 class _BaseUserRequest(BaseModel):
     email: EmailStr = Field(description="Email пользователя")
     password: str = Field(
-        min_length=8,
-        max_length=100,
+        pattern=r"\w{8,100}$",
         description="Пароль (минимум 8 символов)"
     )
 

@@ -37,7 +37,7 @@ class UserRepository:
 
         :param email: Email пользователя
 
-        :return: пользователь, если найден, иначе None.
+        :return: Пользователь, если найден, иначе None.
 
         :raises UserNotFound: Если пользователь не найден.
         """
@@ -46,7 +46,7 @@ class UserRepository:
         user: User | None = result.scalar_one_or_none()
         if not user:
             err_txt = f"email={email}"
-            logger.error(f"Unknown user {err_txt}")
+            logger.warning(f"Unknown user {err_txt}")
             raise user_errors.UserNotFound(err_txt)
         return user
 

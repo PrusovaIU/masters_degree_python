@@ -4,6 +4,7 @@ from app.core.security.password import verify_password, get_password_hash
 from app.core.security.jwt_token import create_access_token
 from app.schemas.user import UserPublic
 from app.core.errors import usecase_auth as errors
+from app.core.errors.user import UserNotFound
 from app.core.config import settings
 from loguru import logger
 
@@ -32,16 +33,18 @@ class AuthUseCase:
         :raises UserAlreadyExistsError: Если пользователь с таким email уже
             существует.
         """
-        existing_user: User | None = await self._user_repo.get_by_email(email)
-        if existing_user:
+        try:
+            await self._user_repo.get_by_email(email)
+        except UserNotFound:
+            password_hash: str = get_password_hash(password)
+            user: User = await self._user_repo.create(
+                email=email,
+                password_hash=password_hash,
+                role=role
+            )
+        else:
             logger.warning(f"User with email {email} already exists")
             raise errors.UserAlreadyExistsError(email)
-        password_hash: str = get_password_hash(password)
-        user: User = await self._user_repo.create(
-            email=email,
-            password_hash=password_hash,
-            role=role
-        )
         return UserPublic.model_validate(user)
 
     async def login(self, email: str, password: str) -> str:
