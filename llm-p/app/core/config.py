@@ -65,6 +65,26 @@ class JWTSettings(BaseModel):
         return timedelta(minutes=self.access_token_expire_minutes)
 
 
+class CORSSettings(BaseModel):
+    enabled: bool = Field(default=True, description="Флаг включения CORS")
+    origins: list[str] = Field(
+        default=["*"],
+        description="Список разрешенных источников"
+    )
+    methods: list[str] = Field(
+        default=["*"],
+        description="Список разрешенных методов"
+    )
+    headers: list[str] = Field(
+        default=["*"],
+        description="Список разрешенных заголовков"
+    )
+    credentials: bool = Field(
+        default=True,
+        description="Разрешить отправку куки"
+    )
+
+
 class Settings(BaseSettings):
     """
     Конфигурация приложения
@@ -75,6 +95,11 @@ class Settings(BaseSettings):
     app_name: str = Field(
         default="llm-p",
         description="Название приложения"
+    )
+
+    env: str = Field(
+        default="local",
+        description="Текущее окружение"
     )
 
     jwt: JWTSettings
@@ -89,6 +114,10 @@ class Settings(BaseSettings):
     password: Optional[PasswordSettings] = Field(
         description="Параметры хэширования пароля",
         default_factory=PasswordSettings
+    )
+    cors: CORSSettings = Field(
+        default_factory=CORSSettings,
+        description="Настройки CORS"
     )
 
     model_config = SettingsConfigDict(

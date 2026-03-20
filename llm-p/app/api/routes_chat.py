@@ -5,10 +5,10 @@ from deps import UserDataDependency, ChatUsecaseDependency, UserIdDependency
 from app.core.errors.openrouter_client import OpenRouterClientException
 from app.db.models.chat_message import ChatMessage
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+chat_router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-@router.post(
+@chat_router.post(
     "",
     response_model=ChatResponse,
     description="Отправить сообщение в чат и получить ответ от LLM."
@@ -44,7 +44,7 @@ async def send_message(
     return ChatResponse(answer=answer)
 
 
-@router.get(
+@chat_router.get(
     "/history",
     response_model=list[ChatMessage],
     description="Получить историю сообщений текущего пользователя."
@@ -66,7 +66,7 @@ async def get_chat_history(
     return await chat_usecase.history(user_id, limit)
 
 
-@router.delete(
+@chat_router.delete(
     "/history",
     response_model=DeleteChatHistoryResponse,
     description="Очистить всю историю сообщений текущего пользователя."

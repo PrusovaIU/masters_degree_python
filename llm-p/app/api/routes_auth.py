@@ -10,10 +10,10 @@ from app.consts.roles import Roles
 from app.core.errors import usecase_auth as errors
 
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+auth_router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.post(
+@auth_router.post(
     "/register",
     response_model=UserPublic,
     description="Регистрация нового пользователя."
@@ -44,7 +44,7 @@ async def register(
     return user
 
 
-@router.post(
+@auth_router.post(
     "/login",
     response_model=TokenResponse,
     description="Вход в систему (OAuth2 совместимый)."
@@ -75,7 +75,7 @@ async def login(
     return TokenResponse(access_token=access_token)
 
 
-@router.get(
+@auth_router.get(
     "/me",
     response_model=UserPublic,
     description="Получить информацию о текущем пользователе."

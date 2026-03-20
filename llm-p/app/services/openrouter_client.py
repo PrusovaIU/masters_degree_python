@@ -54,7 +54,8 @@ class OpenRouterClient:
                 response.raise_for_status()
                 data = response.json()
         except (KeyError, IndexError) as err:
-            logger.error(f"Unexpected response from OpenRouter: {err}")
+            logger.error(f"Unexpected response from OpenRouter: "
+                         f"{err} ({err.__class__.__name__})")
             raise errors.UnexpectedResponseException(err)
         except httpx.TimeoutException:
             logger.error("Connect to OpenRouter timed out")
