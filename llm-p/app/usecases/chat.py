@@ -6,6 +6,7 @@ from dataclasses import asdict
 from app.consts.roles import Roles
 from app.schemas.pagination import Pagination
 from app.schemas.chat import ChatHistoryResponse, ChatMessageResponse
+from app.schemas.chat import DeleteChatHistoryResponse
 
 
 class ChatUseCase:
@@ -126,11 +127,14 @@ class ChatUseCase:
             )
         )
 
-    async def clear_history(self, user_id: int) -> int:
+    async def clear_history(self, user_id: int) -> DeleteChatHistoryResponse:
         """
         Очистка истории сообщений пользователя.
 
         :param user_id: ID пользователя.
         :return: Количество удаленных сообщений.
         """
-        return await self._message_repo.delete_user_history(user_id)
+        amount: int = await self._message_repo.delete_user_history(user_id)
+        return DeleteChatHistoryResponse(
+            deleted_messages_amount=amount
+        )
