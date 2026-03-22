@@ -40,7 +40,7 @@ async def send_message(
     except OpenRouterClientException:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Error accessing OpenRouter. Try later."
+            detail="Error accessing OpenRouter. Try later."
         )
     return ChatResponse(answer=answer)
 

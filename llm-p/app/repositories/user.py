@@ -30,7 +30,6 @@ class UserRepository:
             raise user_errors.UserNotFound(err_txt)
         return user
 
-
     async def get_by_email(self, email: str) -> User:
         """
         Получить пользователя по email.

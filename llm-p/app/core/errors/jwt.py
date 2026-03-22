@@ -16,6 +16,7 @@ class TokenExpiredError(TokenVerifyError):
     """Ошибка истечения срока действия токена"""
     pass
 
+
 class CreateTokenError(TokenError):
     """Ошибка создания токена"""
     pass
