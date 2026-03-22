@@ -39,7 +39,7 @@
 
 ![401_response.png](401_response.png)
 
-## Форма авторизации
+## Авторизация через Swagger
 
 ![auth_form.png](auth_form.png)
 
