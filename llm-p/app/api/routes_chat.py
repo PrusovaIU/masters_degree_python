@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.schemas.chat import ChatRequest, ChatResponse, DeleteChatHistoryResponse
-from app.api.deps import UserDataDependency, ChatUsecaseDependency, UserIdDependency
+from app.api.deps import (ChatUsecaseDependency, UserDataDependency,
+                          UserIdDependency)
 from app.core.errors.openrouter_client import OpenRouterClientException
-from app.schemas.chat import ChatHistoryResponse
+from app.schemas.chat import (ChatHistoryResponse, ChatRequest, ChatResponse,
+                              DeleteChatHistoryResponse)
 
 chat_router = APIRouter(prefix="/chat", tags=["chat"])
 

@@ -1,10 +1,10 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-
-from app.db.models import User
-from app.core.errors import user as user_errors
 from loguru import logger
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.errors import user as user_errors
+from app.db.models import User
 
 
 class UserRepository:

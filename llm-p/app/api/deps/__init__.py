@@ -1,8 +1,7 @@
 from .db import MessageRepoDependency, UserRepoDependency
+from .jwt import AUTH_HEADERS, UserDataDependency, UserIdDependency
 from .services import OpenRouterClientDependency
 from .usecases import AuthUsecaseDependency, ChatUsecaseDependency
-from .jwt import UserIdDependency, AUTH_HEADERS, UserDataDependency
-
 
 __all__ = [
     "MessageRepoDependency",

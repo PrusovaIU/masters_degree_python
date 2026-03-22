@@ -3,9 +3,9 @@ from typing import Annotated, AsyncGenerator
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories.user import UserRepository
-from app.repositories.chat_messages import ChatMessageRepository
 from app.db.session import AsyncSessionLocal
+from app.repositories.chat_messages import ChatMessageRepository
+from app.repositories.user import UserRepository
 
 
 async def get_session() -> AsyncGenerator[AsyncSession]:

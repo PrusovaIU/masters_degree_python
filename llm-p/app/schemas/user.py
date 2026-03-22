@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserPublic(BaseModel):

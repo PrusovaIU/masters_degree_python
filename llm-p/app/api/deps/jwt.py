@@ -2,14 +2,13 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-
-from app.core.security.jwt_token import verify_access_token
-from app.core.errors.jwt import TokenVerifyError
-from app.consts.jwt_token import TokenDataKeys
 from loguru import logger
-from app.schemas.user import UserData
-from app.schemas.error_detail import Detail
 
+from app.consts.jwt_token import TokenDataKeys
+from app.core.errors.jwt import TokenVerifyError
+from app.core.security.jwt_token import verify_access_token
+from app.schemas.error_detail import Detail
+from app.schemas.user import UserData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

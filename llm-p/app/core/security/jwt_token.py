@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from jose import jwt, JWTError, ExpiredSignatureError
+from jose import ExpiredSignatureError, JWTError, jwt
+from loguru import logger
 
 from app.consts.jwt_token import TokenDataKeys
 from app.core.config import settings
-from loguru import logger
-
-from app.core.errors.jwt import TokenVerifyError, TokenExpiredError, CreateTokenError
+from app.core.errors.jwt import (CreateTokenError, TokenExpiredError,
+                                 TokenVerifyError)
 
 # Unix epoch time
 _UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)

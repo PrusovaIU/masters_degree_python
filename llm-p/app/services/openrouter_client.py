@@ -1,9 +1,8 @@
 import httpx
+from loguru import logger
 
 from app.core.config import settings
 from app.core.errors import openrouter_client as errors
-from loguru import logger
-
 from app.core.errors.openrouter_client import OpenRouterClientException
 
 

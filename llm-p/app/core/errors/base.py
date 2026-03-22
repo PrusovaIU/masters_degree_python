@@ -1,5 +1,6 @@
 from app.schemas.error_detail import Detail
 
+
 class BaseAppException(Exception):
     """
     Базовый класс исключений.

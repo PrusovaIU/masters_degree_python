@@ -2,10 +2,9 @@ import hashlib
 import hmac
 import secrets
 
-from app.core.config import settings
 from loguru import logger
 
-
+from app.core.config import settings
 
 _HASH_ALGORITHM = "sha256"  # Алгоритм хеширования пароля
 # Формат хеша пароля:

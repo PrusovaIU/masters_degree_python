@@ -1,10 +1,10 @@
-from sqlalchemy import select, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-
-from app.db.models import ChatMessage
-from app.core.errors import chat_messages as chat_messages_errors
 from loguru import logger
+from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.errors import chat_messages as chat_messages_errors
+from app.db.models import ChatMessage
 
 
 class ChatMessageRepository:

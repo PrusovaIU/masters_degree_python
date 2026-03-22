@@ -4,10 +4,10 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import routers
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
-from app.api import routers
 
 
 @asynccontextmanager

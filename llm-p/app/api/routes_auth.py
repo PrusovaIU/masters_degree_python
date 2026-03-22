@@ -3,13 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.schemas.auth import RegisterRequest, TokenResponse
-from app.schemas.user import UserPublic
-from .deps import AuthUsecaseDependency, AUTH_HEADERS, UserIdDependency
 from app.consts.roles import Roles
 from app.core.errors import usecase_auth as errors
+from app.schemas.auth import RegisterRequest, TokenResponse
 from app.schemas.error_detail import ErrorDetail
+from app.schemas.user import UserPublic
 
+from .deps import AUTH_HEADERS, AuthUsecaseDependency, UserIdDependency
 
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
 

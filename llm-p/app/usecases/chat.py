@@ -1,12 +1,13 @@
+from dataclasses import asdict
+
+from app.consts.roles import Roles
 from app.db.models import ChatMessage
 from app.repositories.chat_messages import ChatMessageRepository
+from app.schemas.chat import (ChatHistoryResponse, ChatMessageResponse,
+                              DeleteChatHistoryResponse)
 from app.schemas.openrouter_message import Message
-from app.services.openrouter_client import OpenRouterClient
-from dataclasses import asdict
-from app.consts.roles import Roles
 from app.schemas.pagination import Pagination
-from app.schemas.chat import ChatHistoryResponse, ChatMessageResponse
-from app.schemas.chat import DeleteChatHistoryResponse
+from app.services.openrouter_client import OpenRouterClient
 
 
 class ChatUseCase:

@@ -1,10 +1,12 @@
-from app.usecases.auth import AuthUseCase
-from app.usecases.chat import ChatUseCase
-from .db import UserRepoDependency, MessageRepoDependency
-from . import OpenRouterClientDependency
 from typing import Annotated
 
 from fastapi import Depends
+
+from app.usecases.auth import AuthUseCase
+from app.usecases.chat import ChatUseCase
+
+from . import OpenRouterClientDependency
+from .db import MessageRepoDependency, UserRepoDependency
 
 
 async def get_auth_usecase(user_repo: UserRepoDependency) -> AuthUseCase:
