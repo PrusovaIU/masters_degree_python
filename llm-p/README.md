@@ -22,7 +22,8 @@
 6. [Сообщение в чат](docs/chat/chat.md);
 7. [Получение истории](docs/history/get/history.md);
 8. [Удаление истории](docs/history/delete/delete_history.md);
-9. [Получение информации о текущем пользователе](docs/profile/profile.md).
+9. [Получение информации о текущем пользователе](docs/profile/profile.md);
+10. [Health check](docs/health_check/health_check.md).
 
 ## Конфигурация
 
@@ -323,4 +324,6 @@ INFO:     Application startup complete.
 3. [Авторизация через Swagger](docs/login/swagger.md);
 4. [Сообщение в чат](docs/chat/chat.md);
 5. [Получение истории](docs/history/get/history.md);
-6. [Удаление истории](docs/history/delete/delete_history.md).
+6. [Удаление истории](docs/history/delete/delete_history.md);
+7. [Получение информации о текущем пользователе](docs/profile/profile.md);
+8. [Health check](docs/health_check/health_check.md).
