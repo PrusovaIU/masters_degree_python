@@ -1,11 +1,10 @@
-from sqlalchemy import select, delete, Result, Row
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.db.models import ChatMessage
 from app.core.errors import chat_messages as chat_messages_errors
 from loguru import logger
-from collections.abc import Sequence
 
 
 class ChatMessageRepository:
@@ -79,6 +78,21 @@ class ChatMessageRepository:
         )
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_user_history_amount(self, user_id: int) -> int:
+        """
+        Получить количество сообщений пользователя.
+
+        :param user_id: ID пользователя.
+        :return: Количество сообщений.
+        """
+        stmt = (
+            select(func.count())
+            .select_from(ChatMessage)
+            .where(ChatMessage.user_id == user_id)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar()
 
     async def delete_user_history(self, user_id: int) -> int:
         """

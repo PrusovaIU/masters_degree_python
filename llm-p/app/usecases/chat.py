@@ -4,6 +4,8 @@ from app.schemas.openrouter_message import Message
 from app.services.openrouter_client import OpenRouterClient
 from dataclasses import asdict
 from app.consts.roles import Roles
+from app.schemas.pagination import Pagination
+from app.schemas.chat import ChatHistoryResponse, ChatMessageResponse
 
 
 class ChatUseCase:
@@ -102,7 +104,7 @@ class ChatUseCase:
             self,
             user_id: int,
             max_history: int = 10
-    ) -> list[ChatMessage]:
+    ) -> ChatHistoryResponse:
         """
         Получение истории сообщений пользователя.
 
@@ -110,8 +112,18 @@ class ChatUseCase:
         :param max_history: Максимальная длина истории.
         :return: Список сообщений.
         """
-        return await self._message_repo.get_user_messages(
+        msgs_amount: int = await self._message_repo.get_user_history_amount(
+            user_id
+        )
+        data: list[ChatMessage] = await self._message_repo.get_user_messages(
             user_id, max_history
+        )
+        return ChatHistoryResponse(
+            data=[ChatMessageResponse.model_validate(row) for row in data],
+            pagination=Pagination(
+                limit=max_history,
+                total=msgs_amount
+            )
         )
 
     async def clear_history(self, user_id: int) -> int:

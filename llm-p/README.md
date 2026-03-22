@@ -298,3 +298,4 @@ INFO:     Application startup complete.
 2. [Логин и получение JWT](docs/login/login.md);
 3. [Авторизация через Swagger](docs/login/swagger.md);
 4. [Сообщение в чат](docs/chat/chat.md);
+5. [Получение истории](docs/history/history.md);

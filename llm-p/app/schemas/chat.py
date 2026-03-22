@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
+from .pagination import Pagination
 
 
 class ChatRequest(BaseModel):
@@ -46,6 +48,11 @@ class ChatMessageResponse(BaseModel):
     user_id: int = Field(description="ID пользователя")
     role: str = Field(description="Роль пользователя")
     content: str = Field(description="Текст сообщения")
-    created_at: str = Field(description="Дата и время создания сообщения")
+    created_at: datetime = Field(description="Дата и время создания сообщения")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ChatHistoryResponse(BaseModel):
+    pagination: Pagination = Field(description="Пагинация")
+    data: list[ChatMessageResponse] = Field(description="История чата")
