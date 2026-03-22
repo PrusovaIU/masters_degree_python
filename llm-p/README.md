@@ -21,6 +21,7 @@ OPENROUTER__BASE_URL=
 OPENROUTER__MODEL=
 OPENROUTER__APP_NAME=
 OPENROUTER__REFERER=
+OPENROUTER__TITLE=
 OPENROUTER__REQUEST_TIMEOUT=
 
 # Настройки хэширования пароля
@@ -115,7 +116,7 @@ CORS__CREDENTIALS=
     <tbody>
         <tr>
             <td>api_key</td>
-            <td>Optional[str]</td>
+            <td>str</td>
             <td>—</td>
             <td>API ключ для OpenRouter</td>
         </tr>
@@ -133,13 +134,19 @@ CORS__CREDENTIALS=
         </tr>
         <tr>
             <td>app_name</td>
-            <td>Optional[str]</td>
+            <td>str</td>
             <td>"llm-fastapi-openrouter"</td>
             <td>Заголовок приложения для OpenRouter</td>
         </tr>
         <tr>
             <td>referer</td>
-            <td>Optional[str]</td>
+            <td>str</td>
+            <td>—</td>
+            <td>Referer заголовок для запросов</td>
+        </tr>
+        <tr>
+            <td>title</td>
+            <td>str</td>
             <td>—</td>
             <td>Referer заголовок для запросов</td>
         </tr>
@@ -285,10 +292,9 @@ INFO:     Application startup complete.
 
 ![opeapi.png](docs/img/opeapi.png)
 
-## Регистрация пользователя
+## Инструкции
 
-[Инструкция](docs/registration/registration.md)
-
-## Аутентификация пользователя
-
-[Инструкция](docs/login/login.md)
+1. [Регистрация пользователя](docs/registration/registration.md);
+2. [Логин и получение JWT](docs/login/login.md);
+3. [Авторизация через Swagger](docs/login/swagger.md);
+4. [Сообщение в чат](docs/chat/chat.md);

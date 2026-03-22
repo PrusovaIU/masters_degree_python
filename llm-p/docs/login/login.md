@@ -38,9 +38,3 @@
 Указаны неверные учетные данные (email или пароль):
 
 ![401_response.png](401_response.png)
-
-## Авторизация через Swagger
-
-![auth_form.png](auth_form.png)
-
-![auth_form_ok.png](auth_form_ok.png)

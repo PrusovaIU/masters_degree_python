@@ -1,5 +1,4 @@
 from datetime import timedelta
-from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, BaseModel
 
@@ -8,7 +7,7 @@ class OpenRouterSettings(BaseModel):
     """
     Схема настроек OpenRouter
     """
-    api_key: Optional[str] = Field(
+    api_key: str = Field(
         description="API ключ для OpenRouter"
     )
     base_url: str = Field(
@@ -19,11 +18,17 @@ class OpenRouterSettings(BaseModel):
         default="stepfun/step-3.5-flash:free",
         description="Модель OpenRouter по умолчанию"
     )
-    app_name: Optional[str] = Field(
+    app_name: str = Field(
         default="llm-fastapi-openrouter",
         description="Заголовок приложения для OpenRouter"
     )
-    referer: Optional[str] = Field()
+    referer: str = Field(
+        description="Реферер для OpenRouter"
+    )
+    title: str = Field(
+        default="llm-fastapi-openrouter",
+        description="Заголовок запроса"
+    )
     request_timeout: int = Field(
         default=10,
         description="Таймаут запроса в секундах"
@@ -110,7 +115,7 @@ class Settings(BaseSettings):
     )
 
     openrouter: OpenRouterSettings
-    password: Optional[PasswordSettings] = Field(
+    password: PasswordSettings | None = Field(
         description="Параметры хэширования пароля",
         default_factory=PasswordSettings
     )

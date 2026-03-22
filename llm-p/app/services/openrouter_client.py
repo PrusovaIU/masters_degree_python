@@ -15,8 +15,8 @@ class OpenRouterClient:
         """Сформировать заголовки для запроса к OpenRouter."""
         return {
             "Authorization": f"Bearer {settings.openrouter.api_key}",
-            "HTTP-Referer": settings.openrouter_referer,
-            "X-Title": settings.openrouter_title,
+            "HTTP-Referer": settings.openrouter.referer,
+            "X-Title": settings.openrouter.title,
             "Content-Type": "application/json"
         }
 
@@ -38,7 +38,7 @@ class OpenRouterClient:
         :raises OpenRouterClientException: При ошибке запроса к API
         """
         payload = {
-            "model": settings.openrouter_model,
+            "model": settings.openrouter.model,
             "messages": messages,
             "temperature": temperature
         }
