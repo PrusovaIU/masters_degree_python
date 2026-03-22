@@ -18,6 +18,8 @@
 | client_id     | string  | Идентификатор клиента                    | --                    | ❌            |
 | client_secret | string  | Секрет клиента                           | --                    | ❌            |
 
+![request.png](request.png)
+
 ## Response
 
 **200 - OK**:
