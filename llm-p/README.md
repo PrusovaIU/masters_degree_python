@@ -21,7 +21,8 @@
 5. [Авторизация через Swagger](docs/login/swagger.md);
 6. [Сообщение в чат](docs/chat/chat.md);
 7. [Получение истории](docs/history/get/history.md);
-8. [Удаление истории](docs/history/delete/delete_history.md).
+8. [Удаление истории](docs/history/delete/delete_history.md);
+9. [Получение информации о текущем пользователе](docs/profile/profile.md).
 
 ## Конфигурация
 
