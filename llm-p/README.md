@@ -299,3 +299,4 @@ INFO:     Application startup complete.
 3. [Авторизация через Swagger](docs/login/swagger.md);
 4. [Сообщение в чат](docs/chat/chat.md);
 5. [Получение истории](docs/history/get/history.md);
+6. [Удаление истории](docs/history/delete/delete_history.md)
