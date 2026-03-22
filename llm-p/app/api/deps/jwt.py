@@ -8,6 +8,7 @@ from app.core.errors.jwt import TokenVerifyError
 from app.consts.jwt_token import TokenDataKeys
 from loguru import logger
 from app.schemas.user import UserData
+from app.schemas.error_detail import Detail
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -33,7 +34,7 @@ def _get_user_data(token: str) -> UserData:
     except TokenVerifyError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=err.message,
+            detail=err.detail.model_dump(),
             headers=AUTH_HEADERS
         )
     except KeyError as err:
@@ -43,7 +44,10 @@ def _get_user_data(token: str) -> UserData:
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail=Detail(
+                title="InvalidTokenError",
+                message="Invalid token format"
+            ),
             headers=AUTH_HEADERS
         )
     return user_data
