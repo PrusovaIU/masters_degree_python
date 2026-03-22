@@ -62,10 +62,12 @@ class AuthUseCase:
         :raises app.core.errors.jwt.CreateTokenError: Если не удалось создать
             токен.
         """
-        user: User | None = await self._user_repo.get_by_email(email)
-        if not user:
+        try:
+            user: User = await self._user_repo.get_by_email(email)
+        except UserNotFound as err:
             logger.warning(f"Unknown email: {email}")
-            raise errors.InvalidCredentialsError("Invalid email or password")
+            raise errors.InvalidCredentialsError("Invalid email or password") \
+                from err
 
         if not verify_password(password, user.password_hash):
             logger.warning(f"Invalid password for email: {email}")
@@ -74,9 +76,8 @@ class AuthUseCase:
         access_token: str = create_access_token(
             user.id,
             user.role,
-            settings.jwt.access_token_expire
+            settings.jwt.access_token_expires
         )
-
         return access_token
 
     async def get_profile(self, user_id: int) -> UserPublic:

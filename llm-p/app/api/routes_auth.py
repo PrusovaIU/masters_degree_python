@@ -55,7 +55,12 @@ async def register(
 @auth_router.post(
     "/login",
     response_model=TokenResponse,
-    description="Вход в систему (OAuth2 совместимый)."
+    description="Вход в систему (OAuth2 совместимый).",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDetail
+        }
+    }
 )
 async def login(
         data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -77,7 +82,7 @@ async def login(
     except errors.InvalidCredentialsError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=err.message,
+            detail=err.detail.model_dump(),
             headers=AUTH_HEADERS
         )
     return TokenResponse(access_token=access_token)

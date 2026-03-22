@@ -31,13 +31,13 @@ class UserRepository:
         return user
 
 
-    async def get_by_email(self, email: str) -> User | None:
+    async def get_by_email(self, email: str) -> User:
         """
         Получить пользователя по email.
 
         :param email: Email пользователя
 
-        :return: Пользователь, если найден, иначе None.
+        :return: Данные пользователя.
 
         :raises UserNotFound: Если пользователь не найден.
         """
@@ -63,7 +63,7 @@ class UserRepository:
         :param password_hash: Хеш пароля.
         :param role: Роль пользователя.
 
-        :return: созданный пользователь.
+        :return: Созданный пользователь.
         """
         user = User(
             email=email,
