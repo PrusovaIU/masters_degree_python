@@ -13,6 +13,8 @@
 | email    | str | Email пользователя  | --                    | ✅            |
 | password | str | Пароль пользователя | --                    | ✅            |
 
+![registrate_request.png](registrate_request.png)
+
 ## Response:
 
 **201 - Created**:
@@ -26,7 +28,7 @@
 | role       | str  | Роль пользователя (всем пользователям присваивается роль `user`) |
 | created_at | str  | Дата и время регистрации пользователя                            |
 
-![registrate_request.png](registrate_request.png)
+![registrate_response.png](registrate_response.png)
 
 **409 - Conflict**:
 
