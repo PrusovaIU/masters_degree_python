@@ -38,3 +38,9 @@
 Указаны неверные учетные данные (email или пароль):
 
 ![401_response.png](401_response.png)
+
+## Форма авторизации
+
+![auth_form.png](auth_form.png)
+
+![auth_form_ok.png](auth_form_ok.png)
