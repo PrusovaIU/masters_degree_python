@@ -1,0 +1,100 @@
+from loguru import logger
+
+from app.core.config import settings
+from app.core.errors import usecase_auth as errors
+from app.core.errors.user import UserNotFound
+from app.core.security.jwt_token import create_access_token
+from app.core.security.password import get_password_hash, verify_password
+from app.db.models import User
+from app.repositories.user import UserRepository
+from app.schemas.user import UserPublic
+
+
+class AuthUseCase:
+    """Usecase для аутентификации и управления пользователями."""
+
+    def __init__(self, user_repository: UserRepository):
+        self._user_repo = user_repository
+
+    async def register(
+            self,
+            email: str,
+            password: str,
+            role: str
+    ) -> UserPublic:
+        """
+        Зарегистрировать нового пользователя.
+
+        :param email: Email пользователя.
+        :param password: Пароль.
+        :param role: Роль пользователя.
+
+        :return: Данные созданного пользователя.
+
+        :raises UserAlreadyExistsError: Если пользователь с таким email уже
+            существует.
+        """
+        try:
+            await self._user_repo.get_by_email(email)
+        except UserNotFound:
+            password_hash: str = get_password_hash(password)
+            user: User = await self._user_repo.create(
+                email=email,
+                password_hash=password_hash,
+                role=role
+            )
+        else:
+            logger.warning(f"User with email {email} already exists")
+            raise errors.UserAlreadyExistsError(email)
+        return UserPublic.model_validate(user)
+
+    async def login(self, email: str, password: str) -> str:
+        """
+        Аутентифицировать пользователя и получить JWT токен.
+
+        :param email: Email пользователя.
+        :param password: Пароль.
+
+        :return: JWT токен.
+
+        :raises app.core.errors.usercase_auth.InvalidCredentialsError:
+            Если email не существует или пароль неверный.
+
+        :raises app.core.errors.jwt.CreateTokenError: Если не удалось создать
+            токен.
+        """
+        try:
+            user: User = await self._user_repo.get_by_email(email)
+        except UserNotFound as err:
+            logger.warning(f"Unknown email: {email}")
+            raise errors.InvalidCredentialsError("Invalid email or password") \
+                from err
+
+        if not verify_password(password, user.password_hash):
+            logger.warning(f"Invalid password for email: {email}")
+            raise errors.InvalidCredentialsError("Invalid email or password")
+
+        access_token: str = create_access_token(
+            user.id,
+            user.role,
+            settings.jwt.access_token_expires
+        )
+        return access_token
+
+    async def get_profile(self, user_id: int) -> UserPublic:
+        """
+        Получить профиль пользователя по ID.
+
+        :param user_id: ID пользователя
+
+        :return: Данные пользователя
+
+        :raises app.core.errors.usercase_auth.UserNotFoundError:
+            Если пользователь не найден
+        """
+        user = await self._user_repo.get_by_id(user_id)
+        if not user:
+            logger.warning(f"User with id {user_id} not found")
+            raise errors.UserNotFoundError(str(user_id))
+
+        return UserPublic.model_validate(user)
