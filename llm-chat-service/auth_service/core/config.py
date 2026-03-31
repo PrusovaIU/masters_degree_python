@@ -36,6 +36,15 @@ class JWT(BaseModel):
             path: Path,
             secret_type: Literal["access", "refresh"]
     ) -> str:
+        """
+        Загрузка секретного ключа из файла.
+
+        :param path: Путь к файлу с ключом.
+        :param secret_type: Тип ключа (access или refresh).
+        :return: Ключ.
+
+        :raises ValueError: Если файл не найден или не может быть прочитан.
+        """
         try:
             return path.read_text(encoding="utf-8").strip()
         except OSError as err:
@@ -44,7 +53,8 @@ class JWT(BaseModel):
             raise ValueError(err_title) from err
 
     @model_validator(mode="after")
-    def check_secret_files(self):
+    def load_secret_files(self):
+        """Загрузка секретных ключей из файлов."""
         self._access_secret = self._load_secret(
             self.access_secret_path, "access"
         )
