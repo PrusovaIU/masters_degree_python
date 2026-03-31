@@ -1,9 +1,12 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from datetime import timedelta
+from urllib.parse import quote_plus
+from loguru import logger
 
 
 class JWT(BaseModel):
@@ -24,6 +27,45 @@ class JWT(BaseModel):
         default=24,
         description="Время жизни refresh токена в часах",
     )
+
+    _access_secret: str | None = PrivateAttr(default=None)
+    _refresh_secret: str | None = PrivateAttr(default=None)
+
+    @staticmethod
+    def _load_secret(
+            path: Path,
+            secret_type: Literal["access", "refresh"]
+    ) -> str:
+        try:
+            return path.read_text(encoding="utf-8").strip()
+        except OSError as err:
+            err_title = f"Ошибка чтения файла с {secret_type} ключом"
+            logger.error(f"{err_title}: {err}")
+            raise ValueError(err_title) from err
+
+    @model_validator(mode="after")
+    def check_secret_files(self):
+        self._access_secret = self._load_secret(
+            self.access_secret_path, "access"
+        )
+        self._refresh_secret = self._load_secret(
+            self.refresh_secret_path, "refresh"
+        )
+        return self
+
+    @property
+    def access_secret(self) -> str:
+        """
+        :return: ключ для подписи access токенов.
+        """
+        return self._access_secret
+
+    @property
+    def refresh_secret(self) -> str:
+        """
+        :return: ключ для подписи refresh токенов.
+        """
+        return self._refresh_secret
 
     @property
     def access_expire(self) -> timedelta:
@@ -47,7 +89,8 @@ class Database(BaseModel):
         """
         :return: строка подключения к базе данных.
         """
-        return (f"postgresql+asyncpg://{self.user}:{self.password}"
+        passwd = quote_plus(self.password)
+        return (f"postgresql+asyncpg://{self.user}:{passwd}"
                 f"@{self.host}:{self.port}/{self.db_name}")
 
 
@@ -89,7 +132,7 @@ class Settings(BaseSettings):
     env: str = Field(default="prod", description="Окружение выполнения")
 
     jwt: JWT = Field(description="Настройки JWT")
-    bd: Database = Field(description="Настройки базы данных")
+    db: Database = Field(description="Настройки базы данных")
     cors: CORSSettings = Field(
         default_factory=CORSSettings,
         description="Настройки CORS"
