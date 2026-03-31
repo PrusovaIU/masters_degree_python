@@ -5,8 +5,8 @@ description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.135.2",
-    "jwt>=1.4.0",
     "loguru>=0.7.3",
     "passlib>=1.7.4",
     "pydantic-settings>=2.13.1",
+    "pyjwt>=2.12.1",
 ]

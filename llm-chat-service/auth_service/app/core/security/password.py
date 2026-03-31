@@ -1,12 +1,7 @@
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
 from auth_service.app.core.exceptions import password as passwd_errors
 
-import jwt
 from passlib.context import CryptContext
 from loguru import logger
-
-from auth_service.app.core.config import settings
 
 
 _PWD_CONTEXT = CryptContext(
