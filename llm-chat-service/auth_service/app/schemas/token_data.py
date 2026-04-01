@@ -39,10 +39,16 @@ class TokenData(BaseModel):
     exp: datetime = Field(description="Время истечения токена")
     iat: datetime = Field(description="Время создания токена")
     token_type: TokenType = Field(
-        default=_TOKEN_TYPE,
         description="Тип токена",
         alias="type"
     )
+
+    @field_validator("token_type", mode="before")
+    @classmethod
+    def set_default_token_type(cls, value: TokenType | None) -> TokenType:
+        if value is None:
+            return cls._TOKEN_TYPE
+        return value
 
     @field_serializer("exp", "iat")
     def serialize_datetime(self, value: datetime) -> int:
@@ -112,15 +118,18 @@ class TokenData(BaseModel):
             **kwargs
         )
 
+    def model_dump(self, **kwargs) -> dict:
+        return super().model_dump(**kwargs, by_alias=True)
+
 
 class AccessTokenData(TokenData):
     """Модель данных access токена"""
     _TOKEN_TYPE: ClassVar[TokenType] = TokenType.access
-    token_type: TokenType = Field(
-        default=_TOKEN_TYPE,
-        description="Тип токена",
-        alias="type"
-    )
+    # token_type: TokenType = Field(
+    #     default=_TOKEN_TYPE,
+    #     description="Тип токена",
+    #     alias="type"
+    # )
     payload: dict | None = Field(
         description="Дополнительные данные",
         exclude_if=lambda v: v is None
@@ -187,11 +196,11 @@ class AccessTokenData(TokenData):
 class RefreshTokenData(TokenData):
     """Модель данных refresh токена"""
     _TOKEN_TYPE: ClassVar[TokenType] = TokenType.refresh
-    token_type: TokenType = Field(
-        default=_TOKEN_TYPE,
-        description="Тип токена",
-        alias="type"
-    )
+    # token_type: TokenType = Field(
+    #     default=_TOKEN_TYPE,
+    #     description="Тип токена",
+    #     alias="type"
+    # )
 
     @classmethod
     def new(
