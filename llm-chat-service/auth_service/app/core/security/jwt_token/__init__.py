@@ -62,7 +62,7 @@ def create_access_token(
 
     :raises TokenEncodeError: Если токен не может быть создан.
     """
-    data = AccessTokenData.new(subject, role, expires_delta, payload)
+    data = AccessTokenData.new(subject, expires_delta, role, payload)
     return _encode_token(data, secret, alg)
 
 
@@ -169,31 +169,6 @@ def decode_token(
 
     :raises TokenDecodeError: Если токен не может быть декодирован.
     """
-    try:
-        payload = _decode_token(token, secret, alg, verify_exp)
-        _check_token_type(payload, expected_type)
-        try:
-            ext = payload["ext"]
-        except KeyError as err:
-            logger.error(
-                f"Неверный формат JWT токена: параметр {err} отсутствует"
-            )
-            raise token_errors.TokenDecodeError("Невалидный JWT токен")
-
-
-
-        # Извлекаем дополнительные данные
-        extra = {k: v for k, v in payload.items()
-                 if k not in }
-
-        return TokenData(
-            sub=str(payload["sub"]),
-            role=payload.get("role"),
-            token_type=token_type,
-            exp=exp_dt,
-            iat=iat_dt,
-            extra=extra,
-        )
-
-
-
+    payload = _decode_token(token, secret, alg, verify_exp)
+    _check_token_type(payload, expected_type)
+    return TokenData.new(**payload, token_type=expected_type)
