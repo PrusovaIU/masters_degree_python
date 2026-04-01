@@ -78,7 +78,7 @@ class TokenData(BaseModel):
     def new(
             cls,
             sub: str,
-            exp: timedelta | int,
+            exp: timedelta,
             token_type: TokenType,
             **kwargs
     ) -> Self:
@@ -87,11 +87,7 @@ class TokenData(BaseModel):
 
         :param sub: Идентификатор пользователя.
 
-        :param exp: Время истечения токена:
-            - timedelta: интервал времени, в течении которого токен
-                действителен.
-            - int: количество секунд с начала эпохи, до точки истечения срока
-                жизни токена.
+        :param exp: Время жизни токена.
 
         :param token_type: Тип токена.
 
@@ -101,15 +97,9 @@ class TokenData(BaseModel):
             - AccessTokenData для токенов типа access.
             - RefreshTokenData для токенов типа refresh.
         """
+        target_class = cls.get_target_class(token_type)
         now = datetime.now(timezone.utc)
-        if isinstance(exp, timedelta):
-            exp = now + exp
-        try:
-            target_class: type[Self] = cls._target_classes[token_type]
-        except KeyError as err:
-            raise SystemError(
-                f"Неподдерживаемый тип токена: {token_type}"
-            ) from err
+        exp = now + exp
         return target_class(
             sub=sub,
             exp=exp,
@@ -117,6 +107,22 @@ class TokenData(BaseModel):
             type=token_type,
             **kwargs
         )
+
+    @classmethod
+    def from_token_data(cls, token_type: TokenType, **kwargs) -> Self:
+        """
+        Создание экземпляра класса из словаря параметров расшифрованного
+        токена.
+
+        :param token_type: Тип токена.
+        :param kwargs: Параметры токена.
+        :return: Новый экземпляр класса, соответствующий типу токена:
+            - AccessTokenData для токенов типа access.
+            - RefreshTokenData для токенов типа refresh.
+        """
+        target_class = cls.get_target_class(token_type)
+        return target_class(**kwargs)
+
 
     def model_dump(self, **kwargs) -> dict:
         """
@@ -126,7 +132,7 @@ class TokenData(BaseModel):
         return super().model_dump(**kwargs, by_alias=True)
 
     @classmethod
-    def _get_model_params_vnames(cls) -> list[str]:
+    def model_params_vnames(cls) -> list[str]:
         """
         :return: Список имен параметров модели для валидации.
         """
@@ -162,7 +168,7 @@ class AccessTokenData(TokenData):
         Все поля, не входящие в список стандартных параметров модели,
         собираются в словарь и помещаются в поле payload.
         """
-        model_parameters_names = cls._get_model_params_vnames()
+        model_parameters_names = cls.model_params_vnames()
         payload_parameters = {
             key: value for key, value in values.items()
             if key not in model_parameters_names
@@ -176,16 +182,27 @@ class AccessTokenData(TokenData):
             values[cls._PAYLOAD_FIELD] = payload
             for key in payload_parameters:
                 values.pop(key)
+        if cls._PAYLOAD_FIELD not in values:
+            values[cls._PAYLOAD_FIELD] = None
         return values
 
     @classmethod
     def new(
             cls,
             sub: str,
-            exp: timedelta | int,
+            exp: timedelta,
             role: str,
             payload: dict | None = None
     ) -> Self:
+        """
+        Создание нового экземпляра класса AccessTokenData.
+
+        :param sub: Идентификатор пользователя.
+        :param exp: Время жизни токена.
+        :param role: Роль пользователя.
+        :param payload: Дополнительные данные.
+        :return: Новый экземпляр класса AccessTokenData.
+        """
         ins = super().new(
             sub, exp, cls._TOKEN_TYPE, role=role, payload=payload
         )
@@ -200,7 +217,15 @@ class RefreshTokenData(TokenData):
     def new(
             cls,
             sub: str,
-            exp: timedelta | int,
+            exp: timedelta,
             *kwargs
     ) -> Self:
+        """
+        Создание нового экземпляра класса RefreshTokenData.
+
+        :param sub: Идентификатор пользователя.
+        :param exp: Время жизни токена.
+        :param kwargs: Для совместимости.
+        :return: None.
+        """
         return super().new(sub, exp, cls._TOKEN_TYPE)

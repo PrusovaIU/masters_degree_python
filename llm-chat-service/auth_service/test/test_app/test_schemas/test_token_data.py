@@ -5,29 +5,20 @@ import pytest
 
 
 SUB = "test_sub"
-EXP_DELTA = timedelta(seconds=10)
-EXP = int(
-    (datetime.now(timezone.utc) - token_data.TokenData._UNIX_EPOCH)
-    .total_seconds()
-)
+EXP = timedelta(seconds=10)
 ROLE = "test_role"
 PAYLOAD = {"test": "test"}
 
 
-EXP_PARAMS = [
-    pytest.param(EXP, id="int"),
-    pytest.param(EXP_DELTA, id="timedelta")
-]
 
 class TestTokenData:
-    @pytest.mark.parametrize("exp", EXP_PARAMS)
-    def test_new_access_token(self, exp: timedelta | int):
+    def test_new_access_token(self):
         """
         Тест создания AccessTokenData методом TokenData.new.
         """
         td = token_data.TokenData.new(
             SUB,
-            exp,
+            EXP,
             TokenType.access,
             role=ROLE,
             payload=PAYLOAD
@@ -40,14 +31,13 @@ class TestTokenData:
         assert td.payload == PAYLOAD
         assert td.token_type == TokenType.access
 
-    @pytest.mark.parametrize("exp", EXP_PARAMS)
-    def test_new_refresh_token(self, exp: timedelta | int):
+    def test_new_refresh_token(self):
         """
         Тест создания RefreshTokenData методом TokenData.new.
         """
         td = token_data.TokenData.new(
             SUB,
-            exp,
+            EXP,
             TokenType.refresh
         )
         assert isinstance(td, token_data.RefreshTokenData)
@@ -63,13 +53,12 @@ class TestAccessTokenData:
         pytest.param(PAYLOAD, id="dict")
     ]
 
-    @pytest.mark.parametrize("exp", EXP_PARAMS)
     @pytest.mark.parametrize("payload", PAYLOAD_PARAMS)
-    def test(self, exp: timedelta | int, payload: dict | None):
+    def test(self, payload: dict | None):
         """
         Тест метода new класса AccessTokenData и сериализации класса.
         """
-        td = token_data.AccessTokenData.new(SUB, exp, ROLE, payload)
+        td = token_data.AccessTokenData.new(SUB, EXP, ROLE, payload)
         # проверка на то, что все поля заполнены:
         assert td.payload == payload
         # проверка сериализации:
@@ -114,12 +103,11 @@ class TestAccessTokenData:
 
 
 class TestRefreshTokenData:
-    @pytest.mark.parametrize("exp", EXP_PARAMS)
-    def test(self, exp: timedelta | int):
+    def test(self):
         """
         Тест метода new класса RefreshTokenData и сериализации класса.
         """
-        td = token_data.RefreshTokenData.new(SUB, exp)
+        td = token_data.RefreshTokenData.new(SUB, EXP)
         # проверка сериализации:
         serialized_td: dict = td.model_dump()
         assert serialized_td["sub"] == SUB

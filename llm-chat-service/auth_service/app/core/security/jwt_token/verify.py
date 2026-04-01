@@ -30,7 +30,7 @@ def _decode_token(
         "verify_signature": True,
         "verify_exp": verify_exp,
         "verify_iat": True,
-        "require": ["exp", "iat", "sub"]
+        "require": TokenData.model_params_vnames()
     }
     try:
         return jwt.decode(
@@ -91,4 +91,4 @@ def verify_token(
     """
     payload = _decode_token(token, secret, alg, verify_exp)
     _check_token_type(payload, expected_type)
-    return TokenData.new(**payload, token_type=expected_type)
+    return TokenData.from_token_data(expected_type, **payload)
