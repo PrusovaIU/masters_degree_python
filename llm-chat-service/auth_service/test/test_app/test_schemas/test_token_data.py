@@ -55,3 +55,27 @@ class TestTokenData:
         assert isinstance(td.exp, datetime)
         assert isinstance(td.iat, datetime)
         assert td.token_type == TokenType.refresh
+
+
+class TestAccessTokenData:
+    @pytest.mark.parametrize("exp", EXP_PARAMS)
+    @pytest.mark.parametrize("payload", [
+        pytest.param(None, id="None"),
+        pytest.param(PAYLOAD, id="dict")
+    ])
+    def test(self, exp: timedelta | int, payload: dict | None):
+        td = token_data.AccessTokenData.new(SUB, exp, ROLE, payload)
+        # проверка на то, что все поля заполнены:
+        assert td.payload == payload
+        # проверка сериализации:
+        result: dict = td.model_dump()
+        assert result["sub"] == SUB
+        assert result["role"] == ROLE
+        assert result["token_type"] == TokenType.access.value
+        assert isinstance(result["exp"], int)
+        assert isinstance(result["iat"], int)
+        if payload is None:
+            assert "payload" not in result
+        else:
+            assert result["payload"] == payload
+

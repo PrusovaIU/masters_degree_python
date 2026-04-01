@@ -101,7 +101,10 @@ class AccessTokenData(TokenData):
         description="Тип токена",
         alias="type"
     )
-    payload: dict | None = Field(description="Дополнительные данные")
+    payload: dict | None = Field(
+        description="Дополнительные данные",
+        exclude_if=lambda v: v is None
+    )
     role: str = Field(
         default="unknown",
         description="Роль пользователя"
@@ -111,13 +114,13 @@ class AccessTokenData(TokenData):
     def new(
             cls,
             sub: str,
-            role: str,
             exp: timedelta | int,
+            role: str,
             payload: dict | None = None
     ) -> Self:
-        ins = super().new(sub, exp, cls._TOKEN_TYPE, role=role)
-        if payload:
-            ins.payload = payload
+        ins = super().new(
+            sub, exp, cls._TOKEN_TYPE, role=role, payload=payload
+        )
         return ins
 
 
