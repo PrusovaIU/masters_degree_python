@@ -64,6 +64,9 @@ class TestAccessTokenData:
         pytest.param(PAYLOAD, id="dict")
     ])
     def test(self, exp: timedelta | int, payload: dict | None):
+        """
+        Тест метода new класса AccessTokenData и сериализации класса.
+        """
         td = token_data.AccessTokenData.new(SUB, exp, ROLE, payload)
         # проверка на то, что все поля заполнены:
         assert td.payload == payload
