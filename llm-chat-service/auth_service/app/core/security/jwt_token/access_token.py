@@ -3,10 +3,10 @@ from typing import Any
 
 import jwt
 
-from .token_data import TokenData
+from auth_service.app.schemas.token_data import TokenData
 from auth_service.app.consts.token_type import TokenType
 from loguru import logger
-from auth_service.app.schemas import token_data as token_errors
+from ...exceptions import jwt_token as token_errors
 
 
 def create_access_token(

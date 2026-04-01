@@ -4,9 +4,9 @@ from typing import Any
 import jwt
 
 from auth_service.app.consts.token_type import TokenType
-from .token_data import TokenData, AccessTokenData, RefreshTokenData
+from auth_service.app.schemas.token_data import TokenData, AccessTokenData, RefreshTokenData
 from loguru import logger
-from auth_service.app.schemas import token_data as token_errors
+from ...exceptions import jwt_token as token_errors
 
 
 def _encode_token(data: TokenData, secret: str, alg: str) -> str:
