@@ -2,7 +2,7 @@ from auth_service.app.core.security import jwt_token
 import pytest
 from datetime import timedelta
 from auth_service.app.consts.token_type import TokenType
-from auth_service.app.schemas.token_data import AccessTokenData
+from auth_service.app.schemas.token_data import AccessTokenData, RefreshTokenData
 
 
 SUBJECT_STR = "test_subject"
@@ -49,3 +49,20 @@ def test_access_token(
         ALG
     )
     assert isinstance(token_data, AccessTokenData)
+
+
+@pytest.mark.parametrize("subject", SUBJECT_PARAMS)
+def test_refresh_token(subject: str | int):
+    token = jwt_token.create_refresh_token(
+        subject,
+        EXPIRES_DELTA,
+        SECRET_KEY,
+        ALG
+    )
+    token_data = jwt_token.verify_token(
+        token,
+        TokenType.refresh,
+        SECRET_KEY,
+        ALG
+    )
+    assert isinstance(token_data, RefreshTokenData)

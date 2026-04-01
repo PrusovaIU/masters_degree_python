@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
 from auth_service.app.consts.token_type import TokenType
 from typing import Self, ClassVar
+from functools import lru_cache
 
 
 class TokenData(BaseModel):
@@ -18,7 +19,6 @@ class TokenData(BaseModel):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls._target_classes[cls._TOKEN_TYPE] = cls
-
 
     @classmethod
     def get_target_class(cls, token_type: TokenType) -> type[Self]:
@@ -132,6 +132,7 @@ class TokenData(BaseModel):
         return super().model_dump(**kwargs, by_alias=True)
 
     @classmethod
+    @lru_cache(maxsize=16)
     def model_params_vnames(cls) -> list[str]:
         """
         :return: Список имен параметров модели для валидации.
@@ -218,7 +219,7 @@ class RefreshTokenData(TokenData):
             cls,
             sub: str,
             exp: timedelta,
-            *kwargs
+            **kwargs
     ) -> Self:
         """
         Создание нового экземпляра класса RefreshTokenData.

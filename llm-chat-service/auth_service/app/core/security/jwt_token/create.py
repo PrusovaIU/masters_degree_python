@@ -26,14 +26,9 @@ def _encode_token(data: TokenData, secret: str, alg: str) -> str:
             key=secret,
             algorithm=alg
         )
-        logger.debug(
-            f"Создан access токен для sub={data.sub}, role={data.role}"
-        )
+        logger.debug(f"Создан access токен для sub={data.sub}")
     except Exception as err:
-        logger.error(
-            f"Ошибка кодирования JWT для sub={data.sub}, role={data.role}: "
-            f"{err}"
-        )
+        logger.error(f"Ошибка кодирования JWT для sub={data.sub}: {err}")
         raise token_errors.TokenEncodeError(
             "Не удалось создать JWT токен"
         ) from err
