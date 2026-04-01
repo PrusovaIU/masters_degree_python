@@ -58,11 +58,13 @@ class TestTokenData:
 
 
 class TestAccessTokenData:
-    @pytest.mark.parametrize("exp", EXP_PARAMS)
-    @pytest.mark.parametrize("payload", [
+    PAYLOAD_PARAMS = [
         pytest.param(None, id="None"),
         pytest.param(PAYLOAD, id="dict")
-    ])
+    ]
+
+    @pytest.mark.parametrize("exp", EXP_PARAMS)
+    @pytest.mark.parametrize("payload", PAYLOAD_PARAMS)
     def test(self, exp: timedelta | int, payload: dict | None):
         """
         Тест метода new класса AccessTokenData и сериализации класса.
@@ -81,6 +83,33 @@ class TestAccessTokenData:
             assert "payload" not in serialized_td
         else:
             assert serialized_td["payload"] == payload
+
+    @pytest.mark.parametrize("payload", PAYLOAD_PARAMS)
+    def test_validator(self, payload: dict | None):
+        """
+        Тест валидатора класса AccessTokenData.
+        Проверяет, что валидатор корректно добавляет дополнительные данные в
+        payload.
+        """
+        additional_data = {"param_1": 1}
+        exp = datetime.now()
+        iat = datetime.now()
+        td = token_data.AccessTokenData(
+            sub=SUB,
+            exp=exp,
+            iat=iat,
+            type=TokenType.access,
+            role=ROLE,
+            payload=payload,
+            **additional_data
+        )
+        assert td.sub == SUB
+        assert td.exp == exp
+        assert td.iat == iat
+        assert td.token_type == TokenType.access
+        assert td.role == ROLE
+        ex_payload = {**additional_data, **(payload or {})}
+        assert td.payload == ex_payload
 
 
 class TestRefreshTokenData:

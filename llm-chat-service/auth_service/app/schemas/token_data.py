@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
 from auth_service.app.consts.token_type import TokenType
 from typing import Self, ClassVar
 
@@ -11,6 +11,7 @@ from typing import Self, ClassVar
 class TokenData(BaseModel):
     """Модель данных токена"""
     _TOKEN_TYPE: ClassVar[TokenType] = TokenType.not_set
+    # Список классов для каждого типа токена:
     _target_classes: ClassVar[dict[TokenType, type[Self]]] = {}
     # Unix epoch time
     _UNIX_EPOCH: ClassVar[datetime] = datetime(
@@ -21,6 +22,21 @@ class TokenData(BaseModel):
         super().__init_subclass__(**kwargs)
         cls._target_classes[cls._TOKEN_TYPE] = cls
 
+
+    @classmethod
+    def get_target_class(cls, token_type: TokenType) -> type[Self]:
+        """
+        Получение класса для указанного типа токена.
+
+        :param token_type: Тип токена.
+        :return: Класс, соответствующий типу токена.
+        """
+        try:
+            return cls._target_classes[token_type]
+        except KeyError as err:
+            raise SystemError(
+                f"Неподдерживаемый тип токена: {token_type}"
+            ) from err
 
     sub: str = Field(description="Пользователя ID")
     exp: datetime = Field(description="Время истечения токена")
@@ -83,7 +99,9 @@ class TokenData(BaseModel):
         try:
             target_class: type[Self] = cls._target_classes[token_type]
         except KeyError as err:
-            raise SystemError(f"Неизвестный тип токена: {token_type}") from err
+            raise SystemError(
+                f"Неподдерживаемый тип токена: {token_type}"
+            ) from err
         return target_class(
             sub=sub,
             exp=exp,
@@ -109,6 +127,42 @@ class AccessTokenData(TokenData):
         default="unknown",
         description="Роль пользователя"
     )
+
+    _PAYLOAD_FIELD: ClassVar[str] = "payload"
+
+    @classmethod
+    def _get_model_params_vnames(cls) -> list:
+        names = []
+        for name, field in cls.model_fields.items():
+            names.append(
+                field.alias or field.validation_alias or name
+            )
+        return names
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate(cls, values: dict) -> dict:
+        """
+        Валидатор модели, служащий для обработки динамических полей, которые
+        не определены в схеме модели.
+
+        Все поля, не входящие в список стандартных параметров модели,
+        собираются в словарь и помещаются в поле payload.
+        """
+        payload_parameters = {
+            key: value for key, value in values.items()
+            if key not in cls._get_model_params_vnames()
+        }
+        if payload_parameters:
+            payload = values.get(cls._PAYLOAD_FIELD)
+            if payload is None:
+                payload = payload_parameters
+            else:
+                payload.update(payload_parameters)
+            values[cls._PAYLOAD_FIELD] = payload
+            for key in payload_parameters:
+                values.pop(key)
+        return values
 
     @classmethod
     def new(
