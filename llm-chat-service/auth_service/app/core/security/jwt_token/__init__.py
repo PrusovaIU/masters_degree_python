@@ -6,7 +6,7 @@ import jwt
 from auth_service.app.consts.token_type import TokenType
 from .token_data import TokenData, AccessTokenData, RefreshTokenData
 from loguru import logger
-from auth_service.app.core.exceptions import jwt_token as token_errors
+from auth_service.app.schemas import token_data as token_errors
 
 
 def _encode_token(data: TokenData, secret: str, alg: str) -> str:
@@ -103,6 +103,7 @@ def _decode_token(
     :param verify_exp: Проверять ли срок действия токена.
     :return: Декодированные данные токена.
 
+    :raises TokenExpiredError: Если срок действия токена истек.
     :raises TokenDecodeError: Если токен не может быть декодирован.
     """
     options = {
@@ -121,18 +122,11 @@ def _decode_token(
     except jwt.ExpiredSignatureError as err:
         err_msg = "Срок действия токена истек"
         logger.warning(err_msg)
+        raise token_errors.TokenExpiredError(err_msg) from err
+    except jwt.PyJWTError as err:
+        err_msg = "Невалидный JWT токен"
+        logger.warning(err_msg)
         raise token_errors.TokenDecodeError(err_msg) from err
-    except jwt.InvalidSignatureError as err:
-        logger.warning("Неверная подпись JWT токена")
-        raise tokTokenDecodeError("Неверная подпись токена") from err
-    except jwt.InvalidTokenError as err:
-        logger.warning(f"Невалидный JWT токен: {err}")
-        raise TokenDecodeError(f"Невалидный токен: {err}",
-                               token_error=err) from err
-    except Exception as err:
-        logger.error(f"Непредвиденная ошибка при декодировании токена: {err}")
-        raise TokenDecodeError("Ошибка при декодировании токена",
-                               token_error=err) from err
 
 
 def _check_token_type(
@@ -179,23 +173,18 @@ def decode_token(
         payload = _decode_token(token, secret, alg, verify_exp)
         _check_token_type(payload, expected_type)
         try:
+            ext = payload["ext"]
         except KeyError as err:
             logger.error(
                 f"Неверный формат JWT токена: параметр {err} отсутствует"
             )
-            raise token_errors.TokenDecodeError("Неверный формат JWT токена")
+            raise token_errors.TokenDecodeError("Невалидный JWT токен")
 
-        # Конвертируем timestamp в datetime для удобства
-        exp_dt = None
-        iat_dt = None
-        if "exp" in payload:
-            exp_dt = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
-        if "iat" in payload:
-            iat_dt = datetime.fromtimestamp(payload["iat"], tz=timezone.utc)
+
 
         # Извлекаем дополнительные данные
         extra = {k: v for k, v in payload.items()
-                 if k not in ["sub", "role", "type", "exp", "iat"]}
+                 if k not in }
 
         return TokenData(
             sub=str(payload["sub"]),

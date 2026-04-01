@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer, field_validator
 from auth_service.app.consts.token_type import TokenType
 from typing import Self
 
@@ -11,11 +11,19 @@ _UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
 class TokenData(BaseModel):
     """Модель данных токена"""
+    _TOKEN_TYPE = TokenType.not_set
+    __classes: dict[TokenType, type[Self]] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.__classes[cls._TOKEN_TYPE] = cls
+
+
     sub: str = Field(description="Пользователя ID")
     exp: datetime = Field(description="Время истечения токена")
     iat: datetime = Field(description="Время создания токена")
     token_type: TokenType = Field(
-        default=TokenType.not_set,
+        default=_TOKEN_TYPE,
         description="Тип токена",
         alias="type"
     )
@@ -26,30 +34,50 @@ class TokenData(BaseModel):
         total = (value - _UNIX_EPOCH).total_seconds()
         return int(total)
 
+    @field_validator("exp", "iat", mode="before")
+    @classmethod
+    def validate_datetime(cls, value: datetime |  int) -> datetime:
+        """Валидация даты и времени"""
+        if isinstance(value, datetime):
+            return value
+        elif isinstance(value, int):
+            return _UNIX_EPOCH + timedelta(seconds=value)
+        else:
+            raise ValueError(
+                "Неверный формат даты: ожидается datetime или int"
+            )
+
     @classmethod
     def new(
             cls,
             sub: str,
             exp_delta: timedelta,
-            token_type: TokenType
+            token_type: TokenType,
+            **kwargs
     ) -> Self:
         """
         Создание нового экземпляра класса.
         """
         now = datetime.now(timezone.utc)
         exp = now + exp_delta
-        return cls(
+        target_class: type[Self] = cls.__classes[token_type]
+        return target_class(
             sub=sub,
             exp=exp,
             iat=now,
-            type=token_type
+            type=token_type,
+            **kwargs
         )
-
 
 
 class AccessTokenData(TokenData):
     """Модель данных access токена"""
-    type: str = Field(default=TokenType.access, description="Тип токена")
+    _TOKEN_TYPE = TokenType.access
+    token_type: TokenType = Field(
+        default=_TOKEN_TYPE,
+        description="Тип токена",
+        alias="type"
+    )
     payload: dict | None = Field(description="Дополнительные данные")
     role: str = Field(
         default="unknown",
@@ -64,8 +92,7 @@ class AccessTokenData(TokenData):
             exp_delta: timedelta,
             payload: dict | None = None
     ) -> Self:
-        ins = super().new(sub, exp_delta, TokenType.access)
-        ins.role = role
+        ins = super().new(sub, exp_delta, cls._TOKEN_TYPE, role=role)
         if payload:
             ins.payload = payload
         return ins
@@ -73,7 +100,12 @@ class AccessTokenData(TokenData):
 
 class RefreshTokenData(TokenData):
     """Модель данных refresh токена"""
-    type: str = Field(default=TokenType.refresh, description="Тип токена")
+    _TOKEN_TYPE = TokenType.refresh
+    token_type: TokenType = Field(
+        default=_TOKEN_TYPE,
+        description="Тип токена",
+        alias="type"
+    )
 
     @classmethod
     def new(
@@ -81,4 +113,4 @@ class RefreshTokenData(TokenData):
             sub: str,
             exp_delta: timedelta
     ) -> Self:
-        return super().new(sub, exp_delta, TokenType.refresh)
+        return super().new(sub, exp_delta, cls._TOKEN_TYPE)

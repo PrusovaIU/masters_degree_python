@@ -1,4 +1,4 @@
-from .security import SecurityError
+from auth_service.app.core.exceptions.security import SecurityError
 
 
 class TokenError(SecurityError):
@@ -25,7 +25,3 @@ class TokenExpiredError(TokenError):
     """Ошибка при проверке срока действия токена."""
     pass
 
-
-class InvalidTokenSignatureError(TokenError):
-    """Ошибка при проверке подписи токена."""
-    pass
