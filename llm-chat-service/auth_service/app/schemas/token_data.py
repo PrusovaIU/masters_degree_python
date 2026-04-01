@@ -5,9 +5,6 @@ from auth_service.app.consts.token_type import TokenType
 from typing import Self, ClassVar
 
 
-
-
-
 class TokenData(BaseModel):
     """Модель данных токена"""
     _TOKEN_TYPE: ClassVar[TokenType] = TokenType.not_set

@@ -62,7 +62,7 @@ def create_access_token(
 
     :raises TokenEncodeError: Если токен не может быть создан.
     """
-    data = AccessTokenData.new(subject, expires_delta, role, payload)
+    data = AccessTokenData.new(str(subject), expires_delta, role, payload)
     return _encode_token(data, secret, alg)
 
 
@@ -84,5 +84,5 @@ def create_refresh_token(
 
     :raises TokenEncodeError: Если токен не может быть создан.
     """
-    data = RefreshTokenData.new(subject, expires_delta)
+    data = RefreshTokenData.new(str(subject), expires_delta)
     return _encode_token(data, secret, alg)
