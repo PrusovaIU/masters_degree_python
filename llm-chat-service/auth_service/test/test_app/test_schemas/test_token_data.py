@@ -71,14 +71,27 @@ class TestAccessTokenData:
         # проверка на то, что все поля заполнены:
         assert td.payload == payload
         # проверка сериализации:
-        result: dict = td.model_dump()
-        assert result["sub"] == SUB
-        assert result["role"] == ROLE
-        assert result["token_type"] == TokenType.access.value
-        assert isinstance(result["exp"], int)
-        assert isinstance(result["iat"], int)
+        serialized_td: dict = td.model_dump()
+        assert serialized_td["sub"] == SUB
+        assert serialized_td["role"] == ROLE
+        assert serialized_td["token_type"] == TokenType.access.value
+        assert isinstance(serialized_td["exp"], int)
+        assert isinstance(serialized_td["iat"], int)
         if payload is None:
-            assert "payload" not in result
+            assert "payload" not in serialized_td
         else:
-            assert result["payload"] == payload
+            assert serialized_td["payload"] == payload
 
+
+class TestRefreshTokenData:
+    @pytest.mark.parametrize("exp", EXP_PARAMS)
+    def test(self, exp: timedelta | int):
+        """
+        Тест метода new класса RefreshTokenData и сериализации класса.
+        """
+        td = token_data.RefreshTokenData.new(SUB, exp)
+        serialized_td: dict = td.model_dump()
+        assert serialized_td["sub"] == SUB
+        assert serialized_td["token_type"] == TokenType.refresh.value
+        assert isinstance(serialized_td["exp"], int)
+        assert isinstance(serialized_td["iat"], int)
