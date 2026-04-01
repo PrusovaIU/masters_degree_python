@@ -119,27 +119,11 @@ class TokenData(BaseModel):
         )
 
     def model_dump(self, **kwargs) -> dict:
+        """
+        Переопределение метода сериализации модели для использования алиасов
+        по умолчанию.
+        """
         return super().model_dump(**kwargs, by_alias=True)
-
-
-class AccessTokenData(TokenData):
-    """Модель данных access токена"""
-    _TOKEN_TYPE: ClassVar[TokenType] = TokenType.access
-    # token_type: TokenType = Field(
-    #     default=_TOKEN_TYPE,
-    #     description="Тип токена",
-    #     alias="type"
-    # )
-    payload: dict | None = Field(
-        description="Дополнительные данные",
-        exclude_if=lambda v: v is None
-    )
-    role: str = Field(
-        default="unknown",
-        description="Роль пользователя"
-    )
-
-    _PAYLOAD_FIELD: ClassVar[str] = "payload"
 
     @classmethod
     def _get_model_params_vnames(cls) -> list[str]:
@@ -152,6 +136,21 @@ class AccessTokenData(TokenData):
                 field.alias or field.validation_alias or name
             )
         return names
+
+
+class AccessTokenData(TokenData):
+    """Модель данных access токена"""
+    _TOKEN_TYPE: ClassVar[TokenType] = TokenType.access
+    payload: dict | None = Field(
+        description="Дополнительные данные",
+        exclude_if=lambda v: v is None
+    )
+    role: str = Field(
+        default="unknown",
+        description="Роль пользователя"
+    )
+
+    _PAYLOAD_FIELD: ClassVar[str] = "payload"
 
     @model_validator(mode="before")
     @classmethod
@@ -196,11 +195,6 @@ class AccessTokenData(TokenData):
 class RefreshTokenData(TokenData):
     """Модель данных refresh токена"""
     _TOKEN_TYPE: ClassVar[TokenType] = TokenType.refresh
-    # token_type: TokenType = Field(
-    #     default=_TOKEN_TYPE,
-    #     description="Тип токена",
-    #     alias="type"
-    # )
 
     @classmethod
     def new(
