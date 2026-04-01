@@ -50,6 +50,11 @@ class TokenData(BaseModel):
         total = (value - self._UNIX_EPOCH).total_seconds()
         return int(total)
 
+    @field_serializer("token_type")
+    def serialize_token_type(self, value: TokenType) -> str:
+        """Сериализация типа токена"""
+        return value.value
+
     @field_validator("exp", "iat", mode="before")
     @classmethod
     def validate_datetime(cls, value: datetime |  int) -> datetime:
@@ -128,7 +133,10 @@ class AccessTokenData(TokenData):
     _PAYLOAD_FIELD: ClassVar[str] = "payload"
 
     @classmethod
-    def _get_model_params_vnames(cls) -> list:
+    def _get_model_params_vnames(cls) -> list[str]:
+        """
+        :return: Список имен параметров модели для валидации.
+        """
         names = []
         for name, field in cls.model_fields.items():
             names.append(
@@ -146,9 +154,10 @@ class AccessTokenData(TokenData):
         Все поля, не входящие в список стандартных параметров модели,
         собираются в словарь и помещаются в поле payload.
         """
+        model_parameters_names = cls._get_model_params_vnames()
         payload_parameters = {
             key: value for key, value in values.items()
-            if key not in cls._get_model_params_vnames()
+            if key not in model_parameters_names
         }
         if payload_parameters:
             payload = values.get(cls._PAYLOAD_FIELD)

@@ -77,6 +77,7 @@ class TestAccessTokenData:
         assert serialized_td["sub"] == SUB
         assert serialized_td["role"] == ROLE
         assert serialized_td["token_type"] == TokenType.access.value
+        assert isinstance(serialized_td["token_type"], str)
         assert isinstance(serialized_td["exp"], int)
         assert isinstance(serialized_td["iat"], int)
         if payload is None:
@@ -119,8 +120,10 @@ class TestRefreshTokenData:
         Тест метода new класса RefreshTokenData и сериализации класса.
         """
         td = token_data.RefreshTokenData.new(SUB, exp)
+        # проверка сериализации:
         serialized_td: dict = td.model_dump()
         assert serialized_td["sub"] == SUB
         assert serialized_td["token_type"] == TokenType.refresh.value
+        assert isinstance(serialized_td["token_type"], str)
         assert isinstance(serialized_td["exp"], int)
         assert isinstance(serialized_td["iat"], int)
