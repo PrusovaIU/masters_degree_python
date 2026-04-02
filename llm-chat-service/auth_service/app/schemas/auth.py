@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from auth_service.app.consts.user_role import UserRole
 
 
 class RegisterRequest(BaseModel):
@@ -24,31 +25,21 @@ class RegisterResponse(BaseModel):
     """
     Схема ответа для эндпоинта регистрации.
     """
+    model_config = ConfigDict(from_attributes=True)
 
     user_id: str = Field(description="ID созданного пользователя")
     email: EmailStr = Field(
         description="Email зарегистрированного пользователя"
     )
+    role: UserRole = Field(description="Роль пользователя")
 
 
-class TokenResponse(BaseModel):
-    """
-    Схема ответа с токеном доступа.
-
-    Возвращается при успешном логине или регистрации.
-    """
-    access_token: str = Field(description="JWT access токен")
-    token_type: str = Field(
-        default="bearer",
-        description="Тип токена",
-    )
-    expires_in: int = Field(
-        description="Время жизни токена в секундах",
-        ge=0
-    )
+class LoginRequest(RegisterRequest):
+    """Схема запроса для авторизации пользователя."""
+    pass
 
 
-class RefreshTokenResponse(BaseModel):
+class LoginResponse(BaseModel):
     """
     Схема ответа с парой токенов (access + refresh).
     """
@@ -63,22 +54,3 @@ class RefreshTokenResponse(BaseModel):
         description="Время жизни refresh токена в секундах"
     )
 
-
-class LoginResponse(RefreshTokenResponse):
-    """
-    Схема ответа для эндпоинта логина.
-    """
-    pass
-
-
-class TokenRefreshRequest(BaseModel):
-    """
-    Схема запроса для обновления токена.
-
-    Используется в POST /auth/refresh
-    """
-
-    refresh_token: str = Field(
-        ...,
-        description="Валидный refresh токен",
-    )
