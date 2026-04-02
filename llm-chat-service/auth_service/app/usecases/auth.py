@@ -10,7 +10,6 @@ from loguru import logger
 from auth_service.app.db.models import User
 from auth_service.app.core.security import jwt_token
 from auth_service.app.schemas.config import JWTConfig
-from auth_service.app.schemas.token_data import AccessTokenDat
 from auth_service.app.consts.token_type import TokenType
 
 
@@ -23,7 +22,7 @@ class AuthUseCase:
             email: str,
             password: str,
             role: UserRole
-    ) -> auth_schemas.RegisterRequest:
+    ) -> UserPublic:
         """
         Регистрирует нового пользователя в системе.
 
@@ -43,6 +42,7 @@ class AuthUseCase:
                 password_hash=password_hash,
                 role=role
             )
+            user_data = UserPublic.model_validate(user)
         except IntegrityError as err:
             logger.error(
                 f"Пользователь с email {email} уже существует ({err})"
@@ -54,14 +54,14 @@ class AuthUseCase:
                 f"({err.__class__.__name__})"
             )
             raise
-        return user
+        return user_data
 
     async def login(
             self,
             email: str,
             password: str,
             jwt_config: JWTConfig
-    ) -> (str, str):
+    ) -> tuple[str, str]:
         """
         Аутентификация пользователя.
 
@@ -86,7 +86,7 @@ class AuthUseCase:
 
             access_token: str = jwt_token.create_access_token(
                 user.id,
-                user.role,
+                user.role.value,
                 jwt_config.access_expire,
                 jwt_config.access_secret,
                 jwt_config.alg
@@ -132,7 +132,7 @@ class AuthUseCase:
         :raises TokenDecodeError: Если токен не может быть декодирован.
         :raises UserNotFoundError: Если пользователь из токена не найден в БД.
         """
-        token_data: AccessTokenData = jwt_token.verify_token(
+        token_data: jwt_token.TokenDataT = jwt_token.verify_token(
             token,
             token_type,
             secret,
@@ -174,7 +174,7 @@ class AuthUseCase:
             )
         except Exception as err:
             err_title = "Ошибка при получении профиля пользователя"
-            logger.error(f"{err_title}: {err} ({err.__class__.__name__}")
+            logger.error(f"{err_title}: {err} ({err.__class__.__name__})")
             raise users_exc.GetUserError(err_title) from err
         return user
 
@@ -213,6 +213,6 @@ class AuthUseCase:
             )
         except Exception as err:
             err_title = "Ошибка обновления access токена"
-            logger.error(f"{err_title}: {err} ({err.__class__.__name__}")
+            logger.error(f"{err_title}: {err} ({err.__class__.__name__})")
             raise security_exc.SecurityError(err_title) from err
         return new_access_token
