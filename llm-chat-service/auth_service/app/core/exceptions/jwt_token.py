@@ -1,7 +1,8 @@
-from auth_service.app.core.exceptions.security import SecurityError
+from .security import AuthError
+from .base import AppException
 
 
-class TokenError(SecurityError):
+class TokenError(AppException):
     """Ошибка при работе с токеном."""
     pass
 
@@ -16,12 +17,11 @@ class TokenDecodeError(TokenError):
     pass
 
 
-class InvalidTokenTypeError(TokenError):
-    """Ошибка при проверке типа токена."""
+class InvalidTokenError(AuthError):
+    """Невалидный токен."""
     pass
 
 
-class TokenExpiredError(TokenError):
+class TokenExpiredError(AuthError):
     """Ошибка при проверке срока действия токена."""
     pass
-

@@ -24,6 +24,7 @@ def _decode_token(
     :return: Декодированные данные токена.
 
     :raises TokenExpiredError: Если срок действия токена истек.
+    :raises InvalidTokenError: Если токен не прошел валидацию.
     :raises TokenDecodeError: Если токен не может быть декодирован.
     """
     options = {
@@ -45,7 +46,11 @@ def _decode_token(
         raise token_errors.TokenExpiredError(err_msg) from err
     except jwt.PyJWTError as err:
         err_msg = "Невалидный JWT токен"
-        logger.warning(err_msg)
+        logger.warning(f"{err_msg}: {err} ({err.__class__.__name__})")
+        raise token_errors.InvalidTokenError(err_msg) from err
+    except Exception as err:
+        err_msg = "Ошибка при декодировании JWT токена"
+        logger.error(f"{err_msg}: {err} ({err.__class__.__name__})")
         raise token_errors.TokenDecodeError(err_msg) from err
 
 
@@ -60,13 +65,13 @@ def _check_token_type(
     :param expected_type: Ожидаемый тип токена.
     :return: None.
 
-    :raises WrongTokenTypeError: Если тип токена не совпадает с ожидаемым.
+    :raises InvalidTokenError: Если тип токена не совпадает с ожидаемым.
     """
     token_type = payload.get("type")
     if token_type != expected_type:
         err_msg = f"ожидался '{expected_type}', получен '{token_type}'"
         logger.error(f"Неверный тип токена: {err_msg}")
-        raise token_errors.InvalidTokenTypeError(err_msg)
+        raise token_errors.InvalidTokenError(err_msg)
 
 
 def verify_token(
@@ -87,6 +92,8 @@ def verify_token(
 
     :return: Декодированные данные токена.
 
+    :raises TokenExpiredError: Если срок действия токена истек.
+    :raises InvalidTokenError: Если токен не прошел валидацию.
     :raises TokenDecodeError: Если токен не может быть декодирован.
     """
     payload = _decode_token(token, secret, alg, verify_exp)

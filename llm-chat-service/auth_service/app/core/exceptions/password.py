@@ -1,4 +1,4 @@
-from .security import SecurityError
+from .security import SecurityError, AuthError
 
 
 class PasswordHashError(SecurityError):
@@ -6,7 +6,7 @@ class PasswordHashError(SecurityError):
     pass
 
 
-class VerifyPasswordError(SecurityError):
+class VerifyPasswordError(AuthError):
     """Ошибка при проверке пароля."""
     pass
 

@@ -1,30 +1,37 @@
+from typing import Any
+
 from auth_service.app.schemas.error_detail import Detail
+from fastapi import HTTPException, status
 
 
-class BaseAppException(Exception):
+class BaseAppException(HTTPException):
     """
     Базовый класс исключений.
 
-    :param title: Заголовок исключения.
+    :param error_code: Код исключения.
     :param message: Сообщение исключения.
     """
     def __init__(
             self,
-            message: str | Exception,
-            title: str | None = None
+            status_code: int,
+            message: str,
+            headers: dict[str, Any] | None = None,
+            error_code: str | None = None
     ):
-        self._title = title if title else self.__class__.__name__
+        self._error_code = error_code if error_code \
+            else self.__class__.__name__
         self._message = str(message)
+        super().__init__(status_code, self.detail, headers)
 
     def __str__(self):
-        return f"{self._title}: {self._message}"
+        return f"{self._error_code}: {self._message}"
 
     @property
-    def title(self) -> str:
+    def error_code(self) -> str:
         """
         :return: Заголовок исключения.
         """
-        return self._title
+        return self._error_code
 
     @property
     def message(self) -> str:
@@ -35,9 +42,17 @@ class BaseAppException(Exception):
 
     @property
     def detail(self) -> Detail:
-        return Detail(title=self.title, message=self.message)
+        return Detail(title=self.error_code, message=self.message)
 
 
 class AppException(BaseAppException):
-    def __init__(self, message: str | Exception):
-        super().__init__(message)
+    @property
+    def status_code(self) -> int:
+        return status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    def __init__(
+            self,
+            message: str,
+            headers: dict[str, Any] | None = None,
+    ):
+        super().__init__(self.status_code, message, headers)
