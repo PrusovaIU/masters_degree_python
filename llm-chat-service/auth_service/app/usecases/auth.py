@@ -1,10 +1,6 @@
-from datetime import timedelta
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from auth_service.app.schemas.user import UserPublic
-from auth_service.app.core.config import settings
 from auth_service.app.consts.user_role import UserRole
 from auth_service.app.schemas import auth as auth_schemas
 from auth_service.app.core.exceptions import users as users_exc, security as security_exc
@@ -14,7 +10,8 @@ from loguru import logger
 from auth_service.app.db.models import User
 from auth_service.app.core.security import jwt_token
 from auth_service.app.schemas.config import JWTConfig
-from auth_service.app.schemas.token_data import AccessTokenData, RefreshTokenData
+from auth_service.app.schemas.token_data import AccessTokenDat
+from auth_service.app.consts.token_type import TokenType
 
 
 class AuthUseCase:
@@ -111,13 +108,50 @@ class AuthUseCase:
             raise security_exc.SecurityError(err_title) from err
         return access_token, refresh_token
 
+    async def get_current_user(
+            self,
+            token: str,
+            token_type: TokenType,
+            secret: str,
+            alg: str,
+            verify_exp: bool = True
+    ) -> UserPublic:
+        """
+        Получение текущего пользователя по JWT токену.
+
+        :param token: Токен.
+        :param token_type: Тип токена.
+        :param secret: Ключ для подписи.
+        :param alg: Алгоритм шифрования подписи.
+        :param verify_exp: Проверять ли срок действия токена.
+
+        :return: Данные пользователя из БД.
+
+        :raises TokenExpiredError: Если срок действия токена истек.
+        :raises InvalidTokenError: Если токен не прошел валидацию.
+        :raises TokenDecodeError: Если токен не может быть декодирован.
+        :raises UserNotFoundError: Если пользователь из токена не найден в БД.
+        """
+        token_data: AccessTokenData = jwt_token.verify_token(
+            token,
+            token_type,
+            secret,
+            alg,
+            verify_exp
+        )
+        user_id = int(token_data.sub)
+        user: User | None = await self._user_repo.get_by_id(user_id)
+        if user is None:
+            raise users_exc.UserNotFoundError(f"ID = {user_id}")
+        return UserPublic.model_validate(user)
+
     async def me(
             self,
             access_token: str,
             jwt_config: JWTConfig,
     ) -> UserPublic:
         """
-        Возвращает профиль текущего аутентифицированного пользователя.
+        Получение профиля текущего пользователя.
 
         :param access_token: JWT access текущего пользователя.
         :param jwt_config: Конфигурация JWT.
@@ -128,25 +162,57 @@ class AuthUseCase:
         :raises InvalidTokenError: Если токен не прошел валидацию.
         :raises TokenDecodeError: Если токен не может быть декодирован.
         :raises UserNotFoundError: Если пользователь из токена не найден в БД.
-        :raises AuthError: При непредвиденной ошибке.
+        :raises GetUserError: При непредвиденной ошибке.
         """
         try:
-            token_data: AccessTokenData = jwt_token.verify_access_token(
+            user: UserPublic = await self.get_current_user(
                 access_token,
+                TokenType.access,
                 jwt_config.access_secret,
-                jwt_config.alg
+                jwt_config.alg,
+                False
             )
-            user_id = int(token_data.sub)
-            user: User | None = \
-                await self._user_repo.get_by_id(user_id)
-            if user is None:
-                raise users_exc.UserNotFoundError(f"ID = {user_id}")
-            user_data = UserPublic.model_validate(user)
         except Exception as err:
             err_title = "Ошибка при получении профиля пользователя"
             logger.error(f"{err_title}: {err} ({err.__class__.__name__}")
             raise users_exc.GetUserError(err_title) from err
-        return user_data
+        return user
 
+    async def refresh_token(
+            self,
+            refresh_token: str,
+            jwt_config: JWTConfig
+    ) -> str:
+        """
+        Обновление access токена на основе refresh токена.
 
+        :param refresh_token: JWT refresh токен.
+        :param jwt_config: Конфигурация JWT.
 
+        :return: Новый access токен.
+
+        :raises TokenExpiredError: Если срок действия токена истек.
+        :raises InvalidTokenError: Если токен не прошел валидацию.
+        :raises TokenDecodeError: Если токен не может быть декодирован.
+        :raises UserNotFoundError: Если пользователь из токена не найден в БД.
+        :raises AuthError: При непредвиденной ошибке.
+        """
+        try:
+            user: UserPublic = await self.get_current_user(
+                refresh_token,
+                TokenType.refresh,
+                jwt_config.refresh_secret,
+                jwt_config.alg
+            )
+            new_access_token: str = jwt_token.create_access_token(
+                user.id,
+                user.role,
+                jwt_config.access_expire,
+                jwt_config.access_secret,
+                jwt_config.alg
+            )
+        except Exception as err:
+            err_title = "Ошибка обновления access токена"
+            logger.error(f"{err_title}: {err} ({err.__class__.__name__}")
+            raise security_exc.SecurityError(err_title) from err
+        return new_access_token
