@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import func, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -18,9 +18,9 @@ class AbstractBase(Base):
 
     __abstract__ = True
 
-    id: Mapped[str] = mapped_column(
+    id: Mapped[Integer] = mapped_column(
         primary_key=True,
-        server_default=func.gen_random_uuid()
+        autoincrement=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
