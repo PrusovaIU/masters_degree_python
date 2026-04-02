@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class JWT(BaseModel):
+class JWTConfig(BaseModel):
     """Настройки JWT"""
     access_secret_path: Path = Field(
         description="Путь к файлу с ключом для подписи access токенов"
@@ -140,7 +140,7 @@ class Settings(BaseSettings):
     )
     env: str = Field(default="prod", description="Окружение выполнения")
 
-    jwt: JWT = Field(description="Настройки JWT")
+    jwt: JWTConfig = Field(description="Настройки JWT")
     db: Database = Field(description="Настройки базы данных")
     cors: CORSSettings = Field(
         default_factory=CORSSettings,

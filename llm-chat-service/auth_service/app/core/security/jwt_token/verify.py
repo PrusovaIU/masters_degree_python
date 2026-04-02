@@ -1,11 +1,14 @@
-from typing import Any
+from typing import Any, TypeVar
 
 import jwt
 from loguru import logger
 
 from auth_service.app.consts.token_type import TokenType
 from auth_service.app.core.exceptions import jwt_token as token_errors
-from auth_service.app.schemas.token_data import TokenData
+from auth_service.app.schemas.token_data import TokenData, AccessTokenData, RefreshTokenData
+
+
+TokenDataT = TypeVar('TokenDataT', bound=TokenData, covariant=True)
 
 
 def _decode_token(
@@ -79,8 +82,8 @@ def verify_token(
         expected_type: TokenType,
         secret: str,
         alg: str,
-        verify_exp: bool = True,
-) -> TokenData:
+        verify_exp: bool = True
+) -> TokenDataT:
     """
     Декодирует и валидирует JWT токен.
 
@@ -99,3 +102,57 @@ def verify_token(
     payload = _decode_token(token, secret, alg, verify_exp)
     _check_token_type(payload, expected_type)
     return TokenData.from_token_data(expected_type, **payload)
+
+
+def verify_access_token(
+        token: str,
+        secret: str,
+        alg: str,
+        verify_exp: bool = True
+) -> AccessTokenData:
+    """
+    Валидация и декодирование access токена.
+
+    :param token: JWT токен в виде строки.
+    :param secret: Ключ для проверки подписи.
+    :param alg: Алгоритм подписи.
+    :param verify_exp: Проверять ли срок действия токена.
+
+    :raises TokenExpiredError: Если срок действия токена истек.
+    :raises InvalidTokenError: Если токен не прошел валидацию.
+    :raises TokenDecodeError: Если токен не может быть декодирован.
+    """
+    return verify_token(
+        token,
+        TokenType.access,
+        secret,
+        alg,
+        verify_exp
+    )
+
+
+def verify_refresh_token(
+        token: str,
+        secret: str,
+        alg: str,
+        verify_exp: bool = True
+) -> RefreshTokenData:
+    """
+    Валидация и декодирование refresh токена.
+
+    :param token: JWT токен в виде строки.
+    :param secret: Ключ для проверки подписи.
+    :param alg: Алгоритм подписи.
+    :param verify_exp: Проверять ли срок действия токена.
+
+    :raises TokenExpiredError: Если срок действия токена истек.
+    :raises InvalidTokenError: Если токен не прошел валидацию.
+    :raises TokenDecodeError: Если токен не может быть декодирован.
+    """
+    return verify_token(
+        token,
+        TokenType.refresh,
+        secret,
+        alg,
+        verify_exp
+    )

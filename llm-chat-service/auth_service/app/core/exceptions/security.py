@@ -13,3 +13,9 @@ class AuthError(SecurityError):
     @property
     def status_code(self) -> int:
         return status.HTTP_401_UNAUTHORIZED
+
+
+class InvalidCredentialsError(AuthError):
+    """Неверные учетные данные."""
+    def __init__(self):
+        super().__init__("Неверный логин или пароль.")
