@@ -1,5 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
+from auth_service.app.schemas.token_data import TokenData
 from auth_service.app.schemas.user import UserPublic
 from auth_service.app.consts.user_role import UserRole
 from auth_service.app.schemas import auth as auth_schemas
@@ -132,7 +133,7 @@ class AuthUseCase:
         :raises TokenDecodeError: Если токен не может быть декодирован.
         :raises UserNotFoundError: Если пользователь из токена не найден в БД.
         """
-        token_data: jwt_token.TokenDataT = jwt_token.verify_token(
+        token_data: TokenData = jwt_token.verify_token(
             token,
             token_type,
             secret,
