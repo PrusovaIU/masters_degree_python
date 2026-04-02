@@ -12,6 +12,10 @@ class PWDContext:
 
     @classmethod
     def setup(cls, schemes: list[str] = None, bcrypt_rounds: int = 12):
+        if cls._pwd_context:
+            msg = "Контекст для хеширования паролей уже установлен"
+            logger.warning(msg)
+            raise SystemError(msg)
         if not schemes:
             schemes = ["bcrypt"]
         cls._pwd_context = CryptContext(

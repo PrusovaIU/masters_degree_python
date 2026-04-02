@@ -4,14 +4,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, \
     AsyncEngine, AsyncSession
 
 from loguru import logger
-from warnings import warn
 from contextlib import asynccontextmanager
 
 
 class DBSession:
     """Класс для работы с сессией БД"""
     _engine : AsyncEngine | None = None
-    _async_session_maker: async_sessionmaker | None = None
+    _async_session_maker: async_sessionmaker[AsyncSession] | None = None
     _has_setup: bool = False
 
     @classmethod
@@ -23,9 +22,9 @@ class DBSession:
         :return: None
         """
         if cls._has_setup:
-            warn_msg = f"Класс {cls.__name__} уже был инициализирован."
-            logger.warning(warn_msg)
-            raise warn(warn_msg, RuntimeWarning)
+            msg = f"Класс {cls.__name__} уже был инициализирован."
+            logger.warning(msg)
+            raise SystemError(msg)
         cls._engine = create_async_engine(data_base_url)
         cls._async_session_maker = async_sessionmaker(
             cls._engine,
@@ -33,6 +32,27 @@ class DBSession:
         )
         cls._has_setup = True
         logger.info(f"Инициализация класса {cls.__name__} завершена.")
+
+    @classmethod
+    async def close(cls) -> None:
+        """
+        Очистка класса.
+        :return: None.
+        """
+        if cls._has_setup:
+            await cls._engine.dispose()
+            cls._has_setup = False
+            cls._engine = None
+            cls._async_session_maker = None
+            logger.info(f"Закрытие класса {cls.__name__}.")
+
+    @classmethod
+    @property
+    def is_initialized(cls) -> bool:
+        """
+        :return: True, если класс был инициализирован, иначе False.
+        """
+        return cls._has_setup
 
     @classmethod
     @asynccontextmanager
@@ -55,8 +75,8 @@ class DBSession:
         try:
             yield session
             await session.commit()
-        except Exception as err:
+        except Exception:
             await session.rollback()
-            raise err
+            raise
         finally:
             await session.close()
