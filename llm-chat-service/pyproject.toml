@@ -11,4 +11,5 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "pyjwt>=2.12.1",
     "pytest>=9.0.2",
+    "sqlalchemy>=2.0.48",
 ]
