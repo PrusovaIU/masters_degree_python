@@ -3,7 +3,7 @@ from typing import Any, TypeVar
 import jwt
 from loguru import logger
 
-from auth_service.app.consts.token_type import TokenType
+from auth_service.app.consts.jwt_token import TokenType
 from auth_service.app.core.exceptions import jwt_token as token_errors
 from auth_service.app.schemas.token_data import TokenData, AccessTokenData, RefreshTokenData
 

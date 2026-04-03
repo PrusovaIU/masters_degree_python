@@ -71,7 +71,7 @@ class DBSession:
                 f"Класс {cls.__name__} не был инициализирован. "
                 f"Используйте метод setup()"
             )
-        session = cls._async_session_maker()
+        session = await cls._async_session_maker()
         try:
             yield session
             await session.commit()

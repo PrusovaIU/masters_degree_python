@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
-from auth_service.app.consts.token_type import TokenType
+from auth_service.app.consts.jwt_token import TokenType
 from typing import Self, ClassVar
 from functools import lru_cache
 

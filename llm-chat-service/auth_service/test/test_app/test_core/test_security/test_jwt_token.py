@@ -1,7 +1,7 @@
 from auth_service.app.core.security import jwt_token
 import pytest
 from datetime import timedelta
-from auth_service.app.consts.token_type import TokenType
+from auth_service.app.consts.jwt_token import TokenType
 from auth_service.app.schemas.token_data import AccessTokenData, RefreshTokenData
 
 

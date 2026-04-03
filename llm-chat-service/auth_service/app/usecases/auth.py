@@ -3,7 +3,6 @@ from sqlalchemy.exc import IntegrityError
 from auth_service.app.schemas.token_data import TokenData
 from auth_service.app.schemas.user import UserPublic
 from auth_service.app.consts.user_role import UserRole
-from auth_service.app.schemas import auth as auth_schemas
 from auth_service.app.core.exceptions import users as users_exc, security as security_exc
 from auth_service.app.core.security.password import PWDContext
 from auth_service.app.repositories.users import UserRepository
@@ -11,7 +10,7 @@ from loguru import logger
 from auth_service.app.db.models import User
 from auth_service.app.core.security import jwt_token
 from auth_service.app.schemas.config import JWTConfig
-from auth_service.app.consts.token_type import TokenType
+from auth_service.app.consts.jwt_token import TokenType
 
 
 class AuthUseCase:

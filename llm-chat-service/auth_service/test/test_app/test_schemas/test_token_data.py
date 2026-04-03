@@ -1,5 +1,5 @@
 from auth_service.app.schemas import token_data
-from auth_service.app.consts.token_type import TokenType
+from auth_service.app.consts.jwt_token import TokenType
 from datetime import timedelta, datetime, timezone
 import pytest
 

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
@@ -13,3 +14,10 @@ class UserPublic(BaseModel):
     updated_at: datetime = Field(description="Дата обновления пользователя")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+@dataclass
+class TokenUserData:
+    """Данные пользователя из JWT токена."""
+    user_id: int
+    user_role: str
