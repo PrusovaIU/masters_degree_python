@@ -21,7 +21,7 @@ class BaseAppException(HTTPException):
         self._error_code = error_code if error_code \
             else self.__class__.__name__
         self._message = str(message)
-        super().__init__(status_code, self.detail, headers)
+        super().__init__(status_code, self.error_detail, headers)
 
     def __str__(self):
         return f"{self._error_code}: {self._message}"
@@ -41,13 +41,13 @@ class BaseAppException(HTTPException):
         return self._message
 
     @property
-    def detail(self) -> Detail:
+    def error_detail(self) -> Detail:
         return Detail(title=self.error_code, message=self.message)
 
 
 class AppException(BaseAppException):
     @property
-    def status_code(self) -> int:
+    def exc_status_code(self) -> int:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(
@@ -55,4 +55,4 @@ class AppException(BaseAppException):
             message: str,
             headers: dict[str, Any] | None = None,
     ):
-        super().__init__(self.status_code, message, headers)
+        super().__init__(self.exc_status_code, message, headers)

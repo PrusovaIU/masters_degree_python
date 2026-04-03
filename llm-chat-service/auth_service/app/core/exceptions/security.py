@@ -11,7 +11,7 @@ class SecurityError(AppException):
 class AuthError(SecurityError):
     """Ошибка аутентификации."""
     @property
-    def status_code(self) -> int:
+    def exc_status_code(self) -> int:
         return status.HTTP_401_UNAUTHORIZED
 
 
@@ -23,5 +23,5 @@ class InvalidCredentialsError(AuthError):
 
 class PermissionDeniedError(SecurityError):
     @property
-    def status_code(self) -> int:
+    def exc_status_code(self) -> int:
         return status.HTTP_403_FORBIDDEN

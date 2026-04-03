@@ -1,8 +1,11 @@
+from time import sleep
+
 from auth_service.app.core.security import jwt_token
 import pytest
-from datetime import timedelta
+from datetime import timedelta, datetime
 from auth_service.app.consts.jwt_token import TokenType
 from auth_service.app.schemas.token_data import AccessTokenData, RefreshTokenData
+from auth_service.app.core.exceptions import jwt_token as exceptions
 
 
 SUBJECT_STR = "test_subject"
@@ -49,6 +52,10 @@ def test_access_token(
         ALG
     )
     assert isinstance(token_data, AccessTokenData)
+    assert token_data.sub == str(subject)
+    assert isinstance(token_data.exp, datetime)
+    assert isinstance(token_data.iat, datetime)
+    assert token_data.role == ROLE
 
 
 @pytest.mark.parametrize("subject", SUBJECT_PARAMS)
@@ -66,3 +73,28 @@ def test_refresh_token(subject: str | int):
         ALG
     )
     assert isinstance(token_data, RefreshTokenData)
+    assert token_data.sub == str(subject)
+    assert isinstance(token_data.exp, datetime)
+    assert isinstance(token_data.iat, datetime)
+
+
+def test_expired_token():
+    """
+    При верификации токена с истекшим сроком действия должно пробрасываться
+    исключение.
+    """
+    token = jwt_token.create_access_token(
+        SUBJECT_STR,
+        ROLE,
+        timedelta(seconds=1),
+        SECRET_KEY,
+        ALG
+    )
+    sleep(2)
+    with pytest.raises(exceptions.TokenExpiredError):
+        jwt_token.verify_token(
+            token,
+            TokenType.access,
+            SECRET_KEY,
+            ALG
+        )
