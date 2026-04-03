@@ -8,7 +8,6 @@ class UserPublic(BaseModel):
     """Публичная схема пользователя для ответов API."""
     id: int = Field(description="ID пользователя")
     email: EmailStr = Field(description="Email пользователя")
-    password_hash: str = Field(description="Хеш пароля пользователя")
     role: str = Field(description="Роль пользователя")
     created_at: datetime = Field(description="Дата создания пользователя")
     updated_at: datetime = Field(description="Дата обновления пользователя")
