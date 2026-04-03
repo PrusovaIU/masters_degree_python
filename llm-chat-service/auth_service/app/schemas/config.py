@@ -81,8 +81,16 @@ class JWTConfig(BaseModel):
         return timedelta(minutes=self.access_expire_minutes)
 
     @property
+    def access_expire_seconds(self) -> int:
+        return int(self.access_expire.total_seconds())
+
+    @property
     def refresh_expire(self) -> timedelta:
         return timedelta(hours=self.refresh_expire_hours)
+
+    @property
+    def refresh_expire_seconds(self) -> int:
+        return int(self.refresh_expire.total_seconds())
 
 
 class Database(BaseModel):

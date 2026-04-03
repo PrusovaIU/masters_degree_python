@@ -147,31 +147,19 @@ class AuthUseCase:
 
     async def me(
             self,
-            access_token: str,
-            jwt_config: JWTConfig,
+            user_id: int
     ) -> UserPublic:
         """
         Получение профиля текущего пользователя.
 
-        :param access_token: JWT access текущего пользователя.
-        :param jwt_config: Конфигурация JWT.
+        :param user_id: ID пользователя.
 
         :return: Данные пользователя.
-
-        :raises TokenExpiredError: Если срок действия токена истек.
-        :raises InvalidTokenError: Если токен не прошел валидацию.
-        :raises TokenDecodeError: Если токен не может быть декодирован.
         :raises UserNotFoundError: Если пользователь из токена не найден в БД.
         :raises GetUserError: При непредвиденной ошибке.
         """
         try:
-            user: UserPublic = await self.get_current_user(
-                access_token,
-                TokenType.access,
-                jwt_config.access_secret,
-                jwt_config.alg,
-                False
-            )
+            user: UserPublic = await self._user_repo.get_by_id(user_id)
         except Exception as err:
             err_title = "Ошибка при получении профиля пользователя"
             logger.error(f"{err_title}: {err} ({err.__class__.__name__})")

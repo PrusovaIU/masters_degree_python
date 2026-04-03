@@ -31,7 +31,22 @@ class RegisterResponse(BaseModel):
     email: EmailStr = Field(
         description="Email зарегистрированного пользователя"
     )
-    role: UserRole = Field(description="Роль пользователя")
+    role: str = Field(description="Роль пользователя")
+
+
+class RefreshTokenRequest(BaseModel):
+    """Схема запроса для обновления access токена."""
+    refresh_token: str = Field(description="JWT refresh токен")
+
+
+class RefreshTokenResponse(BaseModel):
+    """Схема ответа с новым access токеном."""
+    access_token: str = Field(description="JWT access токен")
+    expires_in: int = Field(description="Время жизни access токена в секундах")
+    token_type: str = Field(
+        default="bearer",
+        description="Тип токена"
+    )
 
 
 class LoginRequest(RegisterRequest):
@@ -39,18 +54,11 @@ class LoginRequest(RegisterRequest):
     pass
 
 
-class LoginResponse(BaseModel):
+class LoginResponse(RefreshTokenResponse):
     """
     Схема ответа с парой токенов (access + refresh).
     """
-    access_token: str = Field(description="JWT access токен")
     refresh_token: str = Field(description="JWT refresh токен")
-    token_type: str = Field(
-        default="bearer",
-        description="Тип токена"
-    )
-    expires_in: int = Field(description="Время жизни access токена в секундах")
     refresh_expires_in: int = Field(
         description="Время жизни refresh токена в секундах"
     )
-
