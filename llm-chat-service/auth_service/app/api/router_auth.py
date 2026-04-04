@@ -76,6 +76,7 @@ async def login(
     return auth_schemas.LoginResponse(
         access_token=access,
         refresh_token=refresh,
+        token_type=settings.jwt.token_type,
         expires_in=settings.jwt.access_expire_seconds,
         refresh_expires_in=settings.jwt.refresh_expire_seconds
     )
@@ -126,5 +127,6 @@ async def refresh_token(
 
     return auth_schemas.RefreshTokenResponse(
         access_token=new_access_token,
-        expires_in=settings.jwt.access_expire_seconds
+        expires_in=settings.jwt.access_expire_seconds,
+        token_type=settings.jwt.token_type
     )

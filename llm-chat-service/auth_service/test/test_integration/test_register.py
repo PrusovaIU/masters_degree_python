@@ -1,7 +1,6 @@
 import pytest
 from httpx import AsyncClient, Response
 
-from auth_service.app.api.router_auth import refresh_token
 from auth_service.app.consts.user_role import UserRole
 from fastapi import status
 from auth_service.app.app import App
@@ -23,6 +22,7 @@ LOGIN_DATA = {
 }
 
 ME_URL = "/auth/me"
+REFRESH_TOKEN_URL = "/auth/refresh"
 
 
 async def _test_register(client: AsyncClient) -> None:
@@ -64,7 +64,7 @@ async def _test_login(app: App, client: AsyncClient) -> (str, str):
     assert access_token is not None
     refresh_token = response_json["refresh_token"]
     assert refresh_token is not None
-    assert response_json["token_type"] == "bearer"
+    assert response_json["token_type"] == app.settings.jwt.token_type
     assert (response_json["expires_in"] ==
             app.settings.jwt.access_expire.total_seconds())
     assert (response_json["refresh_expires_in"] ==
@@ -93,6 +93,13 @@ async def _test_login_fail(
 
 
 async def _test_me(client: AsyncClient, access_token: str) -> None:
+    """
+    Тестирование получения данных пользователя.
+
+    :param client: Тестовый клиент.
+    :param access_token: Access token.
+    :return: None
+    """
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -107,11 +114,35 @@ async def _test_me(client: AsyncClient, access_token: str) -> None:
 
 
 async def _test_me_fail(client: AsyncClient, access_token: str | None) -> None:
+    """
+    Тестирование получения данных пользователя с невалидным access token.
+
+    :param client: Тестовый клиент.
+    :param access_token: Невалидный access token.
+    :return: None.
+    """
     headers = {}
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
     response: Response = await client.get(ME_URL, headers=headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+async def _test_refresh_token(
+        app: App,
+        client: AsyncClient,
+        refresh_token: str
+) -> None:
+    body = {
+        "refresh_token": refresh_token
+    }
+    response: Response = await client.post(REFRESH_TOKEN_URL, json=body)
+    response.raise_for_status()
+    response_json = response.json()
+    assert response_json["access_token"] is not None
+    assert (response_json["expires_in"] ==
+            app.settings.jwt.access_expire.total_seconds())
+    assert response_json["token_type"] == app.settings.jwt.token_type
 
 
 @pytest.mark.asyncio
@@ -128,3 +159,4 @@ async def test(app: App, client: AsyncClient):
     await _test_me_fail(client, refresh_token)
     # ME без токена:
     await _test_me_fail(client, None)
+    await _test_refresh_token(app, client, refresh_token)
