@@ -17,6 +17,13 @@ class DBSession:
     def engine(cls) -> AsyncEngine | None:
         return cls._engine
 
+    @classmethod
+    def is_initialized(cls) -> bool:
+        """
+        :return: True, если класс был инициализирован, иначе False.
+        """
+        return cls._has_setup
+
     @staticmethod
     def _form_connect_args(
             data_base_url: str,
@@ -64,14 +71,6 @@ class DBSession:
             cls._engine = None
             cls._async_session_maker = None
             logger.info(f"Закрытие класса {cls.__name__}.")
-
-    @classmethod
-    @property
-    def is_initialized(cls) -> bool:
-        """
-        :return: True, если класс был инициализирован, иначе False.
-        """
-        return cls._has_setup
 
     @classmethod
     @asynccontextmanager
