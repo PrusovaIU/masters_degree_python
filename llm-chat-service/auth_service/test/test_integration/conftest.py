@@ -57,5 +57,8 @@ async def client(app: App):
     fastapi_app: FastAPI = app.app
     transport = httpx.ASGITransport(app=fastapi_app)
     async with LifespanManager(fastapi_app):
-        async with httpx.AsyncClient(transport=transport) as client:
+        async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://test"
+        ) as client:
             yield client
