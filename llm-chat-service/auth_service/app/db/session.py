@@ -17,6 +17,16 @@ class DBSession:
     def engine(cls) -> AsyncEngine | None:
         return cls._engine
 
+    @staticmethod
+    def _form_connect_args(
+            data_base_url: str,
+            schema: str = "public"
+    ) -> dict:
+        if "postgresql" in data_base_url:
+            return {"server_settings": {"search_path": f"{schema},public"}}
+        else:
+            return {}
+
     @classmethod
     def setup(cls, data_base_url: str, schema: str = "public") -> None:
         """
@@ -30,11 +40,10 @@ class DBSession:
             msg = f"Класс {cls.__name__} уже был инициализирован."
             logger.warning(msg)
             raise SystemError(msg)
+        connect_args = cls._form_connect_args(data_base_url, schema)
         cls._engine = create_async_engine(
             data_base_url,
-            connect_args={
-                "server_settings": {"search_path": f"{schema},public"}
-            }
+            connect_args=connect_args
         )
         cls._async_session_maker = async_sessionmaker(
             cls._engine,

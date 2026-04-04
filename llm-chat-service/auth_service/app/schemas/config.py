@@ -1,11 +1,12 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Self
 from urllib.parse import quote_plus
 
 from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from auth_service.app.consts.db import DBType
 
 
 class JWTSecret(BaseModel):
@@ -43,7 +44,7 @@ class JWTSecret(BaseModel):
             raise ValueError(err_title) from err
 
     @model_validator(mode="after")
-    def get_secret_files(self):
+    def get_secret_files(self) -> Self:
         """Определение секретного ключа"""
         if self.data:
             self._secret = self.data
@@ -53,6 +54,7 @@ class JWTSecret(BaseModel):
             raise ValueError(
                 "Не указан секретный ключ JWT (secret_data/secret_path)"
             )
+        return self
 
     @property
     def secret(self) -> str:
@@ -97,7 +99,7 @@ class JWTConfig(BaseModel):
         return int(self.refresh_expire.total_seconds())
 
 
-class Database(BaseModel):
+class DatabaseConfig(BaseModel):
     """Настройки базы данных"""
     host: str = Field(description="Хост базы данных")
     port: int = Field(description="Порт базы данных")
@@ -105,15 +107,43 @@ class Database(BaseModel):
     user: str = Field(description="Пользователь базы данных")
     password: str = Field(description="Пароль пользователя базы данных")
     schema: str = Field(default="public", description="Схема базы данных")
+    test_db_path: str | None = Field(
+        default=None,
+        description="Путь к тестовой базе данных SQLite"
+    )
+    db_type: DBType = Field(
+        default=DBType.postgres,
+        description="Тип базы данных"
+    )
+
+    _database_url: str = PrivateAttr(default=None)
+
+    @model_validator(mode="after")
+    def get_database_url(self) -> Self:
+        """Формирование строки подключения к базе данных"""
+        if self.db_type is DBType.postgres:
+            passwd = quote_plus(self.password)
+            self._database_url = \
+                (f"postgresql+asyncpg://{self.user}:{passwd}"
+                 f"@{self.host}:{self.port}/{self.db_name}")
+        elif self.db_type is DBType.sqlite:
+            if not self.test_db_path:
+                raise ValueError(
+                    "Не указан путь к тестовой базе данных SQLite"
+                )
+            self._database_url = f"sqlite+aiosqlite:///{self.test_db_path}"
+        else:
+            raise ValueError(
+                f"Неподдерживаемый тип базы данных: {self.db_type}"
+            )
+        return self
 
     @property
     def database_url(self) -> str:
         """
         :return: строка подключения к базе данных.
         """
-        passwd = quote_plus(self.password)
-        return (f"postgresql+asyncpg://{self.user}:{passwd}"
-                f"@{self.host}:{self.port}/{self.db_name}")
+        return self._database_url
 
 
 class CORSSettings(BaseModel):
@@ -137,6 +167,17 @@ class CORSSettings(BaseModel):
     )
 
 
+class PasswordHashConfig(BaseModel):
+    schemes: list[str] = Field(
+        default=["bcrypt"],
+        description="Список используемых схем хеширования паролей"
+    )
+    bcrypt_rounds: int = Field(
+        default=12,
+        description="Количество раундов для хеширования паролей"
+    )
+
+
 class Settings(BaseSettings):
     """
     Настройки приложения, загружаемые из переменных окружения.
@@ -156,7 +197,11 @@ class Settings(BaseSettings):
     env: str = Field(default="prod", description="Окружение выполнения")
 
     jwt: JWTConfig = Field(description="Настройки JWT")
-    db: Database = Field(description="Настройки базы данных")
+    db: DatabaseConfig = Field(description="Настройки базы данных")
+    password_hash: PasswordHashConfig = Field(
+        description="Настройки хеширования паролей",
+        default_factory=PasswordHashConfig
+    )
     cors: CORSSettings = Field(
         default_factory=CORSSettings,
         description="Настройки CORS"

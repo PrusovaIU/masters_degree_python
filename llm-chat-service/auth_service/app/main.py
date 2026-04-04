@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
@@ -9,6 +8,7 @@ from auth_service.app.core.config import settings
 from auth_service.app.db.base import Base
 from auth_service.app.db.session import DBSession
 from auth_service.app.schemas.config import Settings
+from auth_service.app.core.security.password import PWDContext
 
 
 class App:
@@ -39,6 +39,10 @@ class App:
         :param app: Приложение FastAPI.
         :return: None.
         """
+        PWDContext.setup(
+            self._config.password_hash.schemes,
+            self._config.password_hash.bcrypt_rounds
+        )
         DBSession.setup(
             self._config.db.database_url,
             self._config.db.schema
