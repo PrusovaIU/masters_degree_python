@@ -16,7 +16,7 @@ class App:
         self._app = FastAPI(
             title=config.app_name,
             version="1.0.0",
-            description="OpenRouter API",
+            description="LLM Chat Auth Service",
             lifespan=self.lifespan
         )
         if config.cors.enabled:
