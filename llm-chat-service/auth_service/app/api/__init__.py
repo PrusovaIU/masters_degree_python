@@ -8,4 +8,5 @@ routers = [auth_router]
 __all__ = [
     "auth_router",
     "health_router",
+    "routers"
 ]
