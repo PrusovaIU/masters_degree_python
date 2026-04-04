@@ -106,11 +106,25 @@ async def _test_me(client: AsyncClient, access_token: str) -> None:
     assert response_json["updated_at"] is not None
 
 
+async def _test_me_fail(client: AsyncClient, access_token: str | None) -> None:
+    headers = {}
+    if access_token:
+        headers["Authorization"] = f"Bearer {access_token}"
+    response: Response = await client.get(ME_URL, headers=headers)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
 @pytest.mark.asyncio
 async def test(app: App, client: AsyncClient):
     await _test_register(client)
     await _test_register_conflict(client)
     access_token, refresh_token = await _test_login(app, client)
+    # Логин с неверным паролем:
     await _test_login_fail(client, EMAIL, "wrong_password")
+    # Логин с неизвестным email:
     await _test_login_fail(client, "unknown@test.com", PASSWORD)
     await _test_me(client, access_token)
+    # ME с невалидным access token:
+    await _test_me_fail(client, refresh_token)
+    # ME без токена:
+    await _test_me_fail(client, None)
