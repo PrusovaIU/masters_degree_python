@@ -8,50 +8,52 @@ from auth_service.app.api import routers
 from auth_service.app.core.config import settings
 from auth_service.app.db.base import Base
 from auth_service.app.db.session import DBSession
+from auth_service.app.schemas.config import Settings
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator:
-    """
-    Создание схемы БД при запуске приложения.
-
-    :param app: Приложение FastAPI.
-    :return: None.
-    """
-    DBSession.setup(settings.db.database_url, settings.db.schema)
-    async with DBSession.engine().begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    await DBSession.close()
-
-
-def create_app() -> FastAPI:
-    """
-    Создание экземпляра FastAPI приложения.
-    """
-    new_app = FastAPI(
-        title=settings.app_name,
-        version="1.0.0",
-        description="OpenRouter API",
-        lifespan=lifespan
-    )
-
-    if settings.cors.enabled:
-        new_app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.cors.origins,
-            allow_credentials=settings.cors.credentials,
-            allow_methods=settings.cors.methods,
-            allow_headers=settings.cors.headers
+class App:
+    def __init__(self, config: Settings):
+        self._config = config
+        self._app = FastAPI(
+            title=config.app_name,
+            version="1.0.0",
+            description="OpenRouter API",
+            lifespan=self.lifespan
         )
+        if config.cors.enabled:
+            self._app.add_middleware(
+                CORSMiddleware,
+                allow_origins=config.cors.origins,
+                allow_credentials=config.cors.credentials,
+                allow_methods=config.cors.methods,
+                allow_headers=config.cors.headers
+            )
 
-    for router in routers:
-        new_app.include_router(router)
+        for router in routers:
+            self._app.include_router(router)
 
-    return new_app
+    async def lifespan(self, app: FastAPI) -> AsyncGenerator:
+        """
+        Создание схемы БД при запуске приложения.
+
+        :param app: Приложение FastAPI.
+        :return: None.
+        """
+        DBSession.setup(
+            self._config.db.database_url,
+            self._config.db.schema
+        )
+        async with DBSession.engine().begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        yield
+        await DBSession.close()
+
+    @property
+    def app(self) -> FastAPI:
+        return self._app
 
 
-app = create_app()
+app = App(settings).app
 
 if __name__ == '__main__':
     import uvicorn
