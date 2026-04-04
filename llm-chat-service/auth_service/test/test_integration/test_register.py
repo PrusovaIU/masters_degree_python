@@ -1,5 +1,7 @@
 import pytest
 from httpx import AsyncClient, Response
+
+from auth_service.app.api.router_auth import refresh_token
 from auth_service.app.consts.user_role import UserRole
 from fastapi import status
 from auth_service.app.app import App
@@ -19,6 +21,8 @@ LOGIN_DATA = {
     "username": EMAIL,
     "password": PASSWORD
 }
+
+ME_URL = "/auth/me"
 
 
 async def _test_register(client: AsyncClient) -> None:
@@ -45,24 +49,27 @@ async def _test_register_conflict(client: AsyncClient) -> None:
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
-async def _test_login(app: App, client: AsyncClient) -> None:
+async def _test_login(app: App, client: AsyncClient) -> (str, str):
     """
     Тестирование успешного логина.
 
     :param app: Тестируемое приложение.
     :param client: Тестовый клиент.
-    :return: None.
+    :return: Access и refresh токены.
     """
     response: Response = await client.post(LOGIN_URL, data=LOGIN_DATA)
     response.raise_for_status()
     response_json = response.json()
-    assert response_json["access_token"] is not None
-    assert response_json["refresh_token"] is not None
+    access_token = response_json["access_token"]
+    assert access_token is not None
+    refresh_token = response_json["refresh_token"]
+    assert refresh_token is not None
     assert response_json["token_type"] == "bearer"
     assert (response_json["expires_in"] ==
             app.settings.jwt.access_expire.total_seconds())
     assert (response_json["refresh_expires_in"] ==
             app.settings.jwt.refresh_expire.total_seconds())
+    return access_token, refresh_token
 
 
 async def _test_login_fail(
@@ -85,10 +92,25 @@ async def _test_login_fail(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+async def _test_me(client: AsyncClient, access_token: str) -> None:
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    response: Response = await client.get(ME_URL, headers=headers)
+    response.raise_for_status()
+    response_json = response.json()
+    assert response_json["id"] is not None
+    assert response_json["email"] == EMAIL
+    assert response_json["role"] == UserRole.user.value
+    assert response_json["created_at"] is not None
+    assert response_json["updated_at"] is not None
+
+
 @pytest.mark.asyncio
 async def test(app: App, client: AsyncClient):
     await _test_register(client)
     await _test_register_conflict(client)
-    await _test_login(app, client)
+    access_token, refresh_token = await _test_login(app, client)
     await _test_login_fail(client, EMAIL, "wrong_password")
     await _test_login_fail(client, "unknown@test.com", PASSWORD)
+    await _test_me(client, access_token)

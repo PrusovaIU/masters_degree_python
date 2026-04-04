@@ -26,7 +26,7 @@ def _get_user_data(token: str) -> TokenUserData:
     try:
         payload: AccessTokenData = verify_access_token(
             token,
-            settings.jwt.access_secret,
+            settings.jwt.access_secret.secret,
             settings.jwt.alg
         )
         user_data = TokenUserData(
