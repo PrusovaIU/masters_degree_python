@@ -10,11 +10,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class JWTSecret(BaseModel):
     """Секретный ключ для подписи JWT"""
-    secret_data: str | None = Field(
+    data: str | None = Field(
+        default=None,
         description="Секретный ключ для подписи JWT. Если не указан, "
                     "берется из файла secret_path."
     )
-    secret_path: Path | None = Field(
+    path: Path | None = Field(
+        default=None,
         description="Путь к файлу с секретным ключом для подписи JWT."
                     "Если не указан, берется из параметра secret_data."
     )
@@ -43,10 +45,10 @@ class JWTSecret(BaseModel):
     @model_validator(mode="after")
     def get_secret_files(self):
         """Определение секретного ключа"""
-        if self.secret_data:
-            self._secret = self.secret_data
-        elif self.secret_path:
-            self._secret = self._load_secret(self.secret_path)
+        if self.data:
+            self._secret = self.data
+        elif self.path:
+            self._secret = self._load_secret(self.path)
         else:
             raise ValueError(
                 "Не указан секретный ключ JWT (secret_data/secret_path)"
