@@ -113,6 +113,8 @@ async def _test_me(client: AsyncClient, access_token: str) -> None:
     assert response_json["role"] == UserRole.user.value
     assert response_json["created_at"] is not None
     assert response_json["updated_at"] is not None
+    assert response_json.get("password_hash") is None
+    assert response_json.get("password") is None
 
 
 async def _test_me_fail(client: AsyncClient, access_token: str | None) -> None:

@@ -15,7 +15,8 @@ def pwd_context() -> PWDContextType:
 
     :return: Класс контекста пароля.
     """
-    PWDContext.setup()
+    if not PWDContext.is_setup():
+        PWDContext.setup()
     return PWDContext
 
 

@@ -25,6 +25,10 @@ class PWDContext:
         )
         logger.info("Установлен контекст для хеширования паролей")
 
+    @classmethod
+    def is_setup(cls) -> bool:
+        return cls._pwd_context is not None
+
     @staticmethod
     def _check_setup(class_method: Callable):
         @wraps(class_method)
