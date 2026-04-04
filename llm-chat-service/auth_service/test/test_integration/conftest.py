@@ -2,7 +2,7 @@ import pytest
 import httpx
 from fastapi import FastAPI
 from auth_service.app.schemas import config
-from auth_service.app.main import App
+from auth_service.app.app import App
 from asgi_lifespan import LifespanManager
 from auth_service.app.consts.db import DBType
 from collections.abc import AsyncGenerator
