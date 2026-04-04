@@ -5,7 +5,9 @@ from sqlalchemy import func, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-Base = DeclarativeBase()
+class Base(DeclarativeBase):
+    """Базовый класс для всех SQLAlchemy моделей."""
+    pass
 
 
 class AbstractBase(Base):
@@ -18,7 +20,8 @@ class AbstractBase(Base):
 
     __abstract__ = True
 
-    id: Mapped[Integer] = mapped_column(
+    id: Mapped[int] = mapped_column(
+        Integer,
         primary_key=True,
         autoincrement=True,
     )

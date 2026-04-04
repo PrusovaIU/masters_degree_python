@@ -14,18 +14,28 @@ class DBSession:
     _has_setup: bool = False
 
     @classmethod
-    def setup(cls, data_base_url: str) -> None:
+    def engine(cls) -> AsyncEngine | None:
+        return cls._engine
+
+    @classmethod
+    def setup(cls, data_base_url: str, schema: str = "public") -> None:
         """
         Инициализация класса.
 
         :param data_base_url: Строка подключения к БД.
+        :param schema: Схема БД.
         :return: None
         """
         if cls._has_setup:
             msg = f"Класс {cls.__name__} уже был инициализирован."
             logger.warning(msg)
             raise SystemError(msg)
-        cls._engine = create_async_engine(data_base_url)
+        cls._engine = create_async_engine(
+            data_base_url,
+            connect_args={
+                "server_settings": {"search_path": f"{schema},public"}
+            }
+        )
         cls._async_session_maker = async_sessionmaker(
             cls._engine,
             expire_on_commit=False
@@ -71,7 +81,7 @@ class DBSession:
                 f"Класс {cls.__name__} не был инициализирован. "
                 f"Используйте метод setup()"
             )
-        session = await cls._async_session_maker()
+        session = cls._async_session_maker()
         try:
             yield session
             await session.commit()

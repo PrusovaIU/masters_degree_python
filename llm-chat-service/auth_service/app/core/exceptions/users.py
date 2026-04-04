@@ -1,4 +1,4 @@
-from base import AppException
+from .base import AppException
 from fastapi import status
 
 

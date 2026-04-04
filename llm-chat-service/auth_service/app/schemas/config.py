@@ -100,6 +100,7 @@ class Database(BaseModel):
     db_name: str = Field(description="Имя базы данных")
     user: str = Field(description="Пользователь базы данных")
     password: str = Field(description="Пароль пользователя базы данных")
+    schema: str = Field(default="public", description="Схема базы данных")
 
     @property
     def database_url(self) -> str:
@@ -138,9 +139,11 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # env_file=".env",
+        env_file="/home/hex/git/masters_degree_python/llm-chat-service/auth_service/.env",
         env_file_encoding="utf-8",
         extra="ignore",
+        env_nested_delimiter="__"
     )
     app_name: str = Field(
         default="Auth Service",

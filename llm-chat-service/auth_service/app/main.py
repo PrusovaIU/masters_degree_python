@@ -18,8 +18,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     :param app: Приложение FastAPI.
     :return: None.
     """
-    DBSession.setup(settings.db.database_url)
-    async with DBSession.get_async_session() as conn:
+    DBSession.setup(settings.db.database_url, settings.db.schema)
+    async with DBSession.engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     await DBSession.close()
