@@ -15,7 +15,7 @@ REGISTER_BODY = {
 }
 
 LOGIN_URL = "/auth/login"
-LOGIN_BODY = {
+LOGIN_DATA = {
     "username": EMAIL,
     "password": PASSWORD
 }
@@ -53,7 +53,7 @@ async def _test_login(app: App, client: AsyncClient) -> None:
     :param client: Тестовый клиент.
     :return: None.
     """
-    response: Response = await client.post(LOGIN_URL, data=LOGIN_BODY)
+    response: Response = await client.post(LOGIN_URL, data=LOGIN_DATA)
     response.raise_for_status()
     response_json = response.json()
     assert response_json["access_token"] is not None
@@ -65,8 +65,30 @@ async def _test_login(app: App, client: AsyncClient) -> None:
             app.settings.jwt.refresh_expire.total_seconds())
 
 
+async def _test_login_fail(
+        client: AsyncClient,
+        username: str,
+        password: str
+) -> None:
+    """
+    Тестирование неуспешного логина.
+    :param client: Тестовый клиент.
+    :param username: Username.
+    :param password: Пароль.
+    :return: None.
+    """
+    data = {
+        "username": username,
+        "password": password
+    }
+    response: Response = await client.post(LOGIN_URL, data=data)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
 @pytest.mark.asyncio
 async def test(app: App, client: AsyncClient):
     await _test_register(client)
     await _test_register_conflict(client)
     await _test_login(app, client)
+    await _test_login_fail(client, EMAIL, "wrong_password")
+    await _test_login_fail(client, "unknown@test.com", PASSWORD)
