@@ -11,6 +11,7 @@ from auth_service.app.db.models import User
 from auth_service.app.core.security import jwt_token
 from auth_service.app.schemas.config import JWTConfig
 from auth_service.app.consts.jwt_token import TokenType
+from auth_service.app.core.exceptions.base import BaseAppException
 
 
 class AuthUseCase:
@@ -48,6 +49,8 @@ class AuthUseCase:
                 f"Пользователь с email {email} уже существует ({err})"
             )
             raise users_exc.UserAlreadyExistsError(f"{email}")
+        except BaseAppException:
+            raise
         except Exception as err:
             logger.error(
                 f"Ошибка при регистрации пользователя: {err} "
@@ -100,6 +103,8 @@ class AuthUseCase:
         except security_exc.InvalidCredentialsError as err:
             logger.warning(str(err))
             raise
+        except BaseAppException:
+            raise
         except Exception as err:
             err_title = "Ошибка при аутентификации пользователя"
             logger.error(
@@ -148,7 +153,7 @@ class AuthUseCase:
     async def me(
             self,
             user_id: int
-    ) -> UserPublic:
+    ) -> User:
         """
         Получение профиля текущего пользователя.
 
@@ -159,7 +164,9 @@ class AuthUseCase:
         :raises GetUserError: При непредвиденной ошибке.
         """
         try:
-            user: UserPublic = await self._user_repo.get_by_id(user_id)
+            user: User = await self._user_repo.get_by_id(user_id)
+            if user is None:
+                raise users_exc.UserNotFoundError(str(user_id))
         except Exception as err:
             err_title = "Ошибка при получении профиля пользователя"
             logger.error(f"{err_title}: {err} ({err.__class__.__name__})")
@@ -199,6 +206,8 @@ class AuthUseCase:
                 jwt_config.access_secret.secret,
                 jwt_config.alg
             )
+        except BaseAppException:
+            raise
         except Exception as err:
             err_title = "Ошибка обновления access токена"
             logger.error(f"{err_title}: {err} ({err.__class__.__name__})")
