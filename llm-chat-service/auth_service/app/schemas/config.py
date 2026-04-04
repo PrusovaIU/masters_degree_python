@@ -8,16 +8,67 @@ from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class JWTSecret(BaseModel):
+    """Секретный ключ для подписи JWT"""
+    secret_data: str | None = Field(
+        description="Секретный ключ для подписи JWT. Если не указан, "
+                    "берется из файла secret_path."
+    )
+    secret_path: Path | None = Field(
+        description="Путь к файлу с секретным ключом для подписи JWT."
+                    "Если не указан, берется из параметра secret_data."
+    )
+
+    _secret: str | None = PrivateAttr(default=None)
+
+    @staticmethod
+    def _load_secret(
+            path: Path
+    ) -> str:
+        """
+        Загрузка секретного ключа из файла.
+
+        :param path: Путь к файлу с ключом.
+        :return: Ключ.
+
+        :raises ValueError: Если файл не найден или не может быть прочитан.
+        """
+        try:
+            return path.read_text(encoding="utf-8").strip()
+        except OSError as err:
+            err_title = f"Ошибка чтения файла с ключом {path.absolute()}"
+            logger.error(f"{err_title}: {err}")
+            raise ValueError(err_title) from err
+
+    @model_validator(mode="after")
+    def get_secret_files(self):
+        """Определение секретного ключа"""
+        if self.secret_data:
+            self._secret = self.secret_data
+        elif self.secret_path:
+            self._secret = self._load_secret(self.secret_path)
+        else:
+            raise ValueError(
+                "Не указан секретный ключ JWT (secret_data/secret_path)"
+            )
+
+    @property
+    def secret(self) -> str:
+        return self._secret
+
+
 class JWTConfig(BaseModel):
     """Настройки JWT"""
-    access_secret_path: Path = Field(
-        description="Путь к файлу с ключом для подписи access токенов"
+    access_secret: JWTSecret = Field(
+        description="Секретный ключ для подписи access токенов"
     )
-    refresh_secret_path: Path = Field(
-        description="Путь к файлу с ключом для подписи refresh токенов"
+    refresh_secret: JWTSecret = Field(
+        description="Секретный ключ для подписи refresh токенов"
     )
+
     token_type: str = Field(default="bearer", description="Тип токена")
     alg: str = Field(default="HS256", description="Алгоритм подписи JWT")
+
     access_expire_minutes: int = Field(
         default=15,
         description="Время жизни access токена в минутах",
@@ -26,55 +77,6 @@ class JWTConfig(BaseModel):
         default=24,
         description="Время жизни refresh токена в часах",
     )
-
-    _access_secret: str | None = PrivateAttr(default=None)
-    _refresh_secret: str | None = PrivateAttr(default=None)
-
-    @staticmethod
-    def _load_secret(
-            path: Path,
-            secret_type: Literal["access", "refresh"]
-    ) -> str:
-        """
-        Загрузка секретного ключа из файла.
-
-        :param path: Путь к файлу с ключом.
-        :param secret_type: Тип ключа (access или refresh).
-        :return: Ключ.
-
-        :raises ValueError: Если файл не найден или не может быть прочитан.
-        """
-        try:
-            return path.read_text(encoding="utf-8").strip()
-        except OSError as err:
-            err_title = f"Ошибка чтения файла с {secret_type} ключом"
-            logger.error(f"{err_title}: {err}")
-            raise ValueError(err_title) from err
-
-    @model_validator(mode="after")
-    def load_secret_files(self):
-        """Загрузка секретных ключей из файлов."""
-        self._access_secret = self._load_secret(
-            self.access_secret_path, "access"
-        )
-        self._refresh_secret = self._load_secret(
-            self.refresh_secret_path, "refresh"
-        )
-        return self
-
-    @property
-    def access_secret(self) -> str:
-        """
-        :return: ключ для подписи access токенов.
-        """
-        return self._access_secret
-
-    @property
-    def refresh_secret(self) -> str:
-        """
-        :return: ключ для подписи refresh токенов.
-        """
-        return self._refresh_secret
 
     @property
     def access_expire(self) -> timedelta:

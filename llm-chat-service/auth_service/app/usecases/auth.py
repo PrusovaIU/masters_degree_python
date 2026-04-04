@@ -88,13 +88,13 @@ class AuthUseCase:
                 user.id,
                 user.role.value,
                 jwt_config.access_expire,
-                jwt_config.access_secret,
+                jwt_config.access_secret.secret,
                 jwt_config.alg
             )
             refresh_token: str = jwt_token.create_refresh_token(
                 user.id,
                 jwt_config.refresh_expire,
-                jwt_config.refresh_secret,
+                jwt_config.refresh_secret.secret,
                 jwt_config.alg
             )
         except security_exc.InvalidCredentialsError as err:
@@ -189,14 +189,14 @@ class AuthUseCase:
             user: UserPublic = await self.get_current_user(
                 refresh_token,
                 TokenType.refresh,
-                jwt_config.refresh_secret,
+                jwt_config.refresh_secret.secret,
                 jwt_config.alg
             )
             new_access_token: str = jwt_token.create_access_token(
                 user.id,
                 user.role,
                 jwt_config.access_expire,
-                jwt_config.access_secret,
+                jwt_config.access_secret.secret,
                 jwt_config.alg
             )
         except Exception as err:
