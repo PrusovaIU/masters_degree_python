@@ -44,7 +44,7 @@ class App:
         )
         DBSession.setup(
             self._config.db.database_url,
-            self._config.db.schema
+            self._config.db.db_schema
         )
         async with DBSession.engine().begin() as conn:
             await conn.run_sync(Base.metadata.create_all)

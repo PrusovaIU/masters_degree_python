@@ -13,4 +13,5 @@ Auth Service предоставляет веб-API и Swagger по адресу 
 
 ## Содержание
 
-1. [Требования к проекту](docs/requirements.md)
+1. [Требования к проекту](docs/requirements.md);
+2. [Конфигурация](docs/config.md)

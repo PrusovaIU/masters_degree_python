@@ -106,7 +106,7 @@ class DatabaseConfig(BaseModel):
     db_name: str = Field(description="Имя базы данных")
     user: str = Field(description="Пользователь базы данных")
     password: str = Field(description="Пароль пользователя базы данных")
-    schema: str = Field(default="public", description="Схема базы данных")
+    db_schema: str = Field(default="public", description="Схема базы данных")
     test_db_path: str | None = Field(
         default=None,
         description="Путь к тестовой базе данных SQLite"
@@ -184,8 +184,8 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        # env_file=".env",
-        env_file="/home/hex/git/masters_degree_python/llm-chat-service/auth_service/.env",
+        env_file=".env",
+        # env_file="/home/hex/git/masters_degree_python/llm-chat-service/auth_service/.env",
         env_file_encoding="utf-8",
         extra="ignore",
         env_nested_delimiter="__"

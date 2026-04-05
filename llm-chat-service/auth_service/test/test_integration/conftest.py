@@ -26,7 +26,7 @@ def settings() -> config.Settings:
             user="",
             db_name="",
             password="",
-            schema="",
+            db_schema="",
             test_db_path=":memory:",
             db_type=DBType.sqlite
         )
