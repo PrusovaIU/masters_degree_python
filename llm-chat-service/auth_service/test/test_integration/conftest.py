@@ -20,7 +20,9 @@ environ.update({
     "DB__DB_NAME": "",
     "DB__DB_SCHEMA": "",
     "DB__DB_TYPE": DBType.sqlite.value,
-    "DB__TEST_DB_PATH": ":memory:"
+    "DB__TEST_DB_PATH": ":memory:",
+
+    "LOGS__FILE_PATH": ""
 })
 
 

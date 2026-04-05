@@ -8,11 +8,17 @@ from auth_service.app.core.security.password import PWDContext
 from auth_service.app.db.base import Base
 from auth_service.app.db.session import DBSession
 from auth_service.app.schemas.config import Settings
-
+from loguru import logger
 
 class App:
     def __init__(self, config: Settings):
         self._config = config
+        if config.logs.file_path:
+            logger.add(
+                config.logs.file_path,
+                level=config.logs.level,
+                rotation=config.logs.rotation
+            )
         self._app = FastAPI(
             title=config.app_name,
             version="1.0.0",

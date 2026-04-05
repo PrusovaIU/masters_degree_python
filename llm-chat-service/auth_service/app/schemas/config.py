@@ -1,6 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import Self
+from typing import Self, Literal
 from urllib.parse import quote_plus
 
 from loguru import logger
@@ -178,6 +178,21 @@ class PasswordHashConfig(BaseModel):
     )
 
 
+class LogConfig(BaseModel):
+    file_path: str = Field(
+        default="logs/auth_service.log",
+        description="Путь к файлу логов"
+    )
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
+        default="INFO",
+        description="Уровень логирования"
+    )
+    rotation: str = Field(
+        default="1 day",
+        description="Ротация логов"
+    )
+
+
 class Settings(BaseSettings):
     """
     Настройки приложения, загружаемые из переменных окружения.
@@ -193,6 +208,10 @@ class Settings(BaseSettings):
         description="Название сервиса"
     )
     env: str = Field(default="prod", description="Окружение выполнения")
+    logs: LogConfig = Field(
+        default_factory=LogConfig,
+        description="Настройки логирования"
+    )
 
     jwt: JWTConfig = Field(description="Настройки JWT")
     db: DatabaseConfig = Field(description="Настройки базы данных")
