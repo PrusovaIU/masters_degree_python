@@ -2,12 +2,26 @@ import pytest
 import httpx
 from fastapi import FastAPI
 from auth_service.app.schemas import config
-from auth_service.app.app import App
 from asgi_lifespan import LifespanManager
 from auth_service.app.consts.db import DBType
-from collections.abc import AsyncGenerator
 from auth_service.app.db.session import DBSession
 from auth_service.app.db.base import Base
+from os import environ
+
+
+environ.update({
+    "JWT__ACCESS_SECRET__DATA": "test_access_secret",
+    "JWT__REFRESH_SECRET__DATA": "test_access_secret",
+
+    "DB__HOST": "",
+    "DB__PORT": "0",
+    "DB__USER": "",
+    "DB__PASSWORD": "",
+    "DB__DB_NAME": "",
+    "DB__DB_SCHEMA": "",
+    "DB__DB_TYPE": DBType.sqlite.value,
+    "DB__TEST_DB_PATH": ":memory:"
+})
 
 
 @pytest.fixture(scope="session")
@@ -15,32 +29,19 @@ def settings() -> config.Settings:
     """
     :return: Тестовые настройки приложения.
     """
-    return config.Settings(
-        jwt=config.JWTConfig(
-            access_secret=config.JWTSecret(data="test_access_secret"),
-            refresh_secret=config.JWTSecret(data="test_refresh_secret")
-        ),
-        db=config.DatabaseConfig(
-            host="",
-            port=0,
-            user="",
-            db_name="",
-            password="",
-            db_schema="",
-            test_db_path=":memory:",
-            db_type=DBType.sqlite
-        )
-    )
+    from auth_service.app.core.config import settings
+    return settings
 
 
 @pytest.fixture(scope="session")
-async def app(settings: config.Settings) -> AsyncGenerator[App]:
+async def app(settings: config.Settings):
     """
     Настройка приложения для тестов.
 
     :param settings: Тестовые настройки приложения.
     :return: Приложение для тестов.
     """
+    from auth_service.app.app import App
     _app = App(settings)
     yield _app
     if DBSession.is_initialized():
@@ -49,7 +50,7 @@ async def app(settings: config.Settings) -> AsyncGenerator[App]:
 
 
 @pytest.fixture
-async def client(app: App):
+async def client(app):
     """
     :param app: приложение для тестов.
     :return: Тестовый клиент для приложения.

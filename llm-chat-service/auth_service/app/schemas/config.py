@@ -184,8 +184,6 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        # env_file="/home/hex/git/masters_degree_python/llm-chat-service/auth_service/.env",
         env_file_encoding="utf-8",
         extra="ignore",
         env_nested_delimiter="__"
