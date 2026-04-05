@@ -118,6 +118,11 @@ async def get_me(
     response_model=auth_schemas.RefreshTokenResponse,
     summary="Обновление access токена",
     description="Генерирует новый access токен по валидному refresh токену.",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": Detail
+        }
+    }
 )
 async def refresh_token(
         data: auth_schemas.RefreshTokenRequest,
