@@ -20,6 +20,10 @@
 
 ![request.png](request.png)
 
+**Auth form**
+
+![auth_form.png](auth_form.png)
+
 **CURL**
 
 ```shell
@@ -45,6 +49,8 @@ curl -X 'POST' \
 | refresh_expires_in | str | Время жизни refresh токена в секундах |
 
 ![200_OK.png](200_OK.png)
+
+![auth_form_ok.png](auth_form_ok.png)
 
 **401 - Unauthorized**:
 
