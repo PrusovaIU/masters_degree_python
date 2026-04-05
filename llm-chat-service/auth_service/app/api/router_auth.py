@@ -91,7 +91,12 @@ async def login(
 @router.get(
     "/me",
     response_model=UserPublic,
-    summary="Профиль текущего пользователя"
+    summary="Профиль текущего пользователя",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": Detail
+        }
+    }
 )
 async def get_me(
         user_data: UserDataDep,
