@@ -16,4 +16,5 @@ Auth Service предоставляет веб-API и Swagger по адресу 
 1. [Требования к проекту](docs/requirements.md);
 2. [Конфигурация](docs/config.md);
 3. [Запуск](docs/run.md);
-4. [Регистрация пользователя](docs/register/register.md);
+4. [Регистрация пользователя](docs/register/README.md);
+5. [Логирование](docs/login/README.md);

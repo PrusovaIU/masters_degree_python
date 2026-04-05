@@ -26,7 +26,7 @@ router = APIRouter(
         status.HTTP_409_CONFLICT: {
             "model": Detail
         }
-    },
+    }
 )
 async def register(
         user_data: auth_schemas.RegisterRequest,
@@ -55,7 +55,12 @@ async def register(
 @router.post(
     "/login",
     response_model=auth_schemas.LoginResponse,
-    summary="Вход пользователя (OAuth2 compatible)"
+    summary="Вход пользователя (OAuth2 compatible)",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": Detail
+        }
+    }
 )
 async def login(
         data: Annotated[OAuth2PasswordRequestForm, Depends()],
