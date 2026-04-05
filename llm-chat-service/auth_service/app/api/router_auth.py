@@ -8,16 +8,12 @@ from auth_service.app.core.config import settings
 from auth_service.app.schemas import auth as auth_schemas
 from auth_service.app.schemas.user import UserPublic
 from auth_service.app.consts.user_role import UserRole
+from auth_service.app.schemas.error_detail import Detail
 
 
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
-    responses={
-        400: {"description": "Bad request"},
-        401: {"description": "Unauthorized"},
-        404: {"description": "Not found"},
-    },
 )
 
 @router.post(
@@ -26,6 +22,11 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     summary="Регистрация нового пользователя",
     description="Создание нового пользователя",
+    responses={
+        status.HTTP_409_CONFLICT: {
+            "model": Detail
+        }
+    },
 )
 async def register(
         user_data: auth_schemas.RegisterRequest,
