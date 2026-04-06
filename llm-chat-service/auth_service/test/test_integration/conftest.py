@@ -3,7 +3,7 @@ import httpx
 from fastapi import FastAPI
 from auth_service.app.schemas import config
 from asgi_lifespan import LifespanManager
-from auth_service.app.consts.db import DBType
+from libs.consts.db import DBType
 from auth_service.app.db.session import DBSession
 from auth_service.app.db.base import Base
 from os import environ
