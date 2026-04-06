@@ -18,6 +18,28 @@ class ConfigWithPasswd(BaseModel):
             else ""
 
 
+class RateLimitingConfig(BaseModel):
+    """
+    Конфигурация Rate Limiting
+    """
+    key: str = Field(
+        default="rl:llm:requests",
+        description="Ключ для Rate Limiting"
+    )
+    llm_window: int = Field(
+        default=60,
+        description="Время окна в секундах"
+    )
+    llm_limit: int = Field(
+        default=10,
+        description="Количество запросов в минуту"
+    )
+    lock_ttl: int = Field(
+        default=300,
+        description="Время блокировки от дубликатов запросов в секундах"
+    )
+
+
 class RedisConfig(ConfigWithPasswd):
     """Конфигурация Redis"""
     host: str = Field(description="Хост Redis сервера")
@@ -28,9 +50,9 @@ class RedisConfig(ConfigWithPasswd):
         default=30,
         description="Таймаут соединения в секундах"
     )
-    lock_ttl: int = Field(
-        default=300,
-        description="Время блокировки от дубликатов запросов в секундах"
+    rate_limit: RateLimitingConfig = Field(
+        default_factory=RateLimitingConfig,
+        description="Настройки Rate Limiting"
     )
 
     @computed_field
@@ -89,24 +111,6 @@ class OpenRouterConfig(BaseModel):
     )
 
 
-class RateLimitingConfig(BaseModel):
-    """
-    Конфигурация Rate Limiting
-    """
-    key: str = Field(
-        default="rl:llm:requests",
-        description="Ключ для Rate Limiting"
-    )
-    llm_window: int = Field(
-        default=60,
-        description="Время окна в секундах"
-    )
-    llm_limit: int = Field(
-        default=10,
-        description="Количество запросов в минуту"
-    )
-
-
 class Settings(BaseSettings):
     """Настройки приложения"""
     model_config = SettingsConfigDict(
@@ -137,10 +141,6 @@ class Settings(BaseSettings):
     )
 
     jwt: JWTConfig = Field(description="Настройки JWT")
-    rate_limit: RateLimitingConfig = Field(
-        default_factory=RateLimitingConfig,
-        description="Настройки Rate Limiting"
-    )
 
     @computed_field
     @property
