@@ -1,6 +1,6 @@
 from typing import Any
 
-from auth_service.app.schemas.error_detail import Detail
+from libs.schemas.error_detail import Detail
 from fastapi import HTTPException, status
 
 

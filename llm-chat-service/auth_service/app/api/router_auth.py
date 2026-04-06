@@ -8,7 +8,7 @@ from auth_service.app.core.config import settings
 from auth_service.app.schemas import auth as auth_schemas
 from auth_service.app.schemas.user import UserPublic
 from auth_service.app.consts.user_role import UserRole
-from auth_service.app.schemas.error_detail import Detail
+from libs.schemas.error_detail import Detail
 
 
 router = APIRouter(

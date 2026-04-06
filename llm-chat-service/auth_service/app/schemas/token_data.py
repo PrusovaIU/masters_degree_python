@@ -35,7 +35,7 @@ class TokenData(BaseModel):
                 f"Неподдерживаемый тип токена: {token_type}"
             ) from err
 
-    sub: str = Field(description="Пользователя ID")
+    sub: str = Field(description="ID пользователя")
     exp: datetime = Field(description="Время истечения токена")
     iat: datetime = Field(description="Время создания токена")
     token_type: TokenType = Field(
