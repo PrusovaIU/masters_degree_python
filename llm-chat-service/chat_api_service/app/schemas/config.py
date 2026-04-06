@@ -28,6 +28,10 @@ class RedisConfig(ConfigWithPasswd):
         default=30,
         description="Таймаут соединения в секундах"
     )
+    lock_ttl: int = Field(
+        default=300,
+        description="Время блокировки от дубликатов запросов в секундах"
+    )
 
     @computed_field
     @property
@@ -89,21 +93,17 @@ class RateLimitingConfig(BaseModel):
     """
     Конфигурация Rate Limiting
     """
-    general_requests: int = Field(
-        default=100,
-        description="Максимальное количество запросов"
-    )
-    general_window: int = Field(
-        default=60,
-        description="Время окна в секундах"
-    )
-    llm_requests: int = Field(
-        default=10,
-        description="Максимальное количество запросов к LLM"
+    key: str = Field(
+        default="rl:llm:requests",
+        description="Ключ для Rate Limiting"
     )
     llm_window: int = Field(
         default=60,
         description="Время окна в секундах"
+    )
+    llm_limit: int = Field(
+        default=10,
+        description="Количество запросов в минуту"
     )
 
 
@@ -137,7 +137,7 @@ class Settings(BaseSettings):
     )
 
     jwt: JWTConfig = Field(description="Настройки JWT")
-    rate_limiting: RateLimitingConfig = Field(
+    rate_limit: RateLimitingConfig = Field(
         default_factory=RateLimitingConfig,
         description="Настройки Rate Limiting"
     )
