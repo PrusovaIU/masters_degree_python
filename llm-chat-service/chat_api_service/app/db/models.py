@@ -10,6 +10,7 @@ from sqlalchemy.sql import func
 
 from chat_api_service.app.consts.message import MessageStatus, SenderType, VALID_TRANSITIONS
 from .base import Base
+from chat_api_service.app.core.exceptions.message import InvalidMessageStatus
 
 
 class Conversation(Base):
@@ -148,8 +149,8 @@ class Message(Base):
         :raises ValueError: Если переход в недопустимое состояние.
         """
         if new_status not in VALID_TRANSITIONS.get(self.status, []):
-            raise ValueError(
-                f"Invalid status transition: {self.status} -> {new_status}"
+            raise InvalidMessageStatus(
+                f"Невалидных переход статуса: {self.status} -> {new_status}"
             )
         self.status = new_status
         now = datetime.now(timezone.utc)

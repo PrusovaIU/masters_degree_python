@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from functools import wraps
+from typing import Callable
 from uuid import UUID
 
 from celery import Task
@@ -36,6 +38,7 @@ from chat_api_service.app.usecases.chat_new_message import ChatNewMessageUsecase
 from chat_api_service.app.core.exceptions.value import UUIDValueError
 from chat_api_service.app.core.exceptions import chat_new_message_usecase as chat_nm_exc
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
+from chat_api_service.app.core.exceptions.message import InvalidMessageStatus
 
 
 logger = get_task_logger(__name__)
@@ -73,6 +76,22 @@ def _uuid_from_str(s: str) -> UUID:
         raise UUIDValueError(s)
 
 
+def uuid_error_decorator(func: Callable):
+    """Декоратор для обработки ошибок UUID."""
+    @wraps(func)
+    async def wrapper(self, message_id, *args, **kwargs) -> dict:
+        try:
+            return await func(self, message_id, *args, **kwargs)
+        except UUIDValueError as err:
+            return LLMTaskStatusSchema(
+                status=LLMTasksStatus.ERROR,
+                message_id=message_id,
+                error=f"invalid_uuid: {err.message}",
+                error_type=err.__class__.__name__
+            ).to_dict()
+    return wrapper
+
+
 @celery_app.task(
     name="chat_api_service.llm_request",
     bind=True,
@@ -84,6 +103,7 @@ def _uuid_from_str(s: str) -> UUID:
     soft_time_limit=settings.redis.rate_limit.llm_window,
     time_limit=settings.redis.rate_limit.llm_window + 30
 )
+@uuid_error_decorator
 async def llm_request(
         self: Task,
         message_id: str,
@@ -133,13 +153,6 @@ async def llm_request(
                 content=answer_content,
                 task_id=self.request.id
             )
-    except UUIDValueError as err:
-        status = LLMTaskStatusSchema(
-            status=LLMTasksStatus.ERROR,
-            message_id=message_id,
-            error=f"invalid_uuid: {err.message}",
-            error_type=err.__class__.__name__
-        )
     except chat_nm_exc.RateLimitExceededError:
         status = LLMTaskStatusSchema(
             status=LLMTasksStatus.RATE_LIMITED,
@@ -186,17 +199,17 @@ async def llm_request(
     return status.model_dump()
 
 
-
 @celery_app.task(
     name="chat_api_service.mark_message_read",
     bind=True,
     autoretry_for=(Exception,),
     retry_kwargs={"max_retries": 2},
 )
+@uuid_error_decorator
 async def mark_message_read(
         self: Task,
         message_id: str,
-        user_id: str,
+        user_id: str
 ) -> dict:
     """
     Фоновая задача: обновление статуса сообщения на "прочитано".
@@ -207,47 +220,42 @@ async def mark_message_read(
     :param user_id: ID пользователя (для проверки прав).
     :return: Результат операции.
     """
-    from uuid import UUID
-
+    status: LLMTaskStatusSchema | None = None
     try:
-        msg_uuid = UUID(message_id)
-    except (ValueError, AttributeError):
-        return {"error": "invalid_message_id"}
-
-    async with DBSession.get_async_session() as session:
-        repo = MessageRepository(session)
-
-        message = await repo.get_by_id(msg_uuid)
-        if not message:
-            return {"error": "message_not_found", "message_id": message_id}
-
-        # Опционально: проверка принадлежности диалога пользователю
-        # (можно добавить в репозиторий метод get_conversation_user_id)
-
-        try:
-            await repo.update_status(msg_uuid, MessageStatus.READ)
+        message_uuid = _uuid_from_str(message_id)
+        async with _get_message_repo() as repo:
+            message: Message | None = await repo.get_by_id(message_uuid)
+            if not message:
+                status = LLMTaskStatusSchema(
+                    status=LLMTasksStatus.ERROR,
+                    message_id=message_id,
+                    error="message_not_found"
+                )
+            await repo.update_status(message_uuid, MessageStatus.READ)
             logger.info(
-                f"Message {message_id} marked as read by user {user_id}")
+                f"Сообщение {message_id} помечено как прочитанное "
+                f"пользователем {user_id}"
+            )
+            read_at = message.read_at.isoformat() if message.read_at else ""
+            status = LLMTaskStatusSchema(
+                status=LLMTasksStatus.SUCCESS,
+                message_id=message_id,
+                note=f"read_at: {read_at}"
+            )
+    except InvalidMessageStatus as err:
+        logger.error(
+            f"Не удалось пометить сообщение {message_id} как прочитанное: "
+            f"{err} ({err.__class__.__name__})"
+        )
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.ERROR,
+            message_id=message_id,
+            error=str(err),
+            error_type=err.__class__.__name__,
+            note=f"current_status: {message.status}"
+        )
+    return status.to_dict()
 
-            return {
-                "status": "success",
-                "message_id": message_id,
-                "read_at": message.read_at.isoformat() if message.read_at else None,
-            }
-        except ValueError as e:
-            # Недопустимый переход статуса
-            logger.warning(f"Cannot mark message {message_id} as read: {e}")
-            return {
-                "status": "invalid_transition",
-                "message_id": message_id,
-                "current_status": message.status.value,
-                "error": str(e),
-            }
-
-
-# =============================================================================
-# Celery Task: периодическая очистка устаревших блокировок (опционально)
-# =============================================================================
 
 @celery_app.task(
     name="chat_api_service.cleanup_stale_locks",
