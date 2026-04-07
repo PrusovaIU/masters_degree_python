@@ -11,15 +11,13 @@ Celery tasks для асинхронной обработки запросов �
 
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
+from datetime import datetime
 from functools import wraps
 from typing import Callable
 from uuid import UUID
 
 from celery import Task
 from celery.utils.log import get_task_logger
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from chat_api_service.app.consts.message import MessageStatus
 from chat_api_service.app.core.config import settings
@@ -28,17 +26,16 @@ from chat_api_service.app.db.session import DBSession
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.services.openrouter_client import OpenRouterClient
-from chat_api_service.app.schemas.config import OpenRouterConfig
 from chat_api_service.app.infra.celery_app import celery_app
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
-from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from chat_api_service.app.schemas.llm_tasks import LLMTaskStatusSchema
-from chat_api_service.app.usecases.chat_new_message import ChatNewMessageUsecase
+from chat_api_service.app.usecases.chat.new_message import ChatNewMessageUsecase
 from chat_api_service.app.core.exceptions.value import UUIDValueError
 from chat_api_service.app.core.exceptions import chat_new_message_usecase as chat_nm_exc
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.core.exceptions.message import InvalidMessageStatus
+from chat_api_service.app.core.exceptions.message import InvalidMessageStatus, MessageNotFound
+from chat_api_service.app.usecases.chat.mark_message import MarkMessageUsecase
 
 
 logger = get_task_logger(__name__)
@@ -217,30 +214,22 @@ async def mark_message_read(
     Может вызываться при открытии диалога пользователем или по таймеру.
 
     :param message_id: UUID сообщения.
-    :param user_id: ID пользователя (для проверки прав).
+    :param user_id: ID пользователя.
     :return: Результат операции.
     """
     status: LLMTaskStatusSchema | None = None
     try:
         message_uuid = _uuid_from_str(message_id)
         async with _get_message_repo() as repo:
-            message: Message | None = await repo.get_by_id(message_uuid)
-            if not message:
-                status = LLMTaskStatusSchema(
-                    status=LLMTasksStatus.ERROR,
-                    message_id=message_id,
-                    error="message_not_found"
-                )
-            await repo.update_status(message_uuid, MessageStatus.READ)
-            logger.info(
-                f"Сообщение {message_id} помечено как прочитанное "
-                f"пользователем {user_id}"
+            usecase = MarkMessageUsecase(repo, logger)
+            read_at: datetime | None = await usecase.as_read(
+                message_uuid, user_id
             )
-            read_at = message.read_at.isoformat() if message.read_at else ""
+            read_at_note = read_at.isoformat() if read_at else ""
             status = LLMTaskStatusSchema(
                 status=LLMTasksStatus.SUCCESS,
                 message_id=message_id,
-                note=f"read_at: {read_at}"
+                note=f"read_at: {read_at_note}"
             )
     except InvalidMessageStatus as err:
         logger.error(
@@ -252,7 +241,16 @@ async def mark_message_read(
             message_id=message_id,
             error=str(err),
             error_type=err.__class__.__name__,
-            note=f"current_status: {message.status}"
+            note=f"current_status: {err.old_status}"
+        )
+    except MessageNotFound as err:
+        logger.error(
+            f"{err}: message_id={message_id} - {err.__class__.__name__}"
+        )
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.ERROR,
+            message_id=message_id,
+            error="message_not_found"
         )
     return status.to_dict()
 

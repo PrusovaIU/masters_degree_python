@@ -15,7 +15,7 @@ class RateLimitExceededError(ChatNewMessageError):
 class AlreadyProcessedError(ChatNewMessageError):
     """Сообщение уже обработано."""
     def __init__(self, message: str, content: str):
-        super().__init__(message)
+        super().__init__(message, content=content)
         self._content = content
 
     @property

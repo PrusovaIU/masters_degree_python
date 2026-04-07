@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    String, Text, DateTime, Enum, ForeignKey, Index
+    String, Text, DateTime, Enum, ForeignKey
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -150,7 +150,9 @@ class Message(Base):
         """
         if new_status not in VALID_TRANSITIONS.get(self.status, []):
             raise InvalidMessageStatus(
-                f"Невалидных переход статуса: {self.status} -> {new_status}"
+                f"Невалидных переход статуса",
+                old_status=self.status,
+                new_status=new_status
             )
         self.status = new_status
         now = datetime.now(timezone.utc)
