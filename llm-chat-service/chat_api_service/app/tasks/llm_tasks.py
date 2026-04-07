@@ -32,7 +32,7 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from chat_api_service.app.schemas.llm_tasks import LLMTaskStatusSchema
-from chat_api_service.app.usecases.chat import ChatUseCase
+from chat_api_service.app.usecases.chat import ChatNewMessageUsecase
 
 logger = get_task_logger(__name__)
 
@@ -249,48 +249,11 @@ async def llm_request(
     try:
 
 
-        # -----------------------------------------------------------------
-        # Шаг 6: Создание сообщения-ответа от ассистента
-        # -----------------------------------------------------------------
-        from chat_api_service.app.consts.message import SenderType
-        from chat_api_service.app.schemas.message import MessageCreate
-
-        async with DBSession.get_async_session() as session:
-            repo = MessageRepository(session)
-
-            # Создаём сообщение с ответом LLM
-            assistant_message = await repo.create(
-                conversation_id=conv_uuid,
-                message_in=MessageCreate(
-                    sender_type=SenderType.ASSISTANT,
-                    content=llm_response,
-                    status=MessageStatus.DELIVERED,
-                    metadata={
-                        "model": or_settings.model,
-                        "temperature": temperature,
-                        "task_id": self.request.id,
-                        "tokens_estimated": len(llm_response.split()),
-                    }
-                ),
-                idempotency_key=f"{idempotency_key}:response",
-            )
-
-            # Обновляем статус исходного сообщения → DELIVERED
-            await repo.update_status(msg_uuid, MessageStatus.DELIVERED)
-
-            assistant_id = str(assistant_message.id)
-
-        logger.info(
-            f"LLM request completed: msg_id={message_id}, "
-            f"response_id={assistant_id}, task_id={self.request.id}"
-        )
-
         return {
             "status": "success",
             "message_id": message_id,
             "response_id": assistant_id,
             "content": llm_response,
-            "model": or_settings.model,
             "task_id": self.request.id,
         }
 

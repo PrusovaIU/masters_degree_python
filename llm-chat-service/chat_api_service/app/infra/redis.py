@@ -111,7 +111,7 @@ class RedisClient:
         return bool(result)
 
     @classmethod
-    async def _release_lock(cls, idempotency_key: str) -> None:
+    async def release_lock(cls, idempotency_key: str) -> None:
         """
         Освобождение блокировки.
 
