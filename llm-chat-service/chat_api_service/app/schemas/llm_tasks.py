@@ -33,7 +33,6 @@ class LLMTaskStatusSchema(BaseModel):
         description="Описание ошибки"
     )
 
-
     def to_dict(self):
         """Сериализация в словарь без None полей"""
         return self.model_dump(exclude_none=True)
