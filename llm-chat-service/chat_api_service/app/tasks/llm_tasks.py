@@ -34,6 +34,8 @@ from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from chat_api_service.app.schemas.llm_tasks import LLMTaskStatusSchema
 from chat_api_service.app.usecases.chat_new_message import ChatNewMessageUsecase
 from chat_api_service.app.core.exceptions.value import UUIDValueError
+from chat_api_service.app.core.exceptions import chat_new_message_usecase as chat_nm_exc
+from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 
 
 logger = get_task_logger(__name__)
@@ -106,6 +108,7 @@ async def llm_request(
     :raises: Celery Retry при временных ошибках,
              или возврат dict с error при критических сбоях.
     """
+    status: LLMTaskStatusSchema | None = None
     try:
         message_uuid = _uuid_from_str(message_id)
         conversation_uuid = _uuid_from_str(conversation_id)
@@ -122,13 +125,66 @@ async def llm_request(
                 temperature,
                 logger
             )
-            result: LLMTaskStatusSchema = await usecase.new_message()
-            return result.to_dict()
+            answer_id, answer_content = await usecase.new_message()
+            status = LLMTaskStatusSchema(
+                status=LLMTasksStatus.SUCCESS,
+                message_id=message_id,
+                response_id=str(answer_id),
+                content=answer_content,
+                task_id=self.request.id
+            )
     except UUIDValueError as err:
-        return {
-            "error": f"invalid_uuid: {err.message}",
-            "message_id": message_id
-        }
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.ERROR,
+            message_id=message_id,
+            error=f"invalid_uuid: {err.message}",
+            error_type=err.__class__.__name__
+        )
+    except chat_nm_exc.RateLimitExceededError:
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.RATE_LIMITED,
+            message_id=message_id,
+            retry_after=settings.redis.rate_limit.llm_window
+        )
+    except chat_nm_exc.CachedError as err:
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.CACHED,
+            message_id=message_id,
+            content=err.content
+        )
+    except chat_nm_exc.AlreadyProcessedError as err:
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.ALREADY_PROCESSED,
+            message_id=message_id,
+            content=err.content
+        )
+    except chat_nm_exc.IsProcessingError:
+        status = LLMTaskStatusSchema(
+            status=LLMTasksStatus.PROCESSING,
+            message_id=message_id,
+            note="Request is being processed by another worker"
+        )
+    except Exception as err:
+        if isinstance(err, (ConnectionError, TimeoutError)):
+            # Временные ошибки сети — можно повторить
+            raise self.retry(
+                exc=err,
+                countdown=5 * (self.request.retries + 1)
+            )
+        elif "rate_limit" in str(err).lower():
+            # Rate limit от OpenRouter — ждём дольше
+            raise self.retry(exc=err, countdown=30)
+        else:
+            # Критическая ошибка
+            status = LLMTaskStatusSchema(
+                status=LLMTasksStatus.ERROR,
+                message_id=message_id,
+                error_type=err.__class__.__name__,
+                error=str(err),
+                task_id=self.request.id
+            )
+    return status.model_dump()
+
 
 
 @celery_app.task(

@@ -6,9 +6,9 @@ from chat_api_service.app.consts.message import SenderType
 
 class LLMTaskStatusSchema(BaseModel):
     status: LLMTasksStatus = Field(description="Статус задачи")
-    message_id: UUID = Field(description="ID сообщения")
-    response_id: UUID | None = Field(default=None, description="ID ответа")
-    task_id: UUID | None = Field(
+    message_id: str = Field(description="ID сообщения")
+    response_id: str | None = Field(default=None, description="ID ответа")
+    task_id: str | None = Field(
         default=None,
         description="ID задачи обработки"
     )
@@ -40,5 +40,5 @@ class LLMTaskStatusSchema(BaseModel):
 
 class MessageSchema(BaseModel):
     """Модель сообщения для LLM"""
-    role: SenderType = Field(description="Роль отправителя")
+    role: SenderType | str = Field(description="Роль отправителя")
     content: str = Field(description="Контекст сообщения")

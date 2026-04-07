@@ -3,16 +3,15 @@ from uuid import UUID
 from celery import Task
 
 from chat_api_service.app.consts.message import MessageStatus
-from chat_api_service.app.core.config import settings
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.services.openrouter_client import OpenRouterClient
-from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.schemas.llm_tasks import LLMTaskStatusSchema, MessageSchema
+from chat_api_service.app.schemas.llm_tasks import MessageSchema
 from chat_api_service.app.consts.message import SenderType
 import loguru
 from chat_api_service.app.schemas.message import MessageCreate
+from chat_api_service.app.core.exceptions import chat_new_message_usecase as errors
 
 
 class ChatNewMessageUsecase:
@@ -42,7 +41,7 @@ class ChatNewMessageUsecase:
 
     async def _update_message_status(
             self,
-            new_status: MessageStatus,
+            new_status: MessageStatus | str,
             content: str | None = None,
             metadata: dict | None = None,
     ) -> None:
@@ -64,11 +63,13 @@ class ChatNewMessageUsecase:
             new_status=new_status,
         )
 
-    async def _check_rate_limit(self) -> LLMTaskStatusSchema | None:
+    async def _check_rate_limit(self) -> None:
         """
         Проверка на превышение лимита запросов.
 
-        :return: Статус ошибки, если превышен лимит, иначе None.
+        :return: None.
+
+        :raises RateLimitExceededError: Если лимит запросов превышен.
         """
         if not await RedisClient.check_rate_limit(self._user_id):
             self._logger.warning(
@@ -79,18 +80,16 @@ class ChatNewMessageUsecase:
                 new_status=MessageStatus.FAILED,
                 metadata={"error": "rate_limit_exceeded"}
             )
-            return LLMTaskStatusSchema(
-                status=LLMTasksStatus.RATE_LIMITED,
-                message_id=self._message_id,
-                retry_after=settings.redis.rate_limit.llm_window
-            )
-        return None
+            raise errors.RateLimitExceededError("Rate limit exceeded")
 
-    async def _acquire_lock(self) -> LLMTaskStatusSchema | None:
+    async def _acquire_lock(self) -> None:
         """
         Захват блокировки для предотвращения дубликатов.
 
-        :return: Статус ошибки, если блокировка уже занята, иначе None.
+        :return: None.
+
+        :raises AlreadyProcessedError: Если запрос уже обработан.
+        :raises IsProcessingError: Если запрос уже обрабатывается.
         """
         lock_acquired = await RedisClient.acquire_lock(self._idempotency_key)
         if not lock_acquired:
@@ -106,24 +105,22 @@ class ChatNewMessageUsecase:
                     f"Идемпотентный запрос уже обработан: "
                     f"{self._idempotency_key}"
                 )
-                return LLMTaskStatusSchema(
-                    status=LLMTasksStatus.ALREADY_PROCESSED,
-                    message_id=self._message_id,
-                    content=existing.content
+                raise errors.AlreadyProcessedError(
+                    "Запрос уже обработан",
+                    existing.content
                 )
             else:
-                return LLMTaskStatusSchema(
-                    status=LLMTasksStatus.PROCESSING,
-                    message_id=self._message_id,
-                    note="Request is being processed by another worker"
-                )
+                raise errors.IsProcessingError("Запрос уже обрабатывается")
         return None
 
-    async def _check_race_condition(self) -> LLMTaskStatusSchema | None:
+    async def _check_race_condition(self) -> None:
         """
         Проверка на race condition при обработке запроса.
 
-        :return: Статус ошибки, если запрос уже обрабатывается, иначе None.
+        :return: None.
+
+        :raises CachedError: Если запрос уже закэширован.
+        :raises IsProcessingError: Если запрос уже обрабатывается.
         """
         existing_msg = await self._repo.get_by_idempotency_key(
             self._idempotency_key
@@ -135,16 +132,13 @@ class ChatNewMessageUsecase:
                 self._logger.info(
                     f"Обнаружено дублирование запроса: {self._idempotency_key}"
                 )
-                return LLMTaskStatusSchema(
-                    status=LLMTasksStatus.CACHED,
-                    message_id=existing_msg.id,
-                    content=existing_msg.content
+                raise errors.CachedError(
+                    "Запрос закэширован",
+                    existing_msg.content
                 )
             elif existing_msg.status == MessageStatus.PROCESSING:
-                return LLMTaskStatusSchema(
-                    status=LLMTasksStatus.PROCESSING,
-                    message_id=self._message_id
-                )
+                raise errors.IsProcessingError("Запрос уже обрабатывается")
+
         await self._repo.update_status(
             self._message_id, MessageStatus.PROCESSING
         )
@@ -205,12 +199,14 @@ class ChatNewMessageUsecase:
 
         return assistant_message.id
 
-    async def _handle_error(self, exc: Exception) -> LLMTaskStatusSchema:
+    async def _handle_error(self, exc: Exception) -> None:
         """
         Обработка ошибок при выполнении запроса к LLM.
 
         :param exc: Возникшее исключение.
         :return: Статус задачи с ошибкой.
+
+        :raises Exception: Перенаправление исключения exc.
         """
         try:
             await self._update_message_status(
@@ -226,25 +222,8 @@ class ChatNewMessageUsecase:
                 f"Не удалось обновить статус сообщения: {db_err} "
                 f"(message_id={self._message_id})"
             )
-        else:
-            if isinstance(exc, (ConnectionError, TimeoutError)):
-                # Временные ошибки сети — можно повторить
-                raise self._task.retry(
-                    exc=exc,
-                    countdown=5 * (self._task.request.retries + 1)
-                )
-            elif "rate_limit" in str(exc).lower():
-                # Rate limit от OpenRouter — ждём дольше
-                raise self._task.retry(exc=exc, countdown=30)
-            else:
-                # Критическая ошибка
-                return LLMTaskStatusSchema(
-                    status=LLMTasksStatus.ERROR,
-                    message_id=self._message_id,
-                    error_type=exc.__class__.__name__,
-                    error=str(exc),
-                    task_id=self._task.request.id
-                )
+        finally:
+            raise exc
 
     async def _release_lock(self) -> None:
         """
@@ -263,21 +242,19 @@ class ChatNewMessageUsecase:
                 f"{err} ({err.__class__.__name__})"
             )
 
-
-    async def new_message(self) -> LLMTaskStatusSchema:
+    async def new_message(self) -> tuple[UUID, str]:
         """
         Обработка нового сообщения от пользователя.
-        :return:
+        :return: ID созданного сообщения и ответ LLM.
+
+        :raises RateLimitExceededError: Если превышен лимит запросов.
+        :raises AlreadyProcessedError: Если запрос уже обработан.
+        :raises IsProcessingError: Если запрос уже обрабатывается.
+        :raises CachedError: Если запрос закэширован.
         """
-        if err_msg := await self._check_rate_limit():
-            return err_msg
-
-        if err_msg := await self._acquire_lock():
-            return err_msg
-
-        if err_msg := await self._check_race_condition():
-            return err_msg
-
+        await self._check_rate_limit()
+        await self._acquire_lock()
+        await self._check_race_condition()
         try:
             messages = await self._prepare_context()
             llm_response: str = await self._openrouter_client.chat_completion(
@@ -299,10 +276,4 @@ class ChatNewMessageUsecase:
             await self._handle_error(err)
         finally:
             await self._release_lock()
-        return LLMTaskStatusSchema(
-            status=LLMTasksStatus.SUCCESS,
-            message_id=self._message_id,
-            response_id=assistant_msg_id,
-            content=llm_response,
-            task_id=self._task.request.id
-        )
+        return assistant_msg_id, llm_response
