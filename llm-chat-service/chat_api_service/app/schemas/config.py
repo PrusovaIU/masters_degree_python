@@ -13,8 +13,8 @@ class ConfigWithPasswd(BaseModel):
         """
         :return: Пароль с экранированными символами.
         """
-        return f":{quote_plus(self.REDIS_PASSWORD)}@" \
-            if self.REDIS_PASSWORD \
+        return f":{quote_plus(self.password)}@" \
+            if self.password \
             else ""
 
 
