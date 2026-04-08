@@ -116,7 +116,7 @@ class MessageRepository:
     async def update_status(
             self,
             message_id: UUID,
-            new_status: MessageStatus,
+            new_status: MessageStatus | str,
             conversation_id: UUID | None = None,
     ) -> Message | None:
         """

@@ -11,10 +11,12 @@ class BaseAppException(Exception):
     def __init__(
             self,
             message: str | Exception,
-            title: str | None = None
+            title: str | None = None,
+            **kwargs
     ):
         self._title = title if title else self.__class__.__name__
         self._message = str(message)
+        self._kwargs = kwargs
 
     def __str__(self):
         return f"{self._title}: {self._message}"
@@ -35,9 +37,13 @@ class BaseAppException(Exception):
 
     @property
     def detail(self) -> Detail:
-        return Detail(title=self.title, message=self.message)
+        return Detail(
+            title=self.title,
+            message=self.message,
+            metadata=self._kwargs
+        )
 
 
 class AppException(BaseAppException):
-    def __init__(self, message: str | Exception):
-        super().__init__(message)
+    def __init__(self, message: str | Exception, **kwargs):
+        super().__init__(message, **kwargs)

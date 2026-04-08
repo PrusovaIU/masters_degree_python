@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    String, Text, DateTime, Enum, ForeignKey, Index
+    String, Text, DateTime, Enum, ForeignKey
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -10,6 +10,7 @@ from sqlalchemy.sql import func
 
 from chat_api_service.app.consts.message import MessageStatus, SenderType, VALID_TRANSITIONS
 from .base import Base
+from chat_api_service.app.core.exceptions.message import InvalidMessageStatus
 
 
 class Conversation(Base):
@@ -73,7 +74,7 @@ class Message(Base):
     )
     conversation_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("conversations.id", ondelete="CASCADE"),
+        ForeignKey(Conversation.id, ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -148,8 +149,10 @@ class Message(Base):
         :raises ValueError: Если переход в недопустимое состояние.
         """
         if new_status not in VALID_TRANSITIONS.get(self.status, []):
-            raise ValueError(
-                f"Invalid status transition: {self.status} -> {new_status}"
+            raise InvalidMessageStatus(
+                f"Невалидных переход статуса",
+                old_status=self.status,
+                new_status=new_status
             )
         self.status = new_status
         now = datetime.now(timezone.utc)

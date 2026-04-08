@@ -6,11 +6,13 @@ from chat_api_service.app.consts.message import MessageStatus, SenderType
 
 
 class MessageCreate(BaseModel):
-    sender_type: SenderType
+    """Модель для создания сообщения"""
+    sender_type: SenderType | str
     content: str = Field(min_length=1, max_length=65536)
-    status: Optional[MessageStatus] = None
-    metadata: Optional[dict] = None
+    status: MessageStatus | str
+    metadata: dict | None = Field(default=None)
 
 
 class MessageStatusUpdate(BaseModel):
+    """Модель для обновления статуса сообщения"""
     status: MessageStatus
