@@ -10,20 +10,29 @@ class RedisClient:
     _redis_client: aioredis.Redis | None = None
     _settings: RedisConfig | None = None
 
-    async def setup(self, settings: RedisConfig):
-        """Инициализация Redis клиента."""
-        if self._redis_client is not None:
+    @classmethod
+    async def setup(cls, settings: RedisConfig, has_set: bool = False) -> None:
+        """
+        Инициализация Redis клиента.
+
+        :param settings: Настройки Redis.
+
+        :param has_set: Если False, и клиент уже был инициализирован,
+            будет выброшено исключение.
+        """
+        if cls._redis_client is not None and not has_set:
             raise SystemError("Redis клиент уже инициализирован.")
-        self._settings = settings
-        self._redis_client = aioredis.from_url(settings.url)
-        await self._redis_client.ping()
+        cls._settings = settings
+        cls._redis_client = aioredis.from_url(settings.url)
+        await cls._redis_client.ping()
         logger.info("Redis клиент инициализирован.")
 
-    async def close(self):
+    @classmethod
+    async def close(cls):
         """Закрытие Redis клиента."""
-        if self._redis_client is not None:
-            await self._redis_client.close()
-            self._redis_client = None
+        if cls._redis_client is not None:
+            await cls._redis_client.close()
+            cls._redis_client = None
 
     @classmethod
     def client(cls) -> aioredis.Redis:
@@ -120,3 +129,23 @@ class RedisClient:
         redis = cls._redis_client
         lock_key = cls.get_redis_lock_key(idempotency_key)
         await redis.delete(lock_key)
+
+    @classmethod
+    async def clean_up(cls) -> int:
+        """
+        Очистка устаревших блокировок.
+
+        :return:Количество удалённых блокировок.
+        """
+        pattern = cls.get_redis_lock_key("*")
+        deleted_count = 0
+        async for key in cls._redis_client.scan_iter(
+                match=pattern, count=100
+        ):
+            ttl = await cls._redis_client.ttl(key)
+            if ttl > cls._settings.rate_limit.lock_ttl:
+                # Блокировка живёт дольше положенного — удаляем
+                await cls._redis_client.delete(key)
+                deleted_count += 1
+                logger.debug(f"Удален ключ: {key.decode()}")
+        return deleted_count

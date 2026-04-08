@@ -1,12 +1,5 @@
 """
 Celery tasks для асинхронной обработки запросов к LLM.
-
-Функционал:
-- Отправка запросов к OpenRouter API
-- Обновление статусов сообщений в БД
-- Идемпотентность по task_id / idempotency_key
-- Rate limiting через Redis
-- Обработка ошибок и повторные попытки
 """
 
 from __future__ import annotations
@@ -19,9 +12,7 @@ from uuid import UUID
 from celery import Task
 from celery.utils.log import get_task_logger
 
-from chat_api_service.app.consts.message import MessageStatus
 from chat_api_service.app.core.config import settings
-from chat_api_service.app.db.models import Message
 from chat_api_service.app.db.session import DBSession
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
@@ -40,6 +31,7 @@ from chat_api_service.app.usecases.chat.mark_message import MarkMessageUsecase
 
 logger = get_task_logger(__name__)
 or_client = OpenRouterClient(settings.openrouter)
+RedisClient.setup(settings.redis, True)
 
 
 @asynccontextmanager
@@ -265,21 +257,14 @@ async def cleanup_stale_locks() -> dict:
 
     Запускается по расписанию (например, раз в 5 минут через Celery Beat).
     """
-    redis = RedisClient.client()
-    pattern = "llm:lock:*"
-    deleted_count = 0
-
-    # Итерируем по ключам с паттерном (в продакшене лучше использовать
-    # отдельный set с таймстемпами для более эффективной очистки)
-    async for key in redis.scan_iter(match=pattern, count=100):
-        ttl = await redis.ttl(key)
-        if ttl == -2:  # ключ не существует
-            continue
-        if ttl > settings.redis.lock_ttl:
-            # Блокировка живёт дольше положенного — удаляем
-            await redis.delete(key)
-            deleted_count += 1
-            logger.debug(f"Deleted stale lock: {key.decode()}")
-
-    logger.info(f"Cleanup completed: removed {deleted_count} stale locks")
-    return {"deleted_locks": deleted_count}
+    try:
+        deleted_count: int = await RedisClient.clean_up()
+        logger.info(
+            f"Очистка блоков : удалено {deleted_count} зависших блоков"
+        )
+        return {"deleted_locks": deleted_count}
+    except Exception as err:
+        logger.error(
+            f"Ошибка при очистке блоков: {err} ({err.__class__.__name__})"
+        )
+        return {"error": str(err)}

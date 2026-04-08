@@ -9,6 +9,9 @@ from chat_api_service.app.core.exceptions.message import MessageNotFound
 
 
 class MarkMessageUsecase:
+    """
+    Usecase для изменения статуса сообщения.
+    """
     def __init__(
             self,
             message_repository: MessageRepository,
