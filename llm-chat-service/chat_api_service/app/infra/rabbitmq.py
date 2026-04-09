@@ -16,36 +16,6 @@ class RabbitMQClient:
     _connection: AbstractRobustConnection | None = None
     _channel: AbstractRobustChannel | None = None
     _is_connected: bool = False
-    _lock: asyncio.Lock = asyncio.Lock()
-    _reconnect_task: asyncio.Task | None = None
-    _on_reconnect_callbacks: list[Callable[[], Awaitable[None]]] = []
-
-    def __init__(
-            self,
-            url: str,
-            reconnect_interval: int = 5,
-            max_reconnect_attempts: int = 10,
-            timeout: int = 5,
-    ):
-        """
-        Инициализация клиента.
-
-        :param url: URL подключения к RabbitMQ (amqp://...).
-
-        :param reconnect_interval: Интервал между попытками
-            переподключения (сек).
-
-        :param max_reconnect_attempts: Максимальное количество попыток
-            переподключения.
-        """
-        self._url = url
-        self._timeout = timeout
-        self._reconnect_interval = reconnect_interval
-        self._max_reconnect_attempts = max_reconnect_attempts
-        self._connection_params = {
-            "url": self._url,
-            "timeout": timeout
-        }
 
     @classmethod
     async def setup(
