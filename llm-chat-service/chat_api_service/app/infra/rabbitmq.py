@@ -2,12 +2,13 @@ from collections.abc import Callable, Awaitable
 from datetime import datetime
 from typing import Any
 
-from aio_pika import Message, ExchangeType, connect_robust
-from aio_pika.abc import DeliveryMode, AbstractRobustConnection, AbstractRobustChannel, RobustChannel
+from aio_pika import Message, connect_robust, IncomingMessage
+from aio_pika.abc import DeliveryMode, AbstractRobustConnection, \
+    AbstractRobustChannel, AbstractRobustQueue, AbstractRobustExchange
 import asyncio
 from loguru import logger
-import json
 from chat_api_service.app.core.exceptions import rabbitmq as errors
+from chat_api_service.app.core.rabbitmq_utils import RabbitMQConsumeUtils
 
 
 class RabbitMQClient:
@@ -110,7 +111,7 @@ class RabbitMQClient:
         :param routing_key: Ключ маршрутизации.
         :param persistent: Если True, сообщение будет сохранено на диск.
         :param priority: Приоритет сообщения.
-        :param expiration: TTL сообщения в миллесекундах.
+        :param expiration: TTL сообщения в миллисекундах.
         :param message_id: Идентификатор сообщения.
         :param headers: Дополнительные заголовки сообщения.
         :return: None.
@@ -134,10 +135,11 @@ class RabbitMQClient:
             timestamp=datetime.now()
         )
         try:
-            exchange = await cls._channel.declare_exchange(
-                name=exchange_name,
-                durable=True
-            )
+            exchange: AbstractRobustExchange = \
+                await cls._channel.declare_exchange(
+                    name=exchange_name,
+                    durable=True
+                )
             await exchange.publish(message, routing_key=routing_key)
             logger.debug(
                 f"Сообщение успешно отправлено в RabbitMQ.",
@@ -158,3 +160,38 @@ class RabbitMQClient:
                 exchange_name,
                 routing_key
             )
+
+    async def consume(
+            self,
+            queue_name: str,
+            callback: Callable[[IncomingMessage], Awaitable[None]],
+            auto_ack: bool = False,
+            exclusive: bool = False,
+    ) -> AbstractRobustQueue:
+        """
+        Начало обработки сообщений из очереди.
+
+        :param queue_name: Имя очереди.
+
+        :param callback: Асинхронный обработчик сообщений.
+
+        :param auto_ack: Если True, сообщения будут подтверждаться
+            автоматически.
+
+        :param exclusive: Эксклюзивное потребление.
+
+        :return: Объект очереди с активным consumer.
+        """
+        queue: AbstractRobustQueue = await self._channel.declare_queue(
+            name=queue_name,
+            durable=True,
+            auto_delete=False
+        )
+        wrapped_callback = RabbitMQConsumeUtils(
+            queue_name,
+            callback,
+            auto_ack
+        ).wrapped_callback
+        await queue.consume(wrapped_callback, exclusive=exclusive)
+        logger.info(f"Старт обработки сообщений из очереди {queue_name}.")
+        return queue
