@@ -1,10 +1,12 @@
 from collections.abc import Sequence
-from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select, update, desc, func
+from loguru import logger
+from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chat_api_service.app.core.exceptions.conversation import \
+    ConversationAccessDenied, ConversationNotFound
 from chat_api_service.app.db.models import Conversation, Message
 
 
@@ -38,7 +40,7 @@ class ConversationRepository:
     async def get_by_id(
             self,
             conversation_id: UUID,
-            user_id: str | None = None,
+            user_id: str | None = None
     ) -> Conversation | None:
         """
         Получение диалога по ID.
@@ -54,6 +56,52 @@ class ConversationRepository:
 
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def get(
+            self,
+            conversation_id: UUID,
+            user_id: str | None = None
+    ) -> Conversation:
+        """
+        Получение диалога.
+
+        :param conversation_id: UUID диалога.
+
+        :param user_id: Идентификатор пользователя для проверки доступа.
+            Если None, доступ не проверяется.
+
+        :return: Диалог.
+
+        :raises ConversationNotFound: Если диалог не найден.
+
+        :raises ConversationAccessDenied: Если доступ к диалогу запрещён.
+        """
+        conversation = await self.get_by_id(
+            conversation_id=conversation_id,
+            user_id=user_id
+        )
+
+        if not conversation and user_id:
+            conv_without_auth = await self.get_by_id(
+                conversation_id=conversation_id
+            )
+            if conv_without_auth:
+                logger.warning(
+                    f"Доступ к диалогу {conversation_id} запрещён "
+                    f"для пользователя {user_id}"
+                )
+                raise ConversationAccessDenied(
+                    f"Доступ к диалогу {conversation_id} запрещён",
+                    conversation_id=conversation_id,
+                    user_id=user_id
+                )
+        if not conversation:
+            logger.warning(f"Диалог {conversation_id} не найден")
+            raise ConversationNotFound(
+                f"Диалог {conversation_id} не найден",
+                conversation_id=conversation_id
+            )
+        return conversation
 
     async def list_by_user(
             self,

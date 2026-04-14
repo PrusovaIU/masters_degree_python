@@ -11,7 +11,7 @@ from chat_api_service.app.schemas.llm_tasks import MessageSchema
 from chat_api_service.app.consts.message import SenderType
 import loguru
 from chat_api_service.app.schemas.message import MessageCreate
-from chat_api_service.app.core.exceptions import chat_new_message_usecase as errors
+from chat_api_service.app.core.exceptions import chat_new_message as errors
 
 
 class ChatNewMessageUsecase:

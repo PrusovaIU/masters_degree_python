@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select, desc,  update
+from sqlalchemy import select, desc, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_api_service.app.consts.message import MessageStatus
@@ -111,7 +111,23 @@ class MessageRepository:
         result = await self._session.execute(query)
         messages = result.scalars().all()
 
-        return list(reversed(messages))
+        return messages
+
+    async def count_by_conversation(
+            self,
+            conversation_id: UUID
+    ) -> int:
+        """
+        Подсчёт количества сообщений в диалоге.
+
+        :param conversation_id: UUID диалога.
+        :return: Количество сообщений.
+        """
+        query = select(func.count()).where(
+            Message.conversation_id == conversation_id)
+
+        result = await self._session.execute(query)
+        return result.scalar_one()
 
     async def update_status(
             self,
