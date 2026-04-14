@@ -1,9 +1,8 @@
 from collections.abc import Sequence
-from datetime import datetime
 from uuid import UUID
 
 from loguru import logger
-from sqlalchemy import select, update, desc, func
+from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_api_service.app.core.exceptions.conversation import \

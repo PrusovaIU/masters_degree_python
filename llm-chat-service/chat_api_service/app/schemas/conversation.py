@@ -22,21 +22,6 @@ class ConversationHistoryParams(BaseModel):
         description="Смещение для пагинации"
     )
 
-    before: datetime | None = Field(
-        default=None,
-        description="Получить сообщения старше указанной даты"
-    )
-
-    after: datetime | None = Field(
-        default=None,
-        description="Получить сообщения новее указанной даты"
-    )
-
-    status: list[MessageStatus] | None = Field(
-        default=None,
-        description="Фильтр по статусам сообщений"
-    )
-
     @model_validator(mode="after")
     def validate_mutual_exclusion(self) -> Self:
         """before и after не могут быть заданы одновременно"""
@@ -54,14 +39,6 @@ class PaginationMeta(BaseModel):
     limit: int = Field(description="Запрошенное количество элементов")
     offset: int = Field(description="Запрошенное смещение")
     total: int = Field(description="Общее количество элементов")
-    next_cursor: str | None = Field(
-        default=None,
-        description="Курсор для загрузки следующей страницы (ISO datetime)"
-    )
-    prev_cursor: str | None = Field(
-        default=None,
-        description="Курсор для загрузки предыдущей страницы (ISO datetime)"
-    )
 
 
 class ConversationHistoryResponse(BaseModel):
