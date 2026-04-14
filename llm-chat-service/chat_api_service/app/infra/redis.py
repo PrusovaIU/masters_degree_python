@@ -1,8 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from json import loads, dumps
 
 import redis.asyncio as aioredis
 from loguru import logger
 from chat_api_service.app.schemas.config import RedisConfig
+from chat_api_service.app.schemas.llm import LLMQueryResponse
 
 
 class RedisClient:
@@ -23,7 +25,7 @@ class RedisClient:
         if cls._redis_client is not None and not has_set:
             raise SystemError("Redis клиент уже инициализирован.")
         cls._settings = settings
-        cls._redis_client = aioredis.from_url(settings.url)
+        cls._redis_client: aioredis.Redis = aioredis.from_url(settings.url)
         await cls._redis_client.ping()
         logger.info("Redis клиент инициализирован.")
 
@@ -149,3 +151,34 @@ class RedisClient:
                 deleted_count += 1
                 logger.debug(f"Удален ключ: {key.decode()}")
         return deleted_count
+
+    async def check_idempotency(self, idempotency_key: str) -> dict | None:
+        """
+        Проверка кэша идемпотентности: есть ли уже обработанный результат.
+
+        :param idempotency_key: Уникальный ключ запроса.
+        :return: Кэшированный ответ или None.
+        """
+        cache_key = f"{self._settings.idem_key_prefix}:{idempotency_key}"
+        cached = await self._redis_client.get(cache_key)
+        data = loads(cached) if cached else None
+        return data
+
+    async def cache_idempotency_result(
+            self,
+            idempotency_key: str,
+            response: LLMQueryResponse
+    ) -> None:
+        """
+        Кэширование результата запроса в Redis.
+
+        :param idempotency_key: Уникальный ключ запроса.
+        :param response: Ответ для кэширования.
+        :return: None.
+        """
+        cache_key = f"{self._settings.idem_key_prefix}:{idempotency_key}"
+        ttl = timedelta(seconds=self._settings.cache_ttl)
+        payload = response.model_dump()
+        await self._redis_client.setex(
+            cache_key, ttl, dumps(payload)
+        )
