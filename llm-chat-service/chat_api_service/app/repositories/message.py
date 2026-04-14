@@ -111,7 +111,7 @@ class MessageRepository:
         result = await self._session.execute(query)
         messages = result.scalars().all()
 
-        return list(reversed(messages))
+        return messages
 
     async def count_by_conversation(
             self,
