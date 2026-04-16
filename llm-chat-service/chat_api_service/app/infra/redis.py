@@ -152,20 +152,22 @@ class RedisClient:
                 logger.debug(f"Удален ключ: {key.decode()}")
         return deleted_count
 
-    async def check_idempotency(self, idempotency_key: str) -> dict | None:
+    @classmethod
+    async def check_idempotency(cls, idempotency_key: str) -> dict | None:
         """
         Проверка кэша идемпотентности: есть ли уже обработанный результат.
 
         :param idempotency_key: Уникальный ключ запроса.
         :return: Кэшированный ответ или None.
         """
-        cache_key = f"{self._settings.idem_key_prefix}:{idempotency_key}"
-        cached = await self._redis_client.get(cache_key)
+        cache_key = f"{cls._settings.idem_key_prefix}:{idempotency_key}"
+        cached = await cls._redis_client.get(cache_key)
         data = loads(cached) if cached else None
         return data
 
+    @classmethod
     async def cache_idempotency_result(
-            self,
+            cls,
             idempotency_key: str,
             response: LLMQueryResponse
     ) -> None:
@@ -176,9 +178,9 @@ class RedisClient:
         :param response: Ответ для кэширования.
         :return: None.
         """
-        cache_key = f"{self._settings.idem_key_prefix}:{idempotency_key}"
-        ttl = timedelta(seconds=self._settings.cache_ttl)
+        cache_key = f"{cls._settings.idem_key_prefix}:{idempotency_key}"
+        ttl = timedelta(seconds=cls._settings.cache_ttl)
         payload = response.model_dump()
-        await self._redis_client.setex(
+        await cls._redis_client.setex(
             cache_key, ttl, dumps(payload)
         )
