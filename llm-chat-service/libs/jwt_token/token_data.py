@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 
 from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
@@ -230,3 +231,10 @@ class RefreshTokenData(TokenData):
         :return: None.
         """
         return super().new(sub, exp, cls._TOKEN_TYPE)
+
+
+@dataclass
+class TokenUserData:
+    """Данные пользователя из JWT токена."""
+    user_id: int
+    user_role: str
