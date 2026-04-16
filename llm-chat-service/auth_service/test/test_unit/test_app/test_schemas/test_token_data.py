@@ -1,6 +1,6 @@
-from auth_service.app.schemas import token_data
-from auth_service.app.consts.jwt_token import TokenType
-from datetime import timedelta, datetime, timezone
+from libs.jwt_token import token_data
+from libs.jwt_token.consts import TokenType
+from datetime import timedelta, datetime
 import pytest
 
 

@@ -1,13 +1,12 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from loguru import logger
 
-from auth_service.app.consts.jwt_token import TokenDataKeys
-from auth_service.app.core.exceptions.jwt_token import VerifyTokenError
-from auth_service.app.core.security.jwt_token import verify_access_token
-from auth_service.app.schemas.token_data import AccessTokenData
+from libs.jwt_token.exceptions import VerifyTokenError
+from libs.jwt_token import verify_access_token
+from libs.jwt_token.token_data import AccessTokenData
 from auth_service.app.schemas.user import TokenUserData
 from auth_service.app.core.config import settings
 

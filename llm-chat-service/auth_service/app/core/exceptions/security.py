@@ -1,6 +1,6 @@
 from starlette import status
 
-from .base import AppException
+from libs.base_exception import AppException
 
 
 class SecurityError(AppException):

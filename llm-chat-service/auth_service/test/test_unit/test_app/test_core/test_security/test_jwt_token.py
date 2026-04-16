@@ -1,12 +1,11 @@
 from time import sleep
 
-from auth_service.app.core.security import jwt_token
+from libs import jwt_token
 import pytest
 from datetime import timedelta, datetime
-from auth_service.app.consts.jwt_token import TokenType
-from auth_service.app.schemas.token_data import AccessTokenData, RefreshTokenData
-from auth_service.app.core.exceptions import jwt_token as exceptions
-
+from libs.jwt_token.consts import TokenType
+from libs.jwt_token.token_data import AccessTokenData, RefreshTokenData
+from libs.jwt_token import exceptions as exceptions
 
 SUBJECT_STR = "test_subject"
 SUBJECT_INT = 123456
