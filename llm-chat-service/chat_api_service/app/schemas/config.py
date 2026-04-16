@@ -85,6 +85,10 @@ class JWTConfig(BaseModel):
     """Конфигурация JWT"""
     secret: JWTSecret = Field(description="Секретный ключ JWT")
     alg: str = Field(default="HS256", description="Алгоритм шифрования JWT")
+    header_name: str = Field(
+        default="Authorization",
+        description="Имя заголовка для JWT"
+    )
 
 
 class OpenRouterConfig(BaseModel):
