@@ -1,8 +1,9 @@
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status, Request
 
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.core.config import settings
-from datetime import datetime, timezone
 
 
 async def rate_limit_dependency(
@@ -28,3 +29,6 @@ async def rate_limit_dependency(
             }
         )
     return True
+
+
+RateLimitDep = Annotated[bool, Depends(rate_limit_dependency)]
