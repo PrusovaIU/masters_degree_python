@@ -8,3 +8,4 @@ class LLMTasksStatus(str, Enum):
     CACHED = "cached"  # В кэше
     SUCCESS = "success"  # Успешно
     ERROR = "error"  # Ошибка
+    QUEUED = "queued"  # В очереди

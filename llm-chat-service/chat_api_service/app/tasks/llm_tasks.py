@@ -1,9 +1,3 @@
-"""
-Celery tasks для асинхронной обработки запросов к LLM.
-"""
-
-from __future__ import annotations
-
 from datetime import datetime
 from functools import wraps
 from typing import Callable
