@@ -4,8 +4,8 @@ from typing import Any
 import jwt
 from loguru import logger
 
-from auth_service.app.core.exceptions import jwt_token as token_errors
-from auth_service.app.schemas.token_data import TokenData, AccessTokenData, \
+from libs.jwt_token import exceptions as token_errors
+from libs.jwt_token.token_data import TokenData, AccessTokenData, \
     RefreshTokenData
 
 

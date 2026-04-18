@@ -54,6 +54,14 @@ class RedisConfig(ConfigWithPasswd):
         default_factory=RateLimitingConfig,
         description="Настройки Rate Limiting"
     )
+    idem_key_prefix: str = Field(
+        default="idem:cache",
+        description="Префикс ключа для идемпотентности"
+    )
+    cache_ttl: int = Field(
+        default=3600,
+        description="Время жизни кэша в секундах"
+    )
 
     @computed_field
     @property
@@ -77,6 +85,10 @@ class JWTConfig(BaseModel):
     """Конфигурация JWT"""
     secret: JWTSecret = Field(description="Секретный ключ JWT")
     alg: str = Field(default="HS256", description="Алгоритм шифрования JWT")
+    header_name: str = Field(
+        default="Authorization",
+        description="Имя заголовка для JWT"
+    )
 
 
 class OpenRouterConfig(BaseModel):

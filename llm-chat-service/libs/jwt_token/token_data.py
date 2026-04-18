@@ -1,7 +1,8 @@
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 
 from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
-from auth_service.app.consts.jwt_token import TokenType
+from libs.jwt_token.consts import TokenType
 from typing import Self, ClassVar
 from functools import lru_cache
 
@@ -230,3 +231,10 @@ class RefreshTokenData(TokenData):
         :return: None.
         """
         return super().new(sub, exp, cls._TOKEN_TYPE)
+
+
+@dataclass
+class TokenUserData:
+    """Данные пользователя из JWT токена."""
+    user_id: int
+    user_role: str

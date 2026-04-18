@@ -1,43 +1,13 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from loguru import logger
 
-from auth_service.app.consts.jwt_token import TokenDataKeys
-from auth_service.app.core.exceptions.jwt_token import VerifyTokenError
-from auth_service.app.core.security.jwt_token import verify_access_token
-from auth_service.app.schemas.token_data import AccessTokenData
-from auth_service.app.schemas.user import TokenUserData
+from libs.jwt_token.token_data import TokenUserData
 from auth_service.app.core.config import settings
+from libs.jwt_token.get_current_user import get_user_data
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-
-def _get_user_data(token: str) -> TokenUserData:
-    """
-    Получение данных пользователя из JWT токена.
-
-    :param token: JWT токен.
-    :return: Данные пользователя.
-
-    :raises HTTPException: Если токен невалидный.
-    """
-    try:
-        payload: AccessTokenData = verify_access_token(
-            token,
-            settings.jwt.access_secret.secret,
-            settings.jwt.alg
-        )
-        user_data = TokenUserData(
-            user_id=int(payload.sub),
-            user_role=payload.role
-        )
-    except ValueError as err:
-        err_title = "Невалидный токен"
-        logger.error(f"{err_title}: {err} ({err.__class__.__name__})")
-        raise VerifyTokenError(err_title)
-    return user_data
 
 
 def get_current_user_id(
@@ -52,7 +22,11 @@ def get_current_user_id(
 
     :raises HTTPException: Если токен невалидный.
     """
-    user_data = _get_user_data(token)
+    user_data = get_user_data(
+        token,
+        settings.jwt.access_secret.secret,
+        settings.jwt.alg
+    )
     return user_data.user_id
 
 
@@ -67,7 +41,11 @@ def get_current_user(
 
     :raises HTTPException: Если токен невалидный.
     """
-    return _get_user_data(token)
+    return get_user_data(
+        token,
+        settings.jwt.access_secret.secret,
+        settings.jwt.alg
+    )
 
 
 UserIdDep = Annotated[int, Depends(get_current_user_id)]
