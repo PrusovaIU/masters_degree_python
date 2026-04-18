@@ -52,7 +52,7 @@ class NewMessageUsecase:
             )
         return idempotency_key
 
-    async def new(self) -> LLMQueryResponse:
+    async def execute(self) -> LLMQueryResponse:
         """
         Обработка нового сообщения.
 
