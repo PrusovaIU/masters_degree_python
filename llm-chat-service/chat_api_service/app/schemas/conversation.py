@@ -55,3 +55,23 @@ class ConversationHistoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ConversationResponse(BaseModel):
+    """Ответ с данными диалога."""
+    id: UUID = Field(description="UUID диалога")
+    user_id: str = Field(description="ID владельца диалога")
+    title: str | None = Field(default=None, description="Заголовок диалога")
+    created_at: datetime = Field(description="Время создания")
+    updated_at: datetime = Field(description="Время последнего обновления")
+
+    class Config:
+        from_attributes = True
+
+
+class ConversationListResponse(BaseModel):
+    """Ответ со списком диалогов."""
+    conversations: list[ConversationResponse] = Field(
+        description="Список диалогов"
+    )
+    pagination: PaginationMeta = Field(description="Метаданные пагинации")
