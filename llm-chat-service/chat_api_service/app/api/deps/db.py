@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chat_api_service.app.core.config import settings
 from chat_api_service.app.db.session import DBSession
 from chat_api_service.app.repositories.message import MessageRepository
+from chat_api_service.app.repositories.conversation import (
+    ConversationRepository)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -30,4 +32,18 @@ def get_message_repo(
     return MessageRepository(session=session)
 
 
+def get_conversation_repo(
+        session: Annotated[AsyncSession, Depends(get_db)],
+) -> ConversationRepository:
+    """
+    :param session: Сессия БД.
+    :return: Экземпляр ConversationRepository.
+    """
+    return ConversationRepository(session=session)
+
+
 MessagesRepoDep = Annotated[MessageRepository, Depends(get_message_repo)]
+ConversationRepoDep = Annotated[
+    ConversationRepository,
+    Depends(get_conversation_repo)
+]

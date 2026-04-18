@@ -82,6 +82,17 @@ class MessageRepository:
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_by_llm_task_id(self, llm_task_id: str) -> Message | None:
+        """
+        Получение сообщения по ID задачи Celery.
+
+        :param llm_task_id: ID задачи Celery.
+        :return: Сообщение, если существует, иначе None.
+        """
+        query = select(Message).where(Message.llm_task_id == llm_task_id)
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()
+
     async def list_by_conversation(
             self,
             conversation_id: UUID,

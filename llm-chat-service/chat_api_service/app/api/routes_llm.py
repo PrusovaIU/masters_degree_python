@@ -1,11 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, status, Header
+from fastapi import APIRouter, status, Header, HTTPException
 from chat_api_service.app.schemas.llm import LLMQueryResponse, LLMQueryRequest
 from .deps.jwt import UserDataDep
 from .deps.rate_limit import RateLimitDep
-from .deps.db import MessagesRepoDep
+from .deps.db import MessagesRepoDep, ConversationRepoDep
 from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
+from chat_api_service.app.schemas.llm import LLMStatusResponse
+from chat_api_service.app.core.exceptions.conversation import (
+    ConversationNotFound, ConversationAccessDenied)
+from chat_api_service.app.usecases.chat.message_status import MessageStatusUsecase
 
 
 router_llm = APIRouter(prefix="/chat/llm", tags=["llm"])
@@ -26,7 +30,8 @@ async def query_llm(
             str | None,
             Header(None, alias="X-Idempotency-Key")
         ],
-        msg_repo: MessagesRepoDep
+        msg_repo: MessagesRepoDep,
+        conversation_repo: ConversationRepoDep
 ) -> LLMQueryResponse:
     """
     Запуск асинхронного запроса к LLM.
@@ -36,15 +41,66 @@ async def query_llm(
     :param custom_idem_key: Опциональный ключ идемпотентности от клиента.
     :param rate_limit_ok: Результат проверки rate limiting.
     :param msg_repo: Репозиторий сообщений.
+    :param conversation_repo: Репозиторий диалогов.
 
     :return: Статус сообщения.
     """
     user_id = str(current_user.user_id)
     usecase = NewMessageUsecase(
         msg_repo,
+        conversation_repo,
         user_id,
         user_message_data,
         custom_idem_key
     )
-    response = await usecase.execute()
+    try:
+        response: LLMQueryResponse = await usecase.execute()
+    except ConversationNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=err.detail
+        )
+    except ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=err.detail
+        )
+    return response
+
+
+@router_llm.get(
+    "/status/{task_id}",
+    response_model=LLMStatusResponse,
+    summary="Получение статуса задачи LLM"
+)
+async def get_llm_task_status(
+        task_id: str,
+        current_user: UserDataDep,
+        msg_repo: MessagesRepoDep
+) -> LLMStatusResponse:
+    """
+    Получение статуса задачи LLM.
+
+    :param task_id: UUID задачи Celery.
+    :param current_user: Аутентифицированный пользователь.
+    :param msg_repo: Репозиторий сообщений.
+
+    :return: Статус задачи.
+    """
+    user_id = str(current_user.user_id)
+    usecase = MessageStatusUsecase(
+        msg_repo, task_id, user_id
+    )
+    try:
+        response: LLMStatusResponse = await usecase.execute()
+    except ConversationNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=err.detail
+        )
+    except ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=err.detail
+        )
     return response

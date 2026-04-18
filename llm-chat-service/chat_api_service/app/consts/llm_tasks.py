@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Self
 
 
 class LLMTasksStatus(str, Enum):
@@ -9,3 +10,14 @@ class LLMTasksStatus(str, Enum):
     SUCCESS = "success"  # Успешно
     ERROR = "error"  # Ошибка
     QUEUED = "queued"  # В очереди
+    UNKNOWN = "unknown"
+
+    @staticmethod
+    def get_status(status: str):
+        """
+        Получение статуса по строке.
+        """
+        for item in LLMTasksStatus:
+            if item.value == status:
+                return item
+        return LLMTasksStatus.UNKNOWN

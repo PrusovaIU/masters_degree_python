@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from chat_api_service.app.consts.message import MessageStatus, SenderType
 from chat_api_service.app.core.idempotency_key import generate_idempotency_key
 from chat_api_service.app.db.models import Message
@@ -10,17 +8,38 @@ from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from chat_api_service.app.schemas.message import MessageCreate
 from chat_api_service.app.tasks.llm_tasks import llm_request
 from celery.result import AsyncResult
+from chat_api_service.app.repositories.conversation import (
+    ConversationRepository)
+from chat_api_service.app.db.models import Conversation
+from chat_api_service.app.core.exceptions.conversation import (
+    ConversationNotFound, ConversationAccessDenied)
 
 
 class NewMessageUsecase:
+    """
+    Usecase для обработки нового сообщения.
+
+    :param message_repository: Репозиторий сообщений.
+
+    :param conversation_repository: Репозиторий диалогов.
+
+    :param user_id: Идентификатор пользователя.
+
+    :param user_request: Запрос пользователя.
+
+    :param custom_idem_key: Пользовательский ключ идемпотентности. Если None,
+        то генерируется новый.
+    """
     def __init__(
             self,
             message_repository: MessageRepository,
+            conversation_repository: ConversationRepository,
             user_id: str,
             user_request: LLMQueryRequest,
             custom_idem_key: str | None
     ):
         self._msg_repository = message_repository
+        self._conversation_repository = conversation_repository
         self._user_id = user_id
         self._user_request = user_request
         self._idem_key: str = self._get_idempotency_key(
@@ -57,6 +76,9 @@ class NewMessageUsecase:
         Обработка нового сообщения.
 
         :return: Статус сообщения.
+
+        :raises ConversationNotFound: Диалог не найден.
+        :raises ConversationAccessDenied: Доступ запрещен.
         """
         cached_response: LLMQueryResponse | None = \
             await self._check_idempotency_cache()
@@ -120,7 +142,15 @@ class NewMessageUsecase:
         Создание нового сообщения.
 
         :return: Статус сообщения.
+
+        :raises ConversationNotFound: Диалог не найден.
+        :raises ConversationAccessDenied: Доступ запрещен.
         """
+        # проверка доступа к диалогу:
+        await self._conversation_repository.get(
+            self._user_request.conversation_id,
+            self._user_id
+        )
         user_message: Message = await self._msg_repository.create(
             conversation_id=self._user_request.conversation_id,
             message_in=MessageCreate(

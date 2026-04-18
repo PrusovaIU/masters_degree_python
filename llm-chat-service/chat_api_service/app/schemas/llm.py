@@ -109,3 +109,14 @@ class LLMStatusResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    def enrich(self, task_result: dict):
+        match self.status:
+            case LLMTasksStatus.SUCCESS:
+                if isinstance(task_result, dict):
+                    self.content = task_result.get("content")
+                    self.response_id = task_result.get("response_id")
+            case LLMTasksStatus.ERROR:
+                if isinstance(task_result, dict):
+                    self.error = task_result.get("error")
+                    self.error_type = task_result.get("error_type")
