@@ -24,10 +24,11 @@ class RedisClient:
         """
         if cls._redis_client is not None and not has_set:
             raise SystemError("Redis клиент уже инициализирован.")
-        cls._settings = settings
-        cls._redis_client: aioredis.Redis = aioredis.from_url(settings.url)
-        await cls._redis_client.ping()
-        logger.info("Redis клиент инициализирован.")
+        else:
+            cls._settings = settings
+            cls._redis_client: aioredis.Redis = aioredis.from_url(settings.url)
+            await cls._redis_client.ping()
+            logger.info("Redis клиент инициализирован.")
 
     @classmethod
     async def close(cls):

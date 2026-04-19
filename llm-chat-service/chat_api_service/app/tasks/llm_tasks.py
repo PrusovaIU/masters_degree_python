@@ -25,7 +25,6 @@ from chat_api_service.app.usecases.chat.mark_message import MarkMessageUsecase
 
 logger = get_task_logger(__name__)
 or_client = OpenRouterClient(settings.openrouter)
-RedisClient.setup(settings.redis, True)
 
 
 @asynccontextmanager
@@ -111,6 +110,7 @@ async def llm_request(
     :raises: Celery Retry при временных ошибках,
              или возврат dict с error при критических сбоях.
     """
+    await RedisClient.setup(settings.redis, True)
     status: LLMTaskStatusSchema | None = None
     try:
         message_uuid = _uuid_from_str(message_id)

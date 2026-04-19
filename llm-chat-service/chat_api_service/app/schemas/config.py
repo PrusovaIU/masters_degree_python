@@ -12,7 +12,7 @@ class ConfigWithPasswd(BaseModel):
         """
         :return: Пароль с экранированными символами.
         """
-        return f":{quote_plus(self.password)}@" \
+        return quote_plus(self.password) \
             if self.password \
             else ""
 
@@ -76,8 +76,8 @@ class RabbitMQConfig(ConfigWithPasswd):
     host: str = Field(description="Хост RabbitMQ сервера")
     port: int = Field(description="Порт RabbitMQ сервера")
     user: str = Field(description="Имя пользователя RabbitMQ")
-    vhost: str = Field(
-        default="",
+    vhost: str | None = Field(
+        default=None,
         description="Виртуальный хост RabbitMQ"
     )
 
@@ -162,11 +162,15 @@ class Settings(BaseSettings):
         """
         :return: Строка подключения к RabbitMQ для Celery Broker.
         """
-        return (
+        url = (
             f"amqp://{self.rabbitmq.user}:"
             f"{self.rabbitmq.password_quoted}@"
-            f"{self.rabbitmq.host}:{self.rabbitmq.port}/{self.rabbitmq.vhost}"
+            f"{self.rabbitmq.host}:{self.rabbitmq.port}"
         )
+        if self.rabbitmq.vhost:
+            url += f"/{self.rabbitmq.vhost}"
+        print(url)
+        return url
 
     @computed_field
     @property
@@ -174,5 +178,5 @@ class Settings(BaseSettings):
         """
         :return: Строка подключения к Redis для Celery Result Backend.
         """
-        return (f"redis://{self.redis.password_quoted}{self.redis.host}:"
+        return (f"redis://:{self.redis.password_quoted}@{self.redis.host}:"
                 f"{self.redis.port}/{self.redis.db + 1}")
