@@ -130,7 +130,7 @@ class CORSSettings(BaseModel):
 
 class LogConfig(BaseModel):
     file_path: str = Field(
-        default="logs/auth_service.log",
+        default="logs/service.log",
         description="Путь к файлу логов"
     )
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(

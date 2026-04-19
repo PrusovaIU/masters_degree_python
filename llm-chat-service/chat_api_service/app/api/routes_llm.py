@@ -26,12 +26,12 @@ async def query_llm(
         user_message_data: LLMQueryRequest,
         current_user: UserDataDep,
         rate_limit_ok: RateLimitDep,
+        msg_repo: MessagesRepoDep,
+        conversation_repo: ConversationRepoDep,
         custom_idem_key: Annotated[
             str | None,
-            Header(None, alias="X-Idempotency-Key")
-        ],
-        msg_repo: MessagesRepoDep,
-        conversation_repo: ConversationRepoDep
+            Header(alias="X-Idempotency-Key")
+        ] = None
 ) -> LLMQueryResponse:
     """
     Запуск асинхронного запроса к LLM.

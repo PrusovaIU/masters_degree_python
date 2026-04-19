@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import (
     String, Text, DateTime, Enum, ForeignKey
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -107,6 +107,7 @@ class Message(Base):
         comment="ID задачи Celery для асинхронного LLM-запроса"
     )
     metadata_json: Mapped[dict | None] = mapped_column(
+        JSONB,
         comment="Доп. метаданные (например, токены, модель, стоимость)"
     )
     created_at: Mapped[datetime] = mapped_column(

@@ -1,4 +1,4 @@
-from sqlalchemy import Enum
+from enum import Enum
 
 
 class MessageStatus(str, Enum):
@@ -22,7 +22,7 @@ VALID_TRANSITIONS = {
 }
 
 
-class SenderType(str, Enum):
+class SenderType(Enum):
     """
     Тип отправителя сообщения
     """
