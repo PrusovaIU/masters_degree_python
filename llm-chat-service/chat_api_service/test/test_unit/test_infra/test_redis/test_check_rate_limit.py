@@ -112,7 +112,12 @@ async def test_different_users_have_separate_limits(
         fake_redis_client,
         redis_config
 ):
-    """Разные пользователи имеют независимые лимиты."""
+    """
+    Разные пользователи имеют независимые лимиты.
+
+    :param fake_redis_client: Мок для Redis.
+    :param redis_config: Конфигурация Redis.
+    """
     user_1 = "user_a"
     user_2 = "user_b"
 
@@ -128,4 +133,3 @@ async def test_different_users_have_separate_limits(
     key_1 = RedisClient.get_rate_limit_key(user_1)
     key_2 = RedisClient.get_rate_limit_key(user_2)
     assert key_1 != key_2
-
