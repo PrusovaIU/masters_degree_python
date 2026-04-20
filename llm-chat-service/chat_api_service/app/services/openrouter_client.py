@@ -23,7 +23,7 @@ class OpenRouterClient:
             "Content-Type": "application/json"
         }
 
-    async def chat_completion(
+    async def call_openrouter(
             self,
             messages: list[dict[str, str]],
             temperature: float = 0.7,

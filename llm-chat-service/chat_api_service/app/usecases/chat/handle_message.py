@@ -257,7 +257,7 @@ class ChatNewMessageUsecase:
         await self._check_race_condition()
         try:
             messages = await self._prepare_context()
-            llm_response: str = await self._openrouter_client.chat_completion(
+            llm_response: str = await self._openrouter_client.call_openrouter(
                 messages=messages,
                 temperature=self._temperature
             )
