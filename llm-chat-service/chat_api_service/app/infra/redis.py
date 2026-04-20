@@ -181,7 +181,7 @@ class RedisClient:
         """
         cache_key = f"{cls._settings.idem_key_prefix}:{idempotency_key}"
         ttl = timedelta(seconds=cls._settings.cache_ttl)
-        payload = response.model_dump()
+        payload = response.model_dump_json()
         await cls._redis_client.setex(
-            cache_key, ttl, dumps(payload)
+            cache_key, ttl, payload
         )
