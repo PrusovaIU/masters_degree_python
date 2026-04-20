@@ -7,13 +7,12 @@ from urllib.parse import quote_plus
 class ConfigWithPasswd(BaseModel):
     password: str = Field(description="Пароль")
 
-    @computed_field
     @property
     def password_quoted(self) -> str:
         """
         :return: Пароль с экранированными символами.
         """
-        return f":{quote_plus(self.password)}@" \
+        return quote_plus(self.password) \
             if self.password \
             else ""
 
@@ -44,8 +43,7 @@ class RedisConfig(ConfigWithPasswd):
     """Конфигурация Redis"""
     host: str = Field(description="Хост Redis сервера")
     port: int = Field(description="Порт Redis сервера")
-    user: str = Field(description="Имя пользователя Redis")
-    db: int = Field(default="0", description="Номер базы данных Redis")
+    db: int = Field(default=0, description="Номер базы данных Redis")
     timeout: int = Field(
         default=30,
         description="Таймаут соединения в секундах"
@@ -78,7 +76,10 @@ class RabbitMQConfig(ConfigWithPasswd):
     host: str = Field(description="Хост RabbitMQ сервера")
     port: int = Field(description="Порт RabbitMQ сервера")
     user: str = Field(description="Имя пользователя RabbitMQ")
-    vhost: str = Field(description="Виртуальный хост RabbitMQ")
+    vhost: str | None = Field(
+        default=None,
+        description="Виртуальный хост RabbitMQ"
+    )
 
 
 class JWTConfig(BaseModel):
@@ -128,10 +129,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file_encoding="utf-8",
         extra="ignore",
-        env_nested_delimiter="__"
+        env_nested_delimiter="__",
+        env_file=".env"
     )
     app_name: str = Field(
-        default="Auth Service",
+        default="Chat API service",
         description="Название сервиса"
     )
     env: str = Field(default="prod", description="Окружение выполнения")
@@ -160,11 +162,15 @@ class Settings(BaseSettings):
         """
         :return: Строка подключения к RabbitMQ для Celery Broker.
         """
-        return (
+        url = (
             f"amqp://{self.rabbitmq.user}:"
             f"{self.rabbitmq.password_quoted}@"
-            f"{self.rabbitmq.host}:{self.rabbitmq.port}/{self.rabbitmq.vhost}"
+            f"{self.rabbitmq.host}:{self.rabbitmq.port}"
         )
+        if self.rabbitmq.vhost:
+            url += f"/{self.rabbitmq.vhost}"
+        print(url)
+        return url
 
     @computed_field
     @property
@@ -172,5 +178,5 @@ class Settings(BaseSettings):
         """
         :return: Строка подключения к Redis для Celery Result Backend.
         """
-        return (f"redis://{self.redis.password_quoted}{self.redis.host}:"
+        return (f"redis://:{self.redis.password_quoted}@{self.redis.host}:"
                 f"{self.redis.port}/{self.redis.db + 1}")

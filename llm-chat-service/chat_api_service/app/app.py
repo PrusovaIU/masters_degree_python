@@ -1,0 +1,55 @@
+from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+
+from chat_api_service.app.db.base import Base
+from chat_api_service.app.db.session import DBSession
+from chat_api_service.app.schemas.config import Settings
+from loguru import logger
+from chat_api_service.app.api import routers
+from chat_api_service.app.infra.redis import RedisClient
+
+
+class App:
+    def __init__(self, config: Settings):
+        self._config = config
+        if config.logs.file_path:
+            logger.add(
+                config.logs.file_path,
+                level=config.logs.level,
+                rotation=config.logs.rotation
+            )
+        self._app = FastAPI(
+            title=config.app_name,
+            version="1.0.0",
+            description="LLM Chat Auth Service",
+            lifespan=self.lifespan
+        )
+        if config.cors.enabled:
+            self._app.add_middleware(
+                CORSMiddleware,
+                allow_origins=config.cors.origins,
+                allow_credentials=config.cors.credentials,
+                allow_methods=config.cors.methods,
+                allow_headers=config.cors.headers
+            )
+        for router in routers:
+            self._app.include_router(router)
+
+    async def lifespan(self, app: FastAPI):
+        await RedisClient.setup(self._config.redis)
+        DBSession.setup(
+            self._config.db.database_url,
+            self._config.db.db_schema
+        )
+        async with DBSession.engine().begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        yield
+        await DBSession.close()
+
+    @property
+    def app(self) -> FastAPI:
+        return self._app
+
+    @property
+    def settings(self) -> Settings:
+        return self._config

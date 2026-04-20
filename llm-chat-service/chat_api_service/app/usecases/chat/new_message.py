@@ -10,9 +10,6 @@ from chat_api_service.app.tasks.llm_tasks import llm_request
 from celery.result import AsyncResult
 from chat_api_service.app.repositories.conversation import (
     ConversationRepository)
-from chat_api_service.app.db.models import Conversation
-from chat_api_service.app.core.exceptions.conversation import (
-    ConversationNotFound, ConversationAccessDenied)
 
 
 class NewMessageUsecase:
@@ -160,7 +157,7 @@ class NewMessageUsecase:
             ),
             idempotency_key=self._idem_key
         )
-        task: AsyncResult = await llm_request.delay(
+        task: AsyncResult = llm_request.delay(
             message_id=str(user_message.id),
             conversation_id=str(self._user_request.conversation_id),
             content=self._user_request.content,
