@@ -1,10 +1,7 @@
 import asyncio
-from datetime import datetime, timezone
-from unittest.mock import patch
 
 import pytest
 from fakeredis.aioredis import FakeRedis
-from freezegun import freeze_time
 
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.schemas.config import RedisConfig
