@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field
-from typing import Optional
 from uuid import UUID
 
 from chat_api_service.app.consts.message import MessageStatus, SenderType
