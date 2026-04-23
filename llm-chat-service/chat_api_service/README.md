@@ -9,4 +9,5 @@ REST API для создания диалогов, отправки сообще
 
 1. [Конфигурация](docs/config.md);
 2. [Запуск](docs/run.md);
-3. [Создание нового диалога](docs/create_dialog/README.md);
+3. [Создание нового диалога](docs/create_conversation/README.md);
+4. [Список диалогов](docs/list_conversation/README.md);
