@@ -30,7 +30,7 @@ class DBSession:
             schema: str = "public"
     ) -> dict:
         if "postgresql" in data_base_url:
-            return {"server_settings": {"search_path": f"{schema},public"}}
+            return {"server_settings": {"search_path": f"{schema}"}}
         else:
             return {}
 

@@ -4,7 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
-from chat_api_service.app.consts.message import MessageStatus
 from .message import MessageResponse
 
 
@@ -75,3 +74,15 @@ class ConversationListResponse(BaseModel):
         description="Список диалогов"
     )
     pagination: PaginationMeta = Field(description="Метаданные пагинации")
+
+
+class ConversationCreateRequest(BaseModel):
+    """Запрос на создание диалога."""
+    title: str = Field(description="Заголовок диалога")
+
+
+class ConversationCreateResponse(BaseModel):
+    """Ответ на создание диалога."""
+    id: UUID = Field(description="UUID созданного диалога")
+    title: str = Field(description="Заголовок диалога")
+    created_at: datetime = Field(description="Время создания диалога")
