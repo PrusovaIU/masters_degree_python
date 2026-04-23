@@ -203,16 +203,11 @@ class MessageRepository:
         :param metadata: Дополнительные метаданные.
         :return: Обновлённое сообщение или None.
         """
-        message = await self.get_by_id(message_id)
-        if not message:
-            return None
-
-        if content is not None:
-            message.content = content
-        if metadata is not None:
-            current_meta = message.metadata_json or {}
-            message.metadata_json = {**current_meta, **metadata}
-
-        message.updated_at = datetime.now(timezone.utc)
+        query = update(Message).where(Message.id == message_id)
+        if content:
+            query = query.values(content=content)
+        if metadata:
+            query = query.values(metadata_json=metadata)
+        await self._session.execute(query)
         await self._session.commit()
-        return message
+        return await self.get_by_id(message_id)
