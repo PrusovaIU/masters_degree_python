@@ -70,7 +70,7 @@ class RedisConfig(ConfigWithPasswd):
         """
         :return: Строка подключения к Redis.
         """
-        return (f"redis://{self.password_quoted}{self.host}:"
+        return (f"redis://:{self.password_quoted}@{self.host}:"
                 f"{self.port}/{self.db}")
 
 

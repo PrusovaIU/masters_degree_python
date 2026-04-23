@@ -23,7 +23,7 @@ curl -X 'POST' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
-  "email": "surname@email.com",
+  "email": "prusova@example.com",
   "password": "P@ssw0rd!"
 }'
 ```
