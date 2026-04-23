@@ -17,7 +17,9 @@ class JWTBearer(HTTPBearer):
             public_key: str,
             alg: str,
             auth_header_name: str,
+            auto_error: bool = True
     ):
+        super().__init__(auto_error=auto_error)
         self._public_key = public_key
         self._alg = alg
         self._auth_header_name = auth_header_name
