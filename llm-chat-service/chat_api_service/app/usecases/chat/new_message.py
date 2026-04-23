@@ -160,6 +160,7 @@ class NewMessageUsecase:
         task: AsyncResult = llm_request.delay(
             message_id=str(user_message.id),
             conversation_id=str(self._user_request.conversation_id),
+            user_id=self._user_id,
             content=self._user_request.content,
             idempotency_key=self._idem_key,
             temperature=self._user_request.temperature

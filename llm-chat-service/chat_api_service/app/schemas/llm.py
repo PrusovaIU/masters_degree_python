@@ -18,6 +18,7 @@ class LLMQueryRequest(BaseModel):
         description="Текст сообщения пользователя"
     )
     temperature: float | None = Field(
+        default=0.7,
         ge=0.0,
         le=2.0,
         description="Параметр креативности "

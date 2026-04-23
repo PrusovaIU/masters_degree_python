@@ -160,7 +160,7 @@ class MessageRepository:
             return None
 
         message.update_status(new_status)
-        await self._session.flush()
+        await self._session.commit()
         return message
 
     async def update_llm_task_id(
@@ -183,7 +183,7 @@ class MessageRepository:
             )
             .values(
                 llm_task_id=llm_task_id,
-                status=MessageStatus.PROCESSING
+                status=MessageStatus.SENT
             )
             .execution_options(synchronize_session="fetch")
         )
@@ -214,5 +214,5 @@ class MessageRepository:
             message.metadata_json = {**current_meta, **metadata}
 
         message.updated_at = datetime.now(timezone.utc)
-        await self._session.flush()
+        await self._session.commit()
         return message

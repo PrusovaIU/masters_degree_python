@@ -71,6 +71,7 @@ class ChatNewMessageUsecase:
 
         :raises RateLimitExceededError: Если лимит запросов превышен.
         """
+        self._logger.info(f"Проверка лимита для пользователя {self._user_id}")
         if not await RedisClient.check_rate_limit(self._user_id):
             self._logger.warning(
                 f"Rate limit было превышено для пользователя {self._user_id}. "
@@ -91,6 +92,7 @@ class ChatNewMessageUsecase:
         :raises AlreadyProcessedError: Если запрос уже обработан.
         :raises IsProcessingError: Если запрос уже обрабатывается.
         """
+        self._logger.info(f"Захват блокировки для {self._idempotency_key}")
         lock_acquired = await RedisClient.acquire_lock(self._idempotency_key)
         if not lock_acquired:
             # Блокировка уже занята. Возможно, запрос уже обрабатывается.
@@ -122,6 +124,7 @@ class ChatNewMessageUsecase:
         :raises CachedError: Если запрос уже закэширован.
         :raises IsProcessingError: Если запрос уже обрабатывается.
         """
+        self._logger.info(f"Проверка race condition для {self._message_id}")
         existing_msg = await self._repo.get_by_idempotency_key(
             self._idempotency_key
         )
@@ -153,6 +156,7 @@ class ChatNewMessageUsecase:
 
         :return: Список сообщений с контекстом для LLM.
         """
+        self._logger.info(f"Подготовка контекста для {self._message_id}")
         # Получение последних сообщений для контекста
         history = await self._repo.list_by_conversation(
             conversation_id=self._conversation_id,
@@ -178,6 +182,7 @@ class ChatNewMessageUsecase:
         :param response: Ответ LLM.
         :return: ID созданного сообщения.
         """
+        self._logger.info(f"Обработка ответа LLM для {self._message_id}")
         assistant_message = await self._repo.create(
             conversation_id=self._conversation_id,
             message_in=MessageCreate(
@@ -209,13 +214,16 @@ class ChatNewMessageUsecase:
         :raises Exception: Перенаправление исключения exc.
         """
         try:
-            await self._update_message_status(
-                new_status=MessageStatus.FAILED,
-                metadata={
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                    "task_id": self._task.request.id,
-                }
+            # await self._update_message_status(
+            #     new_status=MessageStatus.FAILED,
+            #     metadata={
+            #         "error": str(exc),
+            #         "error_type": type(exc).__name__,
+            #         "task_id": self._task.request.id,
+            #     }
+            # )
+            await self._repo.update_status(
+                self._message_id, MessageStatus.FAILED
             )
         except Exception as db_err:
             self._logger.error(
@@ -231,6 +239,9 @@ class ChatNewMessageUsecase:
 
         :return: None.
         """
+        self._logger.info(
+            f"Освобождение блокировки для {self._idempotency_key}"
+        )
         try:
             await RedisClient.release_lock(self._idempotency_key)
         except Exception as err:
