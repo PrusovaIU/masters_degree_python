@@ -22,12 +22,27 @@ class JWTBearer(HTTPBearer):
         self._alg = alg
         self._auth_header_name = auth_header_name
 
-    async def __call__(self, request: Request) -> TokenUserData:
+    def __call__(self, request: Request) -> TokenUserData:
         """
         Проверка валидности токена.
 
         :param request: Запрос.
         :return: Данные пользователя.
+        """
+        scheme, credential = self._get_scheme_and_credential(request)
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication scheme"
+            )
+        return get_user_data(credential, self._public_key, self._alg)
+
+    def _get_scheme_and_credential(self, request: Request) -> tuple[str, str]:
+        """
+        Получение схемы и credential из заголовка.
+
+        :param request: Запрос.
+        :return: Схема и credential.
         """
         header = request.headers.get(self._auth_header_name)
         if header is None:
@@ -35,15 +50,10 @@ class JWTBearer(HTTPBearer):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Not authenticated"
             )
-        scheme, credential = header.split(" ")
-        if not (scheme and credential):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated"
-            )
-        if scheme.lower() != "bearer":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication scheme"
-            )
-        return get_user_data(credential, self._public_key, self._alg)
+        parts = header.split(maxsplit=1)
+        if len(parts) != 2:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Not authenticated")
+
+        scheme, credential = parts
+        return scheme, credential
