@@ -163,16 +163,15 @@ class ChatNewMessageUsecase:
             limit=10,
             offset=0
         )
+        history = [
+            _msg for _msg in history if _msg.status != MessageStatus.FAILED
+        ]
         # Формирование сообщения для OpenRouter API
         messages = []
         for msg in history:
-            role = msg.sender_type
+            role = msg.sender_type.value
             messages.append(MessageSchema(role=role, content=msg.content))
 
-        if not messages or messages[-1]["role"] != "user":
-            messages.append(
-                MessageSchema(role=SenderType.USER, content=self._content)
-            )
         return [msg.model_dump() for msg in messages]
 
     async def _handle_llm_response(self, response: str) -> UUID:
@@ -214,16 +213,13 @@ class ChatNewMessageUsecase:
         :raises Exception: Перенаправление исключения exc.
         """
         try:
-            # await self._update_message_status(
-            #     new_status=MessageStatus.FAILED,
-            #     metadata={
-            #         "error": str(exc),
-            #         "error_type": type(exc).__name__,
-            #         "task_id": self._task.request.id,
-            #     }
-            # )
-            await self._repo.update_status(
-                self._message_id, MessageStatus.FAILED
+            await self._update_message_status(
+                new_status=MessageStatus.FAILED,
+                metadata={
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "task_id": self._task.request.id,
+                }
             )
         except Exception as db_err:
             self._logger.error(

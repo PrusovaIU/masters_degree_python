@@ -130,7 +130,7 @@ class OpenRouterConfig(BaseModel):
         description="Базовый URL OpenRouter API"
     )
     model: str = Field(
-        default="stepfun/step-3.5-flash:free",
+        default="inclusionai/ling-2.6-1t:free",
         description="Модель OpenRouter по умолчанию"
     )
     app_name: str = Field(
