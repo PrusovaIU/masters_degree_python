@@ -2,17 +2,19 @@ from uuid import UUID
 
 from loguru import logger
 
+from chat_api_service.app.db.models import Conversation
 from chat_api_service.app.repositories.conversation import \
     ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.schemas.message import MessageResponse
-from chat_api_service.app.schemas.conversation import ConversationHistoryResponse
+from chat_api_service.app.schemas.conversation import \
+    ConversationHistoryResponse, ConversationResponse
 from chat_api_service.app.schemas.pagination import PaginationMeta
 
 
-class ChatHistoryUsecase:
+class ConversationUsecase:
     """
-    Usecase для получения истории сообщений диалога.
+    Usecase управления диалогами.
 
     :param conversation_repo: Репозиторий для работы с диалогами.
     :param message_repo: Репозиторий для работы с сообщениями.
@@ -24,6 +26,52 @@ class ChatHistoryUsecase:
     ):
         self._conv_repo = conversation_repo
         self._msg_repo = message_repo
+
+    async def create_conversation(
+            self,
+            user_id: str,
+            title: str
+    ) -> Conversation:
+        """
+        Создание диалога.
+
+        :param user_id: Идентификатор диалога.
+        :param title: Заголовок диалога.
+        :return: Данные диалога.
+        """
+        conv_data: Conversation = await self._conv_repo.create(
+            user_id, title
+        )
+        return conv_data
+
+    async def list_conversations(
+            self,
+            user_id: str,
+            limit: int,
+            offset: int
+    ) -> tuple[list[ConversationResponse], int]:
+        """
+        Получение списка диалогов пользователя, отсортированных по дате
+        создания.
+
+        :param user_id: Идентификатор пользователя из Auth Service.
+        :param limit: Количество элементов на странице.
+        :param offset: Смещение для пагинации.
+        :return: Список диалогов с пагинацией, общее количество диалогов.
+        """
+        conversations, total = await self._conv_repo.list_by_user(
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+        )
+        conversations = [
+            ConversationResponse.model_validate(
+                conv,
+                from_attributes=True
+            )
+            for conv in conversations
+        ]
+        return conversations, total
 
     async def get_history(
             self,

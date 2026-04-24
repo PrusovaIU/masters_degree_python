@@ -1,11 +1,12 @@
 from typing import Annotated
 
-from chat_api_service.app.usecases.chat.history import ChatHistoryUsecase
+from chat_api_service.app.db.models import Conversation
+from chat_api_service.app.usecases.chat.conversation import ConversationUsecase
 from chat_api_service.app.api.deps.db import ConversationRepoDep, MessagesRepoDep
 from fastapi import Depends
 
 
-def chat_history_usecase(
+def conversation_usecase(
         conversation_repo: ConversationRepoDep,
         message_repo: MessagesRepoDep,
 ):
@@ -16,13 +17,13 @@ def chat_history_usecase(
     :param message_repo: Репозиторий для работы с сообщениями.
     :return: Экземпляр класса ChatHistoryUsecase.
     """
-    return ChatHistoryUsecase(
+    return ConversationUsecase(
         conversation_repo,
         message_repo
     )
 
 
-ChatHistoryUsecaseDep = Annotated[
-    ChatHistoryUsecase,
-    Depends(chat_history_usecase)
+ConversationUsecaseDep = Annotated[
+    ConversationUsecase,
+    Depends(conversation_usecase)
 ]

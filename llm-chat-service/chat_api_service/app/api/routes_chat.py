@@ -8,7 +8,7 @@ from chat_api_service.app.api.deps.db import ConversationRepoDep
 from chat_api_service.app.api.deps.jwt import UserDataDep
 from chat_api_service.app.schemas import conversation
 from chat_api_service.app.db.models import Conversation
-from chat_api_service.app.api.deps.usecases import ChatHistoryUsecaseDep
+from chat_api_service.app.api.deps.usecases import ConversationUsecaseDep
 from chat_api_service.app.schemas.pagination import PaginationRequest
 from chat_api_service.app.core.exceptions import conversation as errs
 from libs.schemas.error_detail import Detail
@@ -30,34 +30,25 @@ router_chat = APIRouter(prefix="/conversation", tags=["chat"])
 )
 async def list_conversations(
         current_user: UserDataDep,
-        conversation_repo: ConversationRepoDep,
+        conversations_usecase: ConversationUsecaseDep,
         pagination: PaginationRequest
 ) -> conversation.ConversationListResponse:
     """
     Получение списка диалогов пользователя.
 
     :param current_user: Аутентифицированный пользователь.
-    :param conversation_repo: Репозиторий диалогов.
+    :param conversations_usecase: Usecase работы с диалогами.
     :param pagination: Параметры пагинации.
     :return: Список диалогов с метаданными пагинации.
     """
     user_id = str(current_user.user_id)
 
-    conversations, total = await conversation_repo.list_by_user(
-        user_id=user_id,
-        limit=pagination.limit,
-        offset=pagination.offset,
+    conversations, total = await conversations_usecase.list_conversations(
+        user_id, pagination.limit, pagination.offset
     )
-    conversation_responses = [
-        conversation.ConversationResponse.model_validate(
-            conv,
-            from_attributes=True
-        )
-        for conv in conversations
-    ]
 
     return conversation.ConversationListResponse(
-        conversations=conversation_responses,
+        conversations=conversations,
         pagination=chat_api_service.app.schemas.pagination.PaginationMeta(
             limit=pagination.limit,
             offset=pagination.offset,
@@ -75,13 +66,12 @@ async def list_conversations(
 )
 async def create_conversation(
         current_user: UserDataDep,
-        conversation_repo: ConversationRepoDep,
+        conversation_usecase: ConversationUsecaseDep,
         conversation_data: conversation.ConversationCreateRequest
 ):
     user_id = str(current_user.user_id)
-    conv_data: Conversation = await conversation_repo.create(
-        user_id,
-        conversation_data.title
+    conv_data: Conversation = await conversation_usecase.create_conversation(
+        user_id, conversation_data.title
     )
     return conversation.ConversationCreateResponse(
         id=conv_data.id,
@@ -107,7 +97,7 @@ async def create_conversation(
 async def get_history(
         conversation_id: UUID,
         current_user: UserDataDep,
-        chat_history_usecase: ChatHistoryUsecaseDep,
+        chat_history_usecase: ConversationUsecaseDep,
         pagination_data: PaginationRequest,
 ) -> conversation.ConversationHistoryResponse:
     """
@@ -139,3 +129,5 @@ async def get_history(
             detail=jsonable_encoder(err.detail)
         )
     return history
+
+
