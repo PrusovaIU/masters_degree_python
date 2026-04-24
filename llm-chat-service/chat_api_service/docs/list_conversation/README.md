@@ -4,7 +4,7 @@
 
 ## Request:
 
-**URL**: `GET /conversation/all`
+**URL**: `POST /conversation/all`
 
 **Headers**:
 
@@ -24,10 +24,15 @@
 **CURL**
 
 ```shell
-curl -X 'GET' \
-  'http://127.0.0.1:8001/conversation/all?limit=20&offset=0' \
+curl -X 'POST' \
+  'http://127.0.0.1:8001/conversation/all' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzc2OTQ5NzA4LCJpYXQiOjE3NzY5NDg4MDgsInR5cGUiOiJhY2Nlc3MiLCJyb2xlIjoidXNlciJ9.VjkxwVEWNd-YAyjveqOxRAuuZPoAZvKm6NiSdLRq5h8'
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzc3MDI0ODMwLCJpYXQiOjE3NzcwMjM5MzAsInR5cGUiOiJhY2Nlc3MiLCJyb2xlIjoidXNlciJ9.bqAZ3Uhmn-d-kxYoOmMzLI9hjuSZpovtkVa0llNM7ZI' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "limit": 20,
+  "offset": 0
+}'
 ```
 
 ## Response:
