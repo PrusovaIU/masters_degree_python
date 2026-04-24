@@ -275,7 +275,7 @@ class ChatNewMessageUsecase:
             self._message_id, MessageStatus.DELIVERED
         )
         await self._repo.update_status(
-            self._message_id, MessageStatus.DELIVERED
+            assistant_message_id, MessageStatus.DELIVERED
         )
 
     async def new_message(self) -> tuple[UUID, str]:
