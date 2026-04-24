@@ -46,8 +46,6 @@ class ChatHistoryUsecase:
 
         :raises ConversationAccessDenied: Если диалог не принадлежит
             пользователю.
-
-        :raises InvalidPaginationParams: Если параметры пагинации некорректны.
         """
         conversation = await self._conv_repo.get(conversation_id, user_id)
 
