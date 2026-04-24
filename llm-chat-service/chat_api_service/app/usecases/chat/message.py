@@ -110,7 +110,7 @@ class MessageUsecase:
         :raises MessageNotFound: Если сообщение не найдено.
         :raises ConversationAccessDenied: Если доступ к диалогу запрещен.
         :raises UpdateMessageError: Если сообщение не было обновлено.
-        :raises ValueError: Если назначить сообщению указанный статус.
+        :raises InvalidMessageStatus: Если новый статус сообщения не валидный.
         """
         message: Message | None = await self._msg_repo.get_by_id(message_id)
         await self._check_message_access(

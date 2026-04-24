@@ -58,3 +58,8 @@ curl -X 'PATCH' \
 
 ![200_OK.png](200_OK.png)
 
+**400 - Bad request**
+
+Невалидный переход между статусами.
+
+![400_BAD_REQUEST.png](400_BAD_REQUEST.png)

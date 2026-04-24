@@ -173,13 +173,10 @@ async def update_message_status(
             str(current_user.user_id),
             new_status.status
         )
-    except ValueError as err:
+    except msg_errs.InvalidMessageStatus as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=Detail(
-                title="StatusError",
-                message=str(err)
-            )
+            detail=err.detail_jsonable_encoder
         )
     except errs.ConversationAccessDenied as err:
         raise HTTPException(
