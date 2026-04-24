@@ -63,3 +63,15 @@ curl -X 'PATCH' \
 Невалидный переход между статусами.
 
 ![400_BAD_REQUEST.png](400_BAD_REQUEST.png)
+
+**403 - Forbidden**
+
+У пользователя нет доступа к сообщению.
+
+![403_FORBIDDEN.png](403_FORBIDDEN.png)
+
+**404 - Not found**
+
+Сообщение с указанным ID не найдено.
+
+![404_NOT_FOUND.png](404_NOT_FOUND.png)
