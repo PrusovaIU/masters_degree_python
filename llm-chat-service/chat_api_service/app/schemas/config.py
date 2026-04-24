@@ -83,7 +83,7 @@ class RabbitMQConfig(ConfigWithPasswd):
         default=None,
         description="Виртуальный хост RabbitMQ"
     )
-    message_exchange: str = Field(
+    message_queue: str = Field(
         default="messages",
         description="Имя очереди сообщений"
     )

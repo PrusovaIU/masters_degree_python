@@ -24,7 +24,7 @@ from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 logger = get_task_logger(__name__)
 or_client = OpenRouterClient(settings.openrouter)
 DBSession.setup(settings.db.database_url, settings.db.db_schema, True)
-RabbitMQClient.setup(settings.rabbitmq.url, settings.rabbitmq.message_exchange)
+RabbitMQClient.setup(settings.rabbitmq.url, settings.rabbitmq.message_queue)
 
 
 @asynccontextmanager
@@ -113,7 +113,7 @@ async def llm_request(
     await RedisClient.setup(settings.redis, True)
     await RabbitMQClient.setup(
         settings.rabbitmq.url,
-        settings.rabbitmq.message_exchange
+        settings.rabbitmq.message_queue
     )
     status: LLMTaskStatusSchema | None = None
     try:
@@ -129,7 +129,7 @@ async def llm_request(
                 user_id,
                 content,
                 idempotency_key,
-                settings.rabbitmq.message_exchange,
+                settings.rabbitmq.message_queue,
                 temperature
             )
             answer_id, answer_content = await usecase.new_message()
