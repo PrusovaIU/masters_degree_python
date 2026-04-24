@@ -1,17 +1,21 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
+import chat_api_service.app.schemas.pagination
 from chat_api_service.app.api.deps.db import ConversationRepoDep
 from chat_api_service.app.api.deps.jwt import UserDataDep
 from chat_api_service.app.schemas import conversation
 from chat_api_service.app.db.models import Conversation
+from chat_api_service.app.api.deps.usecases import ChatHistoryUsecaseDep
+from chat_api_service.app.schemas.pagination import PaginationRequest
 
 
 router_chat = APIRouter(prefix="/conversation", tags=["chat"])
 
 
-@router_chat.get(
+@router_chat.post(
     "/all",
     response_model=conversation.ConversationListResponse,
     summary="Список диалогов пользователя",
@@ -24,24 +28,22 @@ router_chat = APIRouter(prefix="/conversation", tags=["chat"])
 async def list_conversations(
         current_user: UserDataDep,
         conversation_repo: ConversationRepoDep,
-        limit: Annotated[int, Query(ge=1, le=100)] = 20,
-        offset: Annotated[int, Query(ge=0)] = 0,
+        pagination: PaginationRequest
 ) -> conversation.ConversationListResponse:
     """
     Получение списка диалогов пользователя.
 
     :param current_user: Аутентифицированный пользователь.
     :param conversation_repo: Репозиторий диалогов.
-    :param limit: Количество элементов на странице.
-    :param offset: Смещение для пагинации.
+    :param pagination: Параметры пагинации.
     :return: Список диалогов с метаданными пагинации.
     """
     user_id = str(current_user.user_id)
 
     conversations, total = await conversation_repo.list_by_user(
         user_id=user_id,
-        limit=limit,
-        offset=offset,
+        limit=pagination.limit,
+        offset=pagination.offset,
     )
     conversation_responses = [
         conversation.ConversationResponse.model_validate(
@@ -53,9 +55,9 @@ async def list_conversations(
 
     return conversation.ConversationListResponse(
         conversations=conversation_responses,
-        pagination=conversation.PaginationMeta(
-            limit=limit,
-            offset=offset,
+        pagination=chat_api_service.app.schemas.pagination.PaginationMeta(
+            limit=pagination.limit,
+            offset=pagination.offset,
             total=total
         )
     )
@@ -83,3 +85,35 @@ async def create_conversation(
         title=conv_data.title,
         created_at=conv_data.created_at
     )
+
+
+@router_chat.post(
+    "/history",
+    summary="История сообщений в диалоге",
+    description="История сообщений в диалоге",
+
+)
+async def get_history(
+        conversation_id: UUID,
+        current_user: UserDataDep,
+        chat_history_usecase: ChatHistoryUsecaseDep,
+        pagination_data: PaginationRequest,
+) -> conversation.ConversationHistoryResponse:
+    """
+    Получение истории сообщений в диалоге.
+
+    :param conversation_id: ID диалога.
+    :param current_user: Текущий пользователь.
+    :param chat_history_usecase: Usecase истории сообщений.
+    :param pagination_data: Данные пагинации.
+    :return: История сообщений.
+    """
+    user_id = str(current_user.user_id)
+    history: conversation.ConversationHistoryResponse = \
+        await chat_history_usecase.get_history(
+            conversation_id,
+            user_id,
+            pagination_data.limit,
+            pagination_data.offset
+        )
+    return history

@@ -6,8 +6,8 @@ from chat_api_service.app.repositories.conversation import \
     ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.schemas.message import MessageResponse
-from chat_api_service.app.schemas.conversation import \
-    ConversationHistoryParams, ConversationHistoryResponse, PaginationMeta
+from chat_api_service.app.schemas.conversation import ConversationHistoryResponse
+from chat_api_service.app.schemas.pagination import PaginationMeta
 
 
 class ChatHistoryUsecase:
@@ -29,14 +29,16 @@ class ChatHistoryUsecase:
             self,
             conversation_id: UUID,
             user_id: str,
-            params: ConversationHistoryParams
+            limit: int,
+            offset: int
     ) -> ConversationHistoryResponse:
         """
         Получение истории сообщений диалога.
 
         :param conversation_id: UUID диалога.
         :param user_id: Идентификатор пользователя из Auth Service.
-        :param params: Параметры пагинации и фильтрации.
+        :param limit: Лимит количества сообщений.
+        :param offset: Смещение для пагинации.
 
         :return: Схема ответа с сообщениями и метаданными пагинации.
 
@@ -49,10 +51,12 @@ class ChatHistoryUsecase:
         """
         conversation = await self._conv_repo.get(conversation_id, user_id)
 
+        await self._msg_repo.mark_as_read(conversation_id)
+
         messages = await self._msg_repo.list_by_conversation(
             conversation_id=conversation_id,
-            limit=params.limit,
-            offset=params.offset
+            limit=limit,
+            offset=offset
         )
 
         total_count = await self._msg_repo.count_by_conversation(
@@ -69,8 +73,8 @@ class ChatHistoryUsecase:
             conversation_id=str(conversation_id),
             user_id=user_id,
             messages_count=len(message_responses),
-            limit=params.limit,
-            offset=params.offset,
+            limit=limit,
+            offset=offset,
         )
 
         return ConversationHistoryResponse(
@@ -78,8 +82,8 @@ class ChatHistoryUsecase:
             conversation_title=conversation.title,
             messages=message_responses,
             pagination=PaginationMeta(
-                limit=params.limit,
-                offset=params.offset,
+                limit=limit,
+                offset=offset,
                 total=total_count
             )
         )

@@ -211,3 +211,22 @@ class MessageRepository:
         await self._session.execute(query)
         await self._session.commit()
         return await self.get_by_id(message_id)
+
+    async def mark_as_read(self, conversation_id: UUID) -> None:
+        """
+        Пометить сообщения с типом DELIVERED как READ.
+
+        :param conversation_id: ID диалога.
+        :return: None.
+        """
+        query = (
+            update(Message)
+            .where(
+                Message.conversation_id == conversation_id,
+                Message.status == MessageStatus.DELIVERED
+            ).values(
+                status=MessageStatus.READ,
+                read_at=datetime.now(timezone.utc)
+            )
+        )
+        await self._session.execute(query)

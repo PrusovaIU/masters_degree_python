@@ -1,4 +1,3 @@
-from datetime import datetime
 from functools import wraps
 from typing import Callable
 from uuid import UUID
@@ -7,8 +6,6 @@ from celery import Task
 from celery.utils.log import get_task_logger
 
 from chat_api_service.app.core.config import settings
-from chat_api_service.app.db.session import DBSession
-from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.services.openrouter_client import OpenRouterClient
 from chat_api_service.app.infra.celery_app import celery_app
@@ -19,8 +16,6 @@ from chat_api_service.app.usecases.chat.handle_message import ChatNewMessageUsec
 from chat_api_service.app.core.exceptions.value import UUIDValueError
 from chat_api_service.app.core.exceptions import chat_new_message as chat_nm_exc
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.core.exceptions.message import InvalidMessageStatus, MessageNotFound
-from chat_api_service.app.usecases.chat.mark_message import MarkMessageUsecase
 from chat_api_service.app.db.session import DBSession
 from chat_api_service.app.infra.redis import RedisClient
 
@@ -183,85 +178,3 @@ async def llm_request(
                 task_id=self.request.id
             )
     return status.model_dump()
-
-
-# @celery_app.task(
-#     name="chat_api_service.mark_message_read",
-#     bind=True,
-#     autoretry_for=(Exception,),
-#     retry_kwargs={"max_retries": 2},
-# )
-# @uuid_error_decorator
-# async def mark_message_read(
-#         self: Task,
-#         message_id: str,
-#         user_id: str
-# ) -> dict:
-#     """
-#     Фоновая задача: обновление статуса сообщения на "прочитано".
-#
-#     Может вызываться при открытии диалога пользователем или по таймеру.
-#
-#     :param message_id: UUID сообщения.
-#     :param user_id: ID пользователя.
-#     :return: Результат операции.
-#     """
-#     status: LLMTaskStatusSchema | None = None
-#     try:
-#         message_uuid = _uuid_from_str(message_id)
-#         async with _get_message_repo() as repo:
-#             usecase = MarkMessageUsecase(repo, logger)
-#             read_at: datetime | None = await usecase.as_read(
-#                 message_uuid, user_id
-#             )
-#             read_at_note = read_at.isoformat() if read_at else ""
-#             status = LLMTaskStatusSchema(
-#                 status=LLMTasksStatus.SUCCESS,
-#                 message_id=message_id,
-#                 note=f"read_at: {read_at_note}"
-#             )
-#     except InvalidMessageStatus as err:
-#         logger.error(
-#             f"Не удалось пометить сообщение {message_id} как прочитанное: "
-#             f"{err} ({err.__class__.__name__})"
-#         )
-#         status = LLMTaskStatusSchema(
-#             status=LLMTasksStatus.ERROR,
-#             message_id=message_id,
-#             error=str(err),
-#             error_type=err.__class__.__name__,
-#             note=f"current_status: {err.old_status}"
-#         )
-#     except MessageNotFound as err:
-#         logger.error(
-#             f"{err}: message_id={message_id} - {err.__class__.__name__}"
-#         )
-#         status = LLMTaskStatusSchema(
-#             status=LLMTasksStatus.ERROR,
-#             message_id=message_id,
-#             error="message_not_found"
-#         )
-#     return status.to_dict()
-#
-#
-# @celery_app.task(
-#     name="chat_api_service.cleanup_stale_locks",
-#     ignore_result=True,
-# )
-# async def cleanup_stale_locks() -> dict:
-#     """
-#     Периодическая задача: очистка "зависших" блокировок в Redis.
-#
-#     Запускается по расписанию (например, раз в 5 минут через Celery Beat).
-#     """
-#     try:
-#         deleted_count: int = await RedisClient.clean_up()
-#         logger.info(
-#             f"Очистка блоков : удалено {deleted_count} зависших блоков"
-#         )
-#         return {"deleted_locks": deleted_count}
-#     except Exception as err:
-#         logger.error(
-#             f"Ошибка при очистке блоков: {err} ({err.__class__.__name__})"
-#         )
-#         return {"error": str(err)}
