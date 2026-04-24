@@ -88,11 +88,11 @@ async def get_llm_task_status(
     :return: Статус задачи.
     """
     user_id = str(current_user.user_id)
-    usecase = MessageStatusUsecase(
-        msg_repo, task_id, user_id
-    )
+    usecase = MessageStatusUsecase(msg_repo)
     try:
-        response: LLMStatusResponse = await usecase.execute()
+        response: LLMStatusResponse = await usecase.get_by_task_id(
+            task_id, user_id
+        )
     except ConversationNotFound as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

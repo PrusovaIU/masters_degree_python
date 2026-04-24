@@ -129,5 +129,3 @@ async def get_history(
             detail=jsonable_encoder(err.detail)
         )
     return history
-
-

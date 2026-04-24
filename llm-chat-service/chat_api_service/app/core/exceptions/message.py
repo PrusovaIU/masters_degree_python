@@ -28,7 +28,7 @@ class InvalidMessageStatus(AppException):
 
 class MessageNotFound(AppException):
     """Сообщение не найдено."""
-    def __init__(self, message: str, message_id: UUID):
+    def __init__(self, message: str, message_id: str | UUID):
         super().__init__(message, message_id=message_id)
         self._message_id = message_id
 
