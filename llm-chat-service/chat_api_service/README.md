@@ -12,3 +12,4 @@ REST API для создания диалогов, отправки сообще
 3. [Создание нового диалога](docs/create_conversation/README.md);
 4. [Список диалогов](docs/list_conversation/README.md);
 5. [Список сообщений диалога](docs/conversation_history/README.md);
+6. [Health check](docs/health/README.md).
