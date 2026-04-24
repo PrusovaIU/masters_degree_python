@@ -9,16 +9,20 @@ from chat_api_service.app.api.deps.jwt import UserDataDep
 from chat_api_service.app.schemas import conversation
 from chat_api_service.app.db.models import Conversation
 from chat_api_service.app.api.deps.usecases import ConversationUsecaseDep
+from chat_api_service.app.schemas.message import MessageResponse, \
+    MessageStatusUpdate
 from chat_api_service.app.schemas.pagination import PaginationRequest
 from chat_api_service.app.core.exceptions import conversation as errs
+from chat_api_service.app.core.exceptions import message as msg_errs
 from libs.schemas.error_detail import Detail
 from fastapi.encoders import jsonable_encoder
+from .deps.usecases import MessageUsecaseDep
 
 
-router_chat = APIRouter(prefix="/conversation", tags=["chat"])
+router_conversation = APIRouter(prefix="/conversation", tags=["chat"])
 
 
-@router_chat.post(
+@router_conversation.post(
     "/all",
     response_model=conversation.ConversationListResponse,
     summary="Список диалогов пользователя",
@@ -57,7 +61,7 @@ async def list_conversations(
     )
 
 
-@router_chat.post(
+@router_conversation.post(
     "/",
     response_model=conversation.ConversationCreateResponse,
     status_code=status.HTTP_201_CREATED,
@@ -80,7 +84,7 @@ async def create_conversation(
     )
 
 
-@router_chat.post(
+@router_conversation.post(
     "/history",
     response_model=conversation.ConversationHistoryResponse,
     summary="История сообщений в диалоге",
@@ -129,3 +133,65 @@ async def get_history(
             detail=jsonable_encoder(err.detail)
         )
     return history
+
+
+@router_conversation.patch(
+    "/messages/{message_id}/status",
+    response_model=MessageResponse,
+    summary="Изменение статуса сообщения",
+    description="Изменение статуса сообщения",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": Detail
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": Detail
+        },
+    }
+)
+async def update_message_status(
+        message_id: UUID,
+        new_status: MessageStatusUpdate,
+        current_user: UserDataDep,
+        msg_usecase: MessageUsecaseDep
+) -> MessageResponse:
+    """
+    Обновление статуса сообщения.
+
+    :param message_id: Идентификатор сообщения.
+    :param new_status: Новый статус сообщения.
+    :param current_user: Текущий пользователь.
+    :param msg_usecase: Usecase сообщений.
+    :return: Обновленное сообщение.
+    """
+    try:
+        updated_message = await msg_usecase.status_update(
+            message_id,
+            str(current_user.user_id),
+            new_status.status
+        )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=Detail(
+                title="StatusError",
+                message=str(err)
+            )
+        )
+    except errs.ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=err.detail_jsonable_encoder
+        )
+    except msg_errs.MessageNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=err.detail_jsonable_encoder
+        )
+    return MessageResponse.model_validate(
+        updated_message,
+        from_attributes=True
+    )

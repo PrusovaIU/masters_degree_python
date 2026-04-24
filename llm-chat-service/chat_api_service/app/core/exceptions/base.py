@@ -1,3 +1,5 @@
+from fastapi.encoders import jsonable_encoder
+
 from libs.schemas.error_detail import Detail
 
 
@@ -42,6 +44,10 @@ class BaseAppException(Exception):
             message=self.message,
             metadata=self._kwargs
         )
+
+    @property
+    def detail_jsonable_encoder(self) -> dict:
+        return jsonable_encoder(self.detail)
 
 
 class AppException(BaseAppException):

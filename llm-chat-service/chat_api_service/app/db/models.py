@@ -151,7 +151,8 @@ class Message(Base):
         """
         if new_status not in VALID_TRANSITIONS.get(self.status, []):
             raise InvalidMessageStatus(
-                f"Невалидных переход статуса",
+                f"Невалидных переход статуса из "
+                f"{self.status} в {new_status}",
                 old_status=self.status,
                 new_status=new_status
             )

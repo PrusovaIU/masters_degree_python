@@ -9,7 +9,7 @@ from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
 from chat_api_service.app.schemas.llm import LLMStatusResponse
 from chat_api_service.app.core.exceptions.conversation import (
     ConversationNotFound, ConversationAccessDenied)
-from chat_api_service.app.usecases.chat.message_status import MessageStatusUsecase
+from .deps.usecases import MessageUsecaseDep
 
 
 router_llm = APIRouter(prefix="/chat/llm", tags=["llm"])
@@ -76,21 +76,20 @@ async def query_llm(
 async def get_llm_task_status(
         task_id: str,
         current_user: UserDataDep,
-        msg_repo: MessagesRepoDep
+        msg_usecase: MessageUsecaseDep,
 ) -> LLMStatusResponse:
     """
     Получение статуса задачи LLM.
 
     :param task_id: UUID задачи Celery.
     :param current_user: Аутентифицированный пользователь.
-    :param msg_repo: Репозиторий сообщений.
+    :param msg_usecase: Usecase сообщений.
 
     :return: Статус задачи.
     """
     user_id = str(current_user.user_id)
-    usecase = MessageStatusUsecase(msg_repo)
     try:
-        response: LLMStatusResponse = await usecase.get_by_task_id(
+        response: LLMStatusResponse = await msg_usecase.get_by_task_id(
             task_id, user_id
         )
     except ConversationNotFound as err:
