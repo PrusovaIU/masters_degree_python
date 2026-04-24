@@ -45,6 +45,7 @@ class ChatNewMessageUsecase:
 
     async def _update_message_status(
             self,
+            message_id: UUID,
             new_status: MessageStatus | str,
             content: str | None = None,
             metadata: dict | None = None,
@@ -63,7 +64,7 @@ class ChatNewMessageUsecase:
                 metadata=metadata,
             )
         await self._repo.update_status(
-            message_id=self._message_id,
+            message_id=message_id,
             new_status=new_status,
         )
 
@@ -202,7 +203,11 @@ class ChatNewMessageUsecase:
         )
         return assistant_message.id
 
-    async def _handle_error(self, exc: Exception) -> None:
+    async def _handle_error(
+            self,
+            exc: Exception,
+            assistant_msg_id: UUID | None
+    ) -> None:
         """
         Обработка ошибок при выполнении запроса к LLM.
 
@@ -213,6 +218,7 @@ class ChatNewMessageUsecase:
         """
         try:
             await self._update_message_status(
+                self._message_id,
                 new_status=MessageStatus.FAILED,
                 metadata={
                     "error": str(exc),
@@ -220,6 +226,16 @@ class ChatNewMessageUsecase:
                     "task_id": self._task.request.id,
                 }
             )
+            if assistant_msg_id:
+                await self._update_message_status(
+                    assistant_msg_id,
+                    new_status=MessageStatus.FAILED,
+                    metadata={
+                        "error": str(exc),
+                        "error_type": type(exc).__name__,
+                        "task_id": self._task.request.id,
+                    }
+                )
         except Exception as db_err:
             self._logger.error(
                 f"Не удалось обновить статус сообщения: {db_err} "
@@ -311,12 +327,7 @@ class ChatNewMessageUsecase:
                 f"{err} ({err.__class__.__name__}): "
                 f"msg_id={self._message_id}, task_id={self._task.request.id}"
             )
-            await self._handle_error(err)
-            if assistant_msg_id:
-                await self._repo.update_status(
-                    assistant_msg_id,
-                    MessageStatus.FAILED
-                )
+            await self._handle_error(err, assistant_msg_id)
         else:
             await self._change_status(assistant_msg_id)
         finally:
