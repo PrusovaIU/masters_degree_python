@@ -76,8 +76,14 @@ curl -X 'POST' \
 
 ![200_OK.png](200_OK.png)
 
+**403 - Forbidden**
+
+Диалог принадлежит другому пользователю
+
+![403_FORBIDDEN.png](403_FORBIDDEN.png)
+
 **404 - Not found**
 
 Диалог с указанным идентификатором не найден.
 
-![404_NOT_FOUND.png](404_NOT_FOUND.png)
+![404_NOT_FOUND.png](404_NOT_FOUND.png

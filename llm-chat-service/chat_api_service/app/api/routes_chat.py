@@ -96,9 +96,12 @@ async def create_conversation(
     summary="История сообщений в диалоге",
     description="История сообщений в диалоге",
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        },
         status.HTTP_404_NOT_FOUND: {
             "model": Detail
-        }
+        },
     }
 )
 async def get_history(
@@ -128,6 +131,11 @@ async def get_history(
     except errs.ConversationNotFound as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=jsonable_encoder(err.detail)
+        )
+    except errs.ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=jsonable_encoder(err.detail)
         )
     return history
