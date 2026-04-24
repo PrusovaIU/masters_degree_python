@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, status, HTTPException
 
 import chat_api_service.app.schemas.pagination
 from chat_api_service.app.api.deps.db import ConversationRepoDep
@@ -10,6 +10,9 @@ from chat_api_service.app.schemas import conversation
 from chat_api_service.app.db.models import Conversation
 from chat_api_service.app.api.deps.usecases import ChatHistoryUsecaseDep
 from chat_api_service.app.schemas.pagination import PaginationRequest
+from chat_api_service.app.core.exceptions import conversation as errs
+from libs.schemas.error_detail import Detail
+from fastapi.encoders import jsonable_encoder
 
 
 router_chat = APIRouter(prefix="/conversation", tags=["chat"])
@@ -89,9 +92,14 @@ async def create_conversation(
 
 @router_chat.post(
     "/history",
+    response_model=conversation.ConversationHistoryResponse,
     summary="История сообщений в диалоге",
     description="История сообщений в диалоге",
-
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": Detail
+        }
+    }
 )
 async def get_history(
         conversation_id: UUID,
@@ -109,11 +117,17 @@ async def get_history(
     :return: История сообщений.
     """
     user_id = str(current_user.user_id)
-    history: conversation.ConversationHistoryResponse = \
-        await chat_history_usecase.get_history(
-            conversation_id,
-            user_id,
-            pagination_data.limit,
-            pagination_data.offset
+    try:
+        history: conversation.ConversationHistoryResponse = \
+            await chat_history_usecase.get_history(
+                conversation_id,
+                user_id,
+                pagination_data.limit,
+                pagination_data.offset
+            )
+    except errs.ConversationNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=jsonable_encoder(err.detail)
         )
     return history
