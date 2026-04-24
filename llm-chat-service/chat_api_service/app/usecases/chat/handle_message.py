@@ -12,6 +12,8 @@ from chat_api_service.app.consts.message import SenderType
 import loguru
 from chat_api_service.app.schemas.message import MessageCreate
 from chat_api_service.app.core.exceptions import chat_new_message as errors
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
+from chat_api_service.app.schemas.rabbit_mq import RabbitMQMessageStatus
 
 
 class ChatNewMessageUsecase:
@@ -25,6 +27,7 @@ class ChatNewMessageUsecase:
             user_id: str,
             content: str,
             idempotency_key: str,
+            rabbitmq_exchange: str,
             temperature: float = 0.7,
             logger = None
     ):
@@ -37,6 +40,7 @@ class ChatNewMessageUsecase:
         self._content = content
         self._idempotency_key = idempotency_key
         self._temperature = temperature
+        self._rabbitmq_exchange = rabbitmq_exchange
         self._logger = logger if logger else loguru.logger
 
     async def _update_message_status(
@@ -168,7 +172,7 @@ class ChatNewMessageUsecase:
         ]
         # Формирование сообщения для OpenRouter API
         messages = []
-        for msg in history:
+        for msg in reversed(history):
             role = msg.sender_type.value
             messages.append(MessageSchema(role=role, content=msg.content))
 
@@ -187,7 +191,7 @@ class ChatNewMessageUsecase:
             message_in=MessageCreate(
                 sender_type=SenderType.ASSISTANT,
                 content=response,
-                status=MessageStatus.DELIVERED,
+                status=MessageStatus.PROCESSING,
                 metadata={
                     "temperature": self._temperature,
                     "task_id": self._task.request.id,
@@ -196,11 +200,6 @@ class ChatNewMessageUsecase:
             ),
             idempotency_key=f"{self._idempotency_key}:response",
         )
-
-        await self._repo.update_status(
-            self._message_id, MessageStatus.DELIVERED
-        )
-
         return assistant_message.id
 
     async def _handle_error(self, exc: Exception) -> None:
@@ -249,6 +248,36 @@ class ChatNewMessageUsecase:
                 f"{err} ({err.__class__.__name__})"
             )
 
+    async def _rabbbitmq_publish(self) -> None:
+        """
+        Публикация сообщения в RabbitMQ.
+
+        :return: None.
+        """
+        message_status = RabbitMQMessageStatus(
+            message_id=self._message_id,
+            conversation_id=self._conversation_id,
+            user_id=self._user_id
+        )
+        await RabbitMQClient.publish(
+            message_status.model_dump_json().encode("utf-8"),
+            self._rabbitmq_exchange
+        )
+
+    async def _change_status(self, assistant_message_id: UUID) -> None:
+        """
+        Изменение статуса сообщения в БД на "delivered".
+
+        :param assistant_message_id: Идентификатор сообщения с ответом LLM.
+        :return: None.
+        """
+        await self._repo.update_status(
+            self._message_id, MessageStatus.DELIVERED
+        )
+        await self._repo.update_status(
+            self._message_id, MessageStatus.DELIVERED
+        )
+
     async def new_message(self) -> tuple[UUID, str]:
         """
         Обработка нового сообщения от пользователя.
@@ -262,6 +291,7 @@ class ChatNewMessageUsecase:
         await self._check_rate_limit()
         await self._acquire_lock()
         await self._check_race_condition()
+        assistant_msg_id: UUID | None = None
         try:
             messages = await self._prepare_context()
             llm_response: str = await self._openrouter_client.call_openrouter(
@@ -274,6 +304,7 @@ class ChatNewMessageUsecase:
                 f"response_id={assistant_msg_id}, "
                 f"task_id={self._task.request.id}"
             )
+            await self._rabbbitmq_publish()
         except Exception as err:
             self._logger.error(
                 f"Ошибка при обработке запроса к LLM - "
@@ -281,6 +312,13 @@ class ChatNewMessageUsecase:
                 f"msg_id={self._message_id}, task_id={self._task.request.id}"
             )
             await self._handle_error(err)
+            if assistant_msg_id:
+                await self._repo.update_status(
+                    assistant_msg_id,
+                    MessageStatus.FAILED
+                )
+        else:
+            await self._change_status(assistant_msg_id)
         finally:
             await self._release_lock()
         return assistant_msg_id, llm_response

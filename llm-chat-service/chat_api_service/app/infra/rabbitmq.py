@@ -1,14 +1,12 @@
-from collections.abc import Callable, Awaitable
 from datetime import datetime
 from typing import Any
 
-from aio_pika import Message, connect_robust, IncomingMessage
+from aio_pika import Message, connect_robust
 from aio_pika.abc import DeliveryMode, AbstractRobustConnection, \
-    AbstractRobustChannel, AbstractRobustQueue, AbstractRobustExchange
+    AbstractRobustChannel
 import asyncio
 from loguru import logger
 from chat_api_service.app.core.exceptions import rabbitmq as errors
-from chat_api_service.app.core.rabbitmq_utils import RabbitMQConsumeUtils
 
 
 class RabbitMQClient:
@@ -16,11 +14,13 @@ class RabbitMQClient:
     _connection: AbstractRobustConnection | None = None
     _channel: AbstractRobustChannel | None = None
     _is_connected: bool = False
+    _queue_name: str | None = None
 
     @classmethod
     async def setup(
             cls,
-            url: str | None = None,
+            url: str,
+            queue_name: str,
             timeout: int = 5,
             has_set: bool = False,
     ) -> None:
@@ -28,14 +28,18 @@ class RabbitMQClient:
         Инициализация глобального экземпляра клиента.
 
         :param url: URL подключения к RabbitMQ.
+        :param queue_name: Имя очереди.
         :param timeout: Таймаут подключения.
         :param has_set: Разрешить перезапись существующего подключения.
         :return: None.
 
         :raises SystemError: Если клиент уже инициализирован.
         """
-        if cls._connection is not None and not has_set:
-            raise SystemError("RabbitMQ клиент уже инициализирован.")
+        if cls._connection is not None:
+            if not has_set:
+                raise SystemError("RabbitMQ клиент уже инициализирован.")
+            else:
+                return
 
         cls._connection = await connect_robust(
             url=url,
@@ -44,8 +48,26 @@ class RabbitMQClient:
         )
         cls._channel = await cls._connection.channel()
         await cls._channel.set_qos(prefetch_count=10)
+        await cls._create_queue(queue_name)
+
         cls._is_connected = True
         logger.info("RabbitMQ клиент инициализирован.")
+
+    @classmethod
+    async def _create_queue(cls, queue_name: str) -> None:
+        """
+        Создание очереди в RabbitMQ.
+
+        :param queue_name: Имя очереди.
+        """
+        await cls._channel.declare_queue(
+            name=queue_name,
+            durable=True,
+            auto_delete=False,
+            exclusive=False,
+        )
+        cls._queue_name = queue_name
+        logger.info(f"Очередь '{queue_name}' успешно создана/проверена.")
 
     @classmethod
     async def close(cls) -> None:
@@ -61,12 +83,12 @@ class RabbitMQClient:
     def is_connected(self) -> bool:
         return self._is_connected
 
+
     @classmethod
     async def publish(
             cls,
             body: bytes,
-            exchange_name: str,
-            routing_key: str = "",
+            routing_key: str | None = None,
             persistent: bool = True,
             priority: int | None = None,
             expiration: int | None = None,
@@ -77,23 +99,45 @@ class RabbitMQClient:
         Отправка сообщения в очередь.
 
         :param body: Тело сообщения.
-        :param exchange_name: Имя exchange.
-        :param routing_key: Ключ маршрутизации.
+
+        :param routing_key: Ключ маршрутизации
+            (если None, используется имя очереди).
+
         :param persistent: Если True, сообщение будет сохранено на диск.
-        :param priority: Приоритет сообщения.
+
+        :param priority: Приоритет сообщения (0-9).
+
         :param expiration: TTL сообщения в миллисекундах.
+
         :param message_id: Идентификатор сообщения.
+
         :param headers: Дополнительные заголовки сообщения.
+
         :return: None.
 
         :raises RabbitMQPublishError: Если сообщение не отправлено.
+
+        :raises SystemError: Если клиент не инициализирован или
+            очередь не создана.
         """
+        if not cls._is_connected or cls._channel is None:
+            raise SystemError("RabbitMQ клиент не инициализирован.")
+
+        if cls._queue_name is None:
+            raise SystemError(
+                "Очередь не создана. Убедитесь, что метод setup() был вызван "
+                "с auto_create_queue=True"
+            )
+
         if priority is not None and not (0 <= priority <= 9):
             raise ValueError(
                 "Значение параметра priority должно быть от 0 до 9."
             )
-        delivery_mode = DeliveryMode.PERSISTENT if persistent \
+
+        delivery_mode = DeliveryMode.PERSISTENT \
+            if persistent \
             else DeliveryMode.TRANSIENT
+
         message = Message(
             body=body,
             content_type="application/json",
@@ -104,64 +148,31 @@ class RabbitMQClient:
             headers=headers or {},
             timestamp=datetime.now()
         )
+
         try:
-            exchange: AbstractRobustExchange = \
-                await cls._channel.declare_exchange(
-                    name=exchange_name,
-                    durable=True
-                )
-            await exchange.publish(message, routing_key=routing_key)
-            logger.debug(
-                f"Сообщение успешно отправлено в RabbitMQ.",
-                exchange=exchange_name,
-                routing_key=routing_key,
-                message_id=message_id
+            routing_key = routing_key or cls._queue_name
+
+            await cls._channel.default_exchange.publish(
+                message,
+                routing_key=routing_key
             )
+
+            logger.info(
+                f"Сообщение успешно отправлено в очередь '{routing_key}'.",
+                message_id=message_id,
+                persistent=persistent,
+                priority=priority
+            )
+
         except Exception as err:
             logger.error(
                 f"Ошибка публикации сообщения в RabbitMQ: "
                 f"{err} ({err.__class__.__name__})",
-                exchange=exchange_name,
-                routing_key=routing_key,
+                queue_name=cls._queue_name,
                 message_id=message_id,
             )
             raise errors.RabbitMQPublishError(
                 str(err),
-                exchange_name,
-                routing_key
+                "default_exchange",
+                cls._queue_name
             )
-
-    async def consume(
-            self,
-            queue_name: str,
-            callback: Callable[[IncomingMessage], Awaitable[None]],
-            auto_ack: bool = False,
-            exclusive: bool = False,
-    ) -> AbstractRobustQueue:
-        """
-        Начало обработки сообщений из очереди.
-
-        :param queue_name: Имя очереди.
-
-        :param callback: Асинхронный обработчик сообщений.
-
-        :param auto_ack: Если True, сообщения будут подтверждаться
-            автоматически.
-
-        :param exclusive: Эксклюзивное потребление.
-
-        :return: Объект очереди с активным consumer.
-        """
-        queue: AbstractRobustQueue = await self._channel.declare_queue(
-            name=queue_name,
-            durable=True,
-            auto_delete=False
-        )
-        wrapped_callback = RabbitMQConsumeUtils(
-            queue_name,
-            callback,
-            auto_ack
-        ).wrapped_callback
-        await queue.consume(wrapped_callback, exclusive=exclusive)
-        logger.info(f"Старт обработки сообщений из очереди {queue_name}.")
-        return queue
