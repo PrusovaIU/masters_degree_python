@@ -35,18 +35,31 @@ class DBSession:
             return {}
 
     @classmethod
-    def setup(cls, data_base_url: str, schema: str = "public") -> None:
+    def setup(
+            cls,
+            data_base_url: str,
+            schema: str = "public",
+            has_setup: bool = False
+    ) -> None:
         """
         Инициализация класса.
 
         :param data_base_url: Строка подключения к БД.
+
         :param schema: Схема БД.
+
+        :param has_setup: Если False и класс уже был инициализирован, то
+            выбрасывается исключение.
+
         :return: None
         """
         if cls._has_setup:
-            msg = f"Класс {cls.__name__} уже был инициализирован."
-            logger.warning(msg)
-            raise SystemError(msg)
+            if not has_setup:
+                msg = f"Класс {cls.__name__} уже был инициализирован."
+                logger.warning(msg)
+                raise SystemError(msg)
+            else:
+                return
         connect_args = cls._form_connect_args(data_base_url, schema)
         cls._engine = create_async_engine(
             data_base_url,

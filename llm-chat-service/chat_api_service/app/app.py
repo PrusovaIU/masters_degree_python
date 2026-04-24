@@ -36,10 +36,11 @@ class App:
             self._app.include_router(router)
 
     async def lifespan(self, app: FastAPI):
-        await RedisClient.setup(self._config.redis)
+        await RedisClient.setup(self._config.redis, True)
         DBSession.setup(
             self._config.db.database_url,
-            self._config.db.db_schema
+            self._config.db.db_schema,
+            True
         )
         async with DBSession.engine().begin() as conn:
             await conn.run_sync(Base.metadata.create_all)

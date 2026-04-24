@@ -31,7 +31,7 @@ curl -X 'POST' \
   'http://127.0.0.1:8000/auth/login' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password&username=surname%40email.com&password=P%40ssw0rd!&scope=&client_id=string&client_secret=********'
+  -d 'grant_type=password&username=prusova%40example.com&password=P%40ssw0rd!&scope=&client_id=string&client_secret=********'
 ```
 
 ## Response

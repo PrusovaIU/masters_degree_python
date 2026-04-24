@@ -71,6 +71,7 @@ class ChatNewMessageUsecase:
 
         :raises RateLimitExceededError: Если лимит запросов превышен.
         """
+        self._logger.info(f"Проверка лимита для пользователя {self._user_id}")
         if not await RedisClient.check_rate_limit(self._user_id):
             self._logger.warning(
                 f"Rate limit было превышено для пользователя {self._user_id}. "
@@ -91,6 +92,7 @@ class ChatNewMessageUsecase:
         :raises AlreadyProcessedError: Если запрос уже обработан.
         :raises IsProcessingError: Если запрос уже обрабатывается.
         """
+        self._logger.info(f"Захват блокировки для {self._idempotency_key}")
         lock_acquired = await RedisClient.acquire_lock(self._idempotency_key)
         if not lock_acquired:
             # Блокировка уже занята. Возможно, запрос уже обрабатывается.
@@ -122,6 +124,7 @@ class ChatNewMessageUsecase:
         :raises CachedError: Если запрос уже закэширован.
         :raises IsProcessingError: Если запрос уже обрабатывается.
         """
+        self._logger.info(f"Проверка race condition для {self._message_id}")
         existing_msg = await self._repo.get_by_idempotency_key(
             self._idempotency_key
         )
@@ -153,22 +156,22 @@ class ChatNewMessageUsecase:
 
         :return: Список сообщений с контекстом для LLM.
         """
+        self._logger.info(f"Подготовка контекста для {self._message_id}")
         # Получение последних сообщений для контекста
         history = await self._repo.list_by_conversation(
             conversation_id=self._conversation_id,
             limit=10,
             offset=0
         )
+        history = [
+            _msg for _msg in history if _msg.status != MessageStatus.FAILED
+        ]
         # Формирование сообщения для OpenRouter API
         messages = []
         for msg in history:
-            role = msg.sender_type
+            role = msg.sender_type.value
             messages.append(MessageSchema(role=role, content=msg.content))
 
-        if not messages or messages[-1]["role"] != "user":
-            messages.append(
-                MessageSchema(role=SenderType.USER, content=self._content)
-            )
         return [msg.model_dump() for msg in messages]
 
     async def _handle_llm_response(self, response: str) -> UUID:
@@ -178,6 +181,7 @@ class ChatNewMessageUsecase:
         :param response: Ответ LLM.
         :return: ID созданного сообщения.
         """
+        self._logger.info(f"Обработка ответа LLM для {self._message_id}")
         assistant_message = await self._repo.create(
             conversation_id=self._conversation_id,
             message_in=MessageCreate(
@@ -231,6 +235,9 @@ class ChatNewMessageUsecase:
 
         :return: None.
         """
+        self._logger.info(
+            f"Освобождение блокировки для {self._idempotency_key}"
+        )
         try:
             await RedisClient.release_lock(self._idempotency_key)
         except Exception as err:
@@ -257,7 +264,7 @@ class ChatNewMessageUsecase:
         await self._check_race_condition()
         try:
             messages = await self._prepare_context()
-            llm_response: str = await self._openrouter_client.chat_completion(
+            llm_response: str = await self._openrouter_client.call_openrouter(
                 messages=messages,
                 temperature=self._temperature
             )

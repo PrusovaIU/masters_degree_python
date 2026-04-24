@@ -160,7 +160,7 @@ class MessageRepository:
             return None
 
         message.update_status(new_status)
-        await self._session.flush()
+        await self._session.commit()
         return message
 
     async def update_llm_task_id(
@@ -183,7 +183,7 @@ class MessageRepository:
             )
             .values(
                 llm_task_id=llm_task_id,
-                status=MessageStatus.PROCESSING
+                status=MessageStatus.SENT
             )
             .execution_options(synchronize_session="fetch")
         )
@@ -203,16 +203,30 @@ class MessageRepository:
         :param metadata: Дополнительные метаданные.
         :return: Обновлённое сообщение или None.
         """
-        message = await self.get_by_id(message_id)
-        if not message:
-            return None
+        query = update(Message).where(Message.id == message_id)
+        if content:
+            query = query.values(content=content)
+        if metadata:
+            query = query.values(metadata_json=metadata)
+        await self._session.execute(query)
+        await self._session.commit()
+        return await self.get_by_id(message_id)
 
-        if content is not None:
-            message.content = content
-        if metadata is not None:
-            current_meta = message.metadata_json or {}
-            message.metadata_json = {**current_meta, **metadata}
+    async def mark_as_read(self, conversation_id: UUID) -> None:
+        """
+        Пометить сообщения с типом DELIVERED как READ.
 
-        message.updated_at = datetime.now(timezone.utc)
-        await self._session.flush()
-        return message
+        :param conversation_id: ID диалога.
+        :return: None.
+        """
+        query = (
+            update(Message)
+            .where(
+                Message.conversation_id == conversation_id,
+                Message.status == MessageStatus.DELIVERED
+            ).values(
+                status=MessageStatus.READ,
+                read_at=datetime.now(timezone.utc)
+            )
+        )
+        await self._session.execute(query)

@@ -1,44 +1,10 @@
 from datetime import datetime
-from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
-from chat_api_service.app.consts.message import MessageStatus
 from .message import MessageResponse
-
-
-class ConversationHistoryParams(BaseModel):
-    """Параметры для запроса истории сообщений."""
-    limit: int | None = Field(
-        default=None,
-        ge=1,
-        le=100,
-        description="Количество сообщений на странице"
-    )
-    offset: int | None = Field(
-        default=0,
-        ge=0,
-        description="Смещение для пагинации"
-    )
-
-    @model_validator(mode="after")
-    def validate_mutual_exclusion(self) -> Self:
-        """before и after не могут быть заданы одновременно"""
-        if self.before and self.after:
-            raise ValueError(
-                "Параметры 'before' и 'after' не могут быть использованы "
-                "одновременно"
-            )
-
-        return self
-
-
-class PaginationMeta(BaseModel):
-    """Метаданные пагинации в ответе."""
-    limit: int = Field(description="Запрошенное количество элементов")
-    offset: int = Field(description="Запрошенное смещение")
-    total: int = Field(description="Общее количество элементов")
+from .pagination import PaginationMeta
 
 
 class ConversationHistoryResponse(BaseModel):
@@ -75,3 +41,15 @@ class ConversationListResponse(BaseModel):
         description="Список диалогов"
     )
     pagination: PaginationMeta = Field(description="Метаданные пагинации")
+
+
+class ConversationCreateRequest(BaseModel):
+    """Запрос на создание диалога."""
+    title: str = Field(description="Заголовок диалога")
+
+
+class ConversationCreateResponse(BaseModel):
+    """Ответ на создание диалога."""
+    id: UUID = Field(description="UUID созданного диалога")
+    title: str = Field(description="Заголовок диалога")
+    created_at: datetime = Field(description="Время создания диалога")

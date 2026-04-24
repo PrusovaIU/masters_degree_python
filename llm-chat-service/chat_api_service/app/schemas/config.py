@@ -1,7 +1,10 @@
-from pydantic import Field, computed_field, BaseModel
+from typing import Self
+
+from pydantic import Field, computed_field, BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from libs.schemas.config import LogConfig, DatabaseConfig, JWTSecret, CORSSettings
 from urllib.parse import quote_plus
+from chat_api_service.app.core.jwt import JWTBearer
 
 
 class ConfigWithPasswd(BaseModel):
@@ -67,7 +70,7 @@ class RedisConfig(ConfigWithPasswd):
         """
         :return: Строка подключения к Redis.
         """
-        return (f"redis://{self.password_quoted}{self.host}:"
+        return (f"redis://:{self.password_quoted}@{self.host}:"
                 f"{self.port}/{self.db}")
 
 
@@ -90,6 +93,29 @@ class JWTConfig(BaseModel):
         default="Authorization",
         description="Имя заголовка для JWT"
     )
+    _bearer: JWTBearer | None = None
+
+    @property
+    def bearer(self) -> JWTBearer:
+        """
+        :return: Экземпляр JWTBearer.
+        """
+        return self._bearer
+
+    @model_validator(mode="after")
+    def create_bearer(self) -> Self:
+        """
+        Создание экземпляра JWTBearer.
+
+        :return: Self.
+        """
+        self._bearer = JWTBearer(
+            self.secret.secret,
+            self.alg,
+            self.header_name
+        )
+        return self
+
 
 
 class OpenRouterConfig(BaseModel):
@@ -104,7 +130,7 @@ class OpenRouterConfig(BaseModel):
         description="Базовый URL OpenRouter API"
     )
     model: str = Field(
-        default="stepfun/step-3.5-flash:free",
+        default="inclusionai/ling-2.6-1t:free",
         description="Модель OpenRouter по умолчанию"
     )
     app_name: str = Field(
