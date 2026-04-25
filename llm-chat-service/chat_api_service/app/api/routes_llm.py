@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, status, Header, HTTPException
 from chat_api_service.app.schemas.llm import LLMQueryResponse, LLMQueryRequest
+from libs.schemas.error_detail import Detail
 from .deps.jwt import UserDataDep
 from .deps.rate_limit import RateLimitDep
 from .deps.db import MessagesRepoDep, ConversationRepoDep
@@ -20,7 +21,15 @@ router_llm = APIRouter(prefix="/chat/llm", tags=["llm"])
     response_model=LLMQueryResponse,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Запуск асинхронного запроса к LLM",
-    description="Отправление сообщения пользователя на обработку LLM"
+    description="Отправление сообщения пользователя на обработку LLM",
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": Detail
+        },
+    }
 )
 async def query_llm(
         user_message_data: LLMQueryRequest,
