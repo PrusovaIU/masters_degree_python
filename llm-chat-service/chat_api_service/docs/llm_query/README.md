@@ -5,7 +5,7 @@
 В процессе выполнения запроса сообщение пользователя вносится в базу данных и создается задача для 
 [celery](../celery/README.md).
 
-## Request:[README.md](../celery/README.md)
+## Request:
 
 **URL**: `POST /conversation/all`
 
