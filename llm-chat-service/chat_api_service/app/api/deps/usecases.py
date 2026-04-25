@@ -4,6 +4,7 @@ from chat_api_service.app.usecases.chat.message import MessageUsecase
 from chat_api_service.app.usecases.chat.conversation import ConversationUsecase
 from .db import ConversationRepoDep, MessagesRepoDep
 from fastapi import Depends
+from chat_api_service.app.usecases.admin.tasks import TasksUsecase
 
 
 def conversation_usecase(
@@ -39,6 +40,10 @@ def message_usecase(
     )
 
 
+def tasks_usecase() -> TasksUsecase:
+    return TasksUsecase()
+
+
 ConversationUsecaseDep = Annotated[
     ConversationUsecase,
     Depends(conversation_usecase)
@@ -46,4 +51,8 @@ ConversationUsecaseDep = Annotated[
 MessageUsecaseDep = Annotated[
     MessageUsecase,
     Depends(message_usecase)
+]
+TasksUsecaseDep = Annotated[
+    TasksUsecase,
+    Depends(tasks_usecase)
 ]
