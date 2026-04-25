@@ -172,7 +172,8 @@ async def test_create_new_message_success(
         conversation_id=str(CONVERSATION_ID),
         content=CONTENT,
         idempotency_key=IDEMPOTENCY_KEY,
-        temperature=user_request.temperature
+        temperature=user_request.temperature,
+        user_id=USER_ID
     )
 
     # Проверка обновления task_id

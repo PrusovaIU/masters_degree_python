@@ -5,8 +5,10 @@ from fastapi import APIRouter, HTTPException, status
 from libs.schemas.error_detail import Detail
 from .deps.jwt import AdminDep
 from chat_api_service.app.schemas.llm import CeleryTaskResponse
-from .deps.usecases import TasksUsecaseDep
+from .deps.usecases import TasksUsecaseDep, ConversationUsecaseDep
 from ..core.exceptions.task import TaskNotFound
+from ..schemas.conversation import ConversationListResponse
+from ..schemas.pagination import PaginationRequest, PaginationMeta
 
 router_admin = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -45,3 +47,35 @@ def get_llm_task_status(
             detail=err.detail_jsonable_encoder
         )
     return task_status
+
+
+@router_admin.post(
+    "/conversations/all",
+    response_model=ConversationListResponse,
+    summary="Получение списка всех диалогов",
+    description="Получение списка всех диалогов с пагинацией.",
+)
+async def get_all_conversations(
+        admin_user: AdminDep,
+        conversations_usecase: ConversationUsecaseDep,
+        pagination: PaginationRequest
+):
+    """
+    Получение списка всех диалогов с пагинацией.
+
+    :param admin_user: Пользователь с ролью администратора.
+    :param conversations_usecase: Usecase для работы с диалогами.
+    :param pagination: Параметры пагинации.
+    :return: Список диалогов с метаданными пагинации.
+    """
+    conversations, total = await conversations_usecase.list_conversations(
+        None, pagination.limit, pagination.offset
+    )
+    return ConversationListResponse(
+        conversations=conversations,
+        pagination=PaginationMeta(
+            limit=pagination.limit,
+            offset=pagination.offset,
+            total=total
+        )
+    )
