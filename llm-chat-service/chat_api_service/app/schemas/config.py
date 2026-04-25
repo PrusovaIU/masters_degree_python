@@ -83,6 +83,25 @@ class RabbitMQConfig(ConfigWithPasswd):
         default=None,
         description="Виртуальный хост RabbitMQ"
     )
+    message_queue: str = Field(
+        default="messages",
+        description="Имя очереди сообщений"
+    )
+
+    @property
+    def url(self) -> str:
+        """
+        :return: Строка подключения к RabbitMQ.
+        """
+        url = (
+            f"amqp://{self.user}:"
+            f"{self.password_quoted}@"
+            f"{self.host}:{self.port}"
+        )
+        if self.vhost:
+            url += f"/{self.vhost}"
+        print(url)
+        return url
 
 
 class JWTConfig(BaseModel):
@@ -188,15 +207,7 @@ class Settings(BaseSettings):
         """
         :return: Строка подключения к RabbitMQ для Celery Broker.
         """
-        url = (
-            f"amqp://{self.rabbitmq.user}:"
-            f"{self.rabbitmq.password_quoted}@"
-            f"{self.rabbitmq.host}:{self.rabbitmq.port}"
-        )
-        if self.rabbitmq.vhost:
-            url += f"/{self.rabbitmq.vhost}"
-        print(url)
-        return url
+        return self.rabbitmq.url
 
     @computed_field
     @property

@@ -159,8 +159,18 @@ class MessageRepository:
         if not message:
             return None
 
-        message.update_status(new_status)
+        query = (
+            update(Message)
+            .where(Message.id == message_id)
+            .values(status=new_status)
+        )
+        if new_status == MessageStatus.DELIVERED:
+            query = query.values(delivered_at=datetime.now(timezone.utc))
+        elif new_status == MessageStatus.READ:
+            query = query.values(read_at=datetime.now(timezone.utc))
+        await self._session.execute(query)
         await self._session.commit()
+        await self._session.refresh(message)
         return message
 
     async def update_llm_task_id(

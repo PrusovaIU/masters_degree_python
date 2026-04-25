@@ -18,12 +18,13 @@ from chat_api_service.app.core.exceptions import chat_new_message as chat_nm_exc
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from chat_api_service.app.db.session import DBSession
 from chat_api_service.app.infra.redis import RedisClient
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 
 
 logger = get_task_logger(__name__)
 or_client = OpenRouterClient(settings.openrouter)
 DBSession.setup(settings.db.database_url, settings.db.db_schema, True)
-RedisClient.setup(settings.redis)
+RabbitMQClient.setup(settings.rabbitmq.url, settings.rabbitmq.message_queue)
 
 
 @asynccontextmanager
@@ -110,6 +111,10 @@ async def llm_request(
              или возврат dict с error при критических сбоях.
     """
     await RedisClient.setup(settings.redis, True)
+    await RabbitMQClient.setup(
+        settings.rabbitmq.url,
+        settings.rabbitmq.message_queue
+    )
     status: LLMTaskStatusSchema | None = None
     try:
         message_uuid = _uuid_from_str(message_id)
@@ -124,6 +129,7 @@ async def llm_request(
                 user_id,
                 content,
                 idempotency_key,
+                settings.rabbitmq.message_queue,
                 temperature
             )
             answer_id, answer_content = await usecase.new_message()

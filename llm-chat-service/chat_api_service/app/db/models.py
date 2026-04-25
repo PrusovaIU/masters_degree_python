@@ -141,9 +141,9 @@ class Message(Base):
         return (f"<Message(id={self.id}, conv={self.conversation_id}, "
                 f"sender={self.sender_type}, status={self.status})>")
 
-    def update_status(self, new_status: MessageStatus) -> None:
+    def check_new_status(self, new_status: MessageStatus) -> None:
         """
-        Обновление статуса.
+        Проверка перехода статуса сообщения на новый.
 
         :param new_status: Новый статус сообщения
 
@@ -156,9 +156,9 @@ class Message(Base):
                 old_status=self.status,
                 new_status=new_status
             )
-        self.status = new_status
-        now = datetime.now(timezone.utc)
-        if new_status == MessageStatus.DELIVERED and not self.delivered_at:
-            self.delivered_at = now
-        elif new_status == MessageStatus.READ and not self.read_at:
-            self.read_at = now
+        # self.status = new_status
+        # now = datetime.now(timezone.utc)
+        # if new_status == MessageStatus.DELIVERED and not self.delivered_at:
+        #     self.delivered_at = now
+        # elif new_status == MessageStatus.READ and not self.read_at:
+        #     self.read_at = now

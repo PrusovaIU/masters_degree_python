@@ -13,4 +13,6 @@ REST API для создания диалогов, отправки сообще
 4. [Список диалогов](docs/list_conversation/README.md);
 5. [Список сообщений диалога](docs/conversation_history/README.md);
 6. [Обновление статуса сообщения](docs/message_status_update/README.md);
-7. [Health check](docs/health/README.md).
+7. [Запрос LLM](docs/llm_query/README.md);
+8. [Задача Celery](docs/celery/README.md);
+9. [Health check](docs/health/README.md).
