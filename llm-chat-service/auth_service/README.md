@@ -20,4 +20,5 @@ Auth Service предоставляет веб-API и Swagger по адресу 
 5. [Логирование](docs/login/README.md);
 6. [Получение данных текущего пользователя](docs/me/README.md);
 7. [Обновление access токена](docs/refresh_token/README.md);
-8. [Health check](docs/health/README.md).
+8. [Health check](docs/health/README.md);
+9. [Тестирование](docs/tests/README.md).
