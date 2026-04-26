@@ -23,7 +23,6 @@ router_admin = APIRouter(prefix="/admin", tags=["admin"])
             "model": Detail
         }
     }
-
 )
 def get_llm_task_status(
         task_id: UUID,
@@ -54,6 +53,11 @@ def get_llm_task_status(
     response_model=ConversationListResponse,
     summary="Получение списка всех диалогов",
     description="Получение списка всех диалогов с пагинацией.",
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        }
+    }
 )
 async def get_all_conversations(
         admin_user: AdminDep,
