@@ -17,4 +17,5 @@ REST API для создания диалогов, отправки сообще
 8. [[ADMIN] Получение статуса задачи](docs/admin/task_status/README.md);
 9. [[ADMIN] Получение списка всех диалогов](docs/admin/all_conversations/README.md);
 10. [Задача Celery](docs/celery/README.md);
-11. [Health check](docs/health/README.md).
+11. [Тестирование](docs/tests/README.md);
+12. [Health check](docs/health/README.md).
