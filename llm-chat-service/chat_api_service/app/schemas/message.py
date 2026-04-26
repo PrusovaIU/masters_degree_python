@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from uuid import UUID
 
 from chat_api_service.app.consts.message import MessageStatus, SenderType
@@ -44,6 +44,7 @@ class MessageResponse(BaseModel):
         alias="metadata_json"
     )
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )

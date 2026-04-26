@@ -103,21 +103,24 @@ class ConversationRepository:
             )
         return conversation
 
-    async def list_by_user(
+    async def list(
             self,
-            user_id: str,
+            user_id: str | None,
             limit: int | None = None,
             offset: int | None = None
     ) -> tuple[Sequence[Conversation], int]:
         """
         Получение списка диалогов пользователя с пагинацией.
 
-        :param user_id: ID пользователя.
+        :param user_id: ID пользователя. Если None, возвращаются все диалоги.
         :param limit: Количество элементов на странице.
         :param offset: Смещение для пагинации.
         :return: (список диалогов, общее количество).
         """
-        query = select(Conversation).where(Conversation.user_id == user_id)
+        query = select(Conversation)
+
+        if user_id is not None:
+            query = query.where(Conversation.user_id == user_id)
 
         # Получение общего количества для пагинации
         count_query = select(func.count()).select_from(query.subquery())

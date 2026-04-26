@@ -3,11 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, status, Header, HTTPException
 from chat_api_service.app.schemas.llm import LLMQueryResponse, LLMQueryRequest
 from libs.schemas.error_detail import Detail
-from .deps.jwt import UserDataDep
+from .deps.jwt import UserDataDep, AdminDep
 from .deps.rate_limit import RateLimitDep
 from .deps.db import MessagesRepoDep, ConversationRepoDep
 from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
-from chat_api_service.app.schemas.llm import LLMStatusResponse
+from chat_api_service.app.schemas.llm import CeleryTaskResponse
 from chat_api_service.app.core.exceptions.conversation import (
     ConversationNotFound, ConversationAccessDenied)
 from .deps.usecases import MessageUsecaseDep
@@ -64,43 +64,6 @@ async def query_llm(
     )
     try:
         response: LLMQueryResponse = await usecase.execute()
-    except ConversationNotFound as err:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=err.detail
-        )
-    except ConversationAccessDenied as err:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=err.detail
-        )
-    return response
-
-
-@router_llm.get(
-    "/status/{task_id}",
-    response_model=LLMStatusResponse,
-    summary="Получение статуса задачи LLM"
-)
-async def get_llm_task_status(
-        task_id: str,
-        current_user: UserDataDep,
-        msg_usecase: MessageUsecaseDep,
-) -> LLMStatusResponse:
-    """
-    Получение статуса задачи LLM.
-
-    :param task_id: UUID задачи Celery.
-    :param current_user: Аутентифицированный пользователь.
-    :param msg_usecase: Usecase сообщений.
-
-    :return: Статус задачи.
-    """
-    user_id = str(current_user.user_id)
-    try:
-        response: LLMStatusResponse = await msg_usecase.get_by_task_id(
-            task_id, user_id
-        )
     except ConversationNotFound as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

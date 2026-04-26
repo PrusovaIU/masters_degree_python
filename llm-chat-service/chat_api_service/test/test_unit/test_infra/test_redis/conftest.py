@@ -55,7 +55,7 @@ async def fake_redis_client(redis_config) -> fakeredis.aioredis.FakeRedis:
     RedisClient._redis_client = fake_redis
     RedisClient._settings = redis_config
     yield fake_redis
-    await fake_redis.close()
+    await fake_redis.aclose()
     RedisClient._redis_client = None
     RedisClient._settings = None
 

@@ -46,7 +46,7 @@ class ConversationUsecase:
 
     async def list_conversations(
             self,
-            user_id: str,
+            user_id: str | None,
             limit: int,
             offset: int
     ) -> tuple[list[ConversationResponse], int]:
@@ -59,7 +59,7 @@ class ConversationUsecase:
         :param offset: Смещение для пагинации.
         :return: Список диалогов с пагинацией, общее количество диалогов.
         """
-        conversations, total = await self._conv_repo.list_by_user(
+        conversations, total = await self._conv_repo.list(
             user_id=user_id,
             limit=limit,
             offset=offset,

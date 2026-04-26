@@ -2,7 +2,9 @@ from datetime import datetime
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
+from chat_api_service.app.schemas.llm_tasks import LLMTaskStatusSchema
 
 
 class LLMQueryRequest(BaseModel):
@@ -55,69 +57,23 @@ class LLMQueryResponse(BaseModel):
         description="Дополнительная информация"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
 
-class LLMStatusResponse(BaseModel):
+class CeleryTaskResponse(BaseModel):
     """
     Статус задачи обработки LLM-запроса.
-
-    Используется в GET /chat/llm/status/{task_id}
     """
-    task_id: str = Field(description="ID задачи Celery")
-    status: LLMTasksStatus = Field(description="Текущий статус")
-
-    message_id: UUID | None = Field(
+    result: LLMTaskStatusSchema | None = Field(
         default=None,
-        description="UUID сообщения-запроса"
+        description="Результат обработки"
     )
-
-    conversation_id: UUID | None = Field(
+    status: str = Field(
+        description="Статус задачи"
+    )
+    traceback: str | None = Field(
         default=None,
-        description="UUID диалога"
+        description="Трассировка исключения (если есть)"
     )
-
-    content: str | None = Field(
-        default=None,
-        description="Текст ответа LLM"
-    )
-
-    response_id: UUID | None = Field(
-        default=None,
-        description="UUID сообщения-ответа"
-    )
-
-    error: str | None = Field(
-        default=None,
-        description="Описание ошибки"
-    )
-
-    error_type: str | None = Field(
-        default=None,
-        description="Тип ошибки"
-    )
-
-    created_at: datetime | None = Field(
-        default=None,
-        description="Время создания задачи"
-    )
-
-    updated_at: datetime | None = Field(
-        default=None,
-        description="Время последнего обновления"
-    )
-
-    class Config:
-        from_attributes = True
-
-    def enrich(self, task_result: dict):
-        match self.status:
-            case LLMTasksStatus.SUCCESS:
-                if isinstance(task_result, dict):
-                    self.content = task_result.get("content")
-                    self.response_id = task_result.get("response_id")
-            case LLMTasksStatus.ERROR:
-                if isinstance(task_result, dict):
-                    self.error = task_result.get("error")
-                    self.error_type = task_result.get("error_type")
