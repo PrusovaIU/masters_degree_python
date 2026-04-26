@@ -24,7 +24,6 @@ from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 logger = get_task_logger(__name__)
 or_client = OpenRouterClient(settings.openrouter)
 DBSession.setup(settings.db.database_url, settings.db.db_schema, True)
-RabbitMQClient.setup(settings.rabbitmq.url, settings.rabbitmq.message_queue)
 
 
 @asynccontextmanager

@@ -2,7 +2,7 @@ from datetime import datetime
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from chat_api_service.app.schemas.llm_tasks import LLMTaskStatusSchema
 
@@ -57,8 +57,9 @@ class LLMQueryResponse(BaseModel):
         description="Дополнительная информация"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
 
 class CeleryTaskResponse(BaseModel):
