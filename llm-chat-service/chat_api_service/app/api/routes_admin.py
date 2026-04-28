@@ -7,8 +7,8 @@ from .deps.jwt import AdminDep
 from chat_api_service.app.schemas.llm import CeleryTaskResponse
 from .deps.usecases import TasksUsecaseDep, ConversationUsecaseDep
 from ..core.exceptions.task import TaskNotFound
-from ..schemas.conversation import ConversationListResponse
-from ..schemas.pagination import PaginationRequest, PaginationMeta
+from libs.schemas.conversation import ConversationListResponse
+from libs.schemas.pagination import PaginationRequest, PaginationMeta
 
 router_admin = APIRouter(prefix="/admin", tags=["admin"])
 

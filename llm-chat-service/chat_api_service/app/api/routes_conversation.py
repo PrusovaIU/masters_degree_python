@@ -1,17 +1,15 @@
-from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, status, HTTPException
 
-import chat_api_service.app.schemas.pagination
-from chat_api_service.app.api.deps.db import ConversationRepoDep
+import libs.schemas.pagination
 from chat_api_service.app.api.deps.jwt import UserDataDep
-from chat_api_service.app.schemas import conversation
+from libs.schemas import conversation
 from chat_api_service.app.db.models import Conversation
 from chat_api_service.app.api.deps.usecases import ConversationUsecaseDep
 from chat_api_service.app.schemas.message import MessageResponse, \
     MessageStatusUpdate
-from chat_api_service.app.schemas.pagination import PaginationRequest
+from libs.schemas.pagination import PaginationRequest
 from chat_api_service.app.core.exceptions import conversation as errs
 from chat_api_service.app.core.exceptions import message as msg_errs
 from libs.schemas.error_detail import Detail
@@ -53,7 +51,7 @@ async def list_conversations(
 
     return conversation.ConversationListResponse(
         conversations=conversations,
-        pagination=chat_api_service.app.schemas.pagination.PaginationMeta(
+        pagination=libs.schemas.pagination.PaginationMeta(
             limit=pagination.limit,
             offset=pagination.offset,
             total=total

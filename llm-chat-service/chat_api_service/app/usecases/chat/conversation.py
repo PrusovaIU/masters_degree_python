@@ -7,9 +7,9 @@ from chat_api_service.app.repositories.conversation import \
     ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.schemas.message import MessageResponse
-from chat_api_service.app.schemas.conversation import \
+from libs.schemas.conversation import \
     ConversationHistoryResponse, ConversationResponse
-from chat_api_service.app.schemas.pagination import PaginationMeta
+from libs.schemas.pagination import PaginationMeta
 
 
 class ConversationUsecase:

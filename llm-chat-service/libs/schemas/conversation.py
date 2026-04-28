@@ -3,8 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from .message import MessageResponse
-from .pagination import PaginationMeta
+from chat_api_service.app.schemas.message import MessageResponse
+from libs.schemas.pagination import PaginationMeta
 
 
 class ConversationHistoryResponse(BaseModel):
