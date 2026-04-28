@@ -10,7 +10,7 @@ from pytest_mock import MockerFixture
 from chat_api_service.app.usecases.chat import new_message
 from chat_api_service.app.consts.message import MessageStatus, SenderType
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.schemas.llm import LLMQueryRequest, LLMQueryResponse
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from chat_api_service.app.db.models import Message
 
 

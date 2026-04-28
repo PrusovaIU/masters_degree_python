@@ -24,13 +24,37 @@ class CreateConversationException(ConversationException):
         super().__init__(message, conversation_title=conversation_title)
 
 
+class ConversationWithIDException(ConversationException):
+    def __init__(self, message: str, conversation_id: UUID):
+        super().__init__(message, conversation_id=conversation_id)
+
+
 class ConversationHistoryException(ConversationException):
     """Ошибка при получении истории диалога."""
     def __init__(self, message: str, conversation_id: UUID):
         super().__init__(message, conversation_id=conversation_id)
 
 
-class ConversationAccessException(ConversationException):
+class ConversationAccessException(ConversationWithIDException):
     """Доступ к диалогу запрещен."""
-    def __init__(self, message: str, conversation_id: UUID):
-        super().__init__(message, conversation_id=conversation_id)
+    pass
+
+
+class ConversationNotFoundException(ConversationWithIDException):
+    """Диалог не найден."""
+    pass
+
+
+class LLMQueryException(ChatApiClientException):
+    """Ошибка при запросе к LLM."""
+    def __init__(
+            self,
+            message: str,
+            conversation_id: UUID,
+            content: str
+    ):
+        super().__init__(
+            message,
+            conversation_id=conversation_id,
+            content=content
+        )

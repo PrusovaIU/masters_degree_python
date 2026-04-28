@@ -4,7 +4,7 @@ from json import loads, dumps
 import redis.asyncio as aioredis
 from loguru import logger
 from chat_api_service.app.schemas.config import RedisConfig
-from chat_api_service.app.schemas.llm import LLMQueryResponse
+from libs.schemas.llm_query import LLMQueryResponse
 
 
 class RedisClient:

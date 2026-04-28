@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, status, Header, HTTPException
-from chat_api_service.app.schemas.llm import LLMQueryResponse, LLMQueryRequest
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from libs.schemas.error_detail import Detail
 from .deps.jwt import UserDataDep, AdminDep
 from .deps.rate_limit import RateLimitDep

@@ -9,7 +9,7 @@ from chat_api_service.app.tasks import llm_tasks
 from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
 from chat_api_service.app.consts.message import MessageStatus, SenderType
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.schemas.llm import LLMQueryRequest
+from libs.schemas.llm_query import LLMQueryRequest
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.core.exceptions.conversation import (
     ConversationNotFound,

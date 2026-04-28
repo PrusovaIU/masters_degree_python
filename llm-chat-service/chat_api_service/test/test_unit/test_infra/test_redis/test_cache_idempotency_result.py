@@ -6,7 +6,8 @@ from fakeredis.aioredis import FakeRedis
 from uuid import uuid4
 
 from chat_api_service.app.schemas.config import RedisConfig, RateLimitingConfig
-from chat_api_service.app.schemas.llm import LLMQueryResponse, LLMTasksStatus
+from chat_api_service.app.schemas.llm import LLMTasksStatus
+from libs.schemas.llm_query import LLMQueryResponse
 from chat_api_service.app.infra.redis import RedisClient
 
 

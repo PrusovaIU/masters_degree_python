@@ -1,13 +1,74 @@
+from typing import Type
 from uuid import UUID
 
 from httpx import HTTPStatusError, TimeoutException
 from fastapi import status
 
 from web_service.app.core.utils.httpx_client import BaseClient, error_handler_decorator
-from libs.schemas import conversation as schemas
+from libs.schemas import conversation as conv_schemas
 from libs.schemas.pagination import PaginationRequest
 from loguru import logger
 from web_service.app.core.exceptions import chat_api_client as errors
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
+from functools import wraps
+
+
+def conv_error_handler(
+        error_type: Type[errors.ChatApiClientException],
+        title: str
+):
+    """
+    Декоратор для обработки ошибок, связанных с диалогом.
+
+    :param error_type: Тип пробрасываемого исключения.
+    :param title: Заголовок для логирования.
+    """
+    async def decorator(func):
+        async def wrapper(*args, conversation_id: UUID, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except HTTPStatusError as err:
+                match err.response.status_code:
+                    case status.HTTP_403_FORBIDDEN:
+                        logger.error(
+                            f"Доступ к диалогу \"{conversation_id}\" запрещен"
+                        )
+                        raise errors.ConversationAccessException(
+                            "Доступ запрещен",
+                            conversation_id=conversation_id
+                        )
+                    case status.HTTP_404_NOT_FOUND:
+                        logger.error(f"Диалог \"{conversation_id}\" не найден")
+                        raise errors.ConversationNotFoundException(
+                            "Диалог не найден",
+                            conversation_id=conversation_id
+                        )
+                    case _:
+                        logger.error(
+                            f"{title}: {err.response.text} "
+                            f"(status_code={err.response.status_code}"
+                        )
+                        raise error_type(
+                            err.response.text,
+                            conversation_id=conversation_id
+                        )
+            except TimeoutException:
+                logger.error(f"{title}: timeout error")
+                raise error_type(
+                    "timeout error",
+                    conversation_id=conversation_id
+                )
+            except Exception as err:
+                logger.error(
+                    f"{title}: {err} ({err.__class__.__name__})"
+                )
+                raise errors.ConversationHistoryException(
+                    title,
+                    conversation_id=conversation_id
+                )
+        return wrapper
+    return decorator
+
 
 
 class ChatAPIServiceClient(BaseClient):
@@ -22,7 +83,7 @@ class ChatAPIServiceClient(BaseClient):
             access_token: str,
             limit: int,
             offset: int
-    ) -> schemas.ConversationListResponse:
+    ) -> conv_schemas.ConversationListResponse:
         """
         Список диалогов пользователя.
 
@@ -44,13 +105,13 @@ class ChatAPIServiceClient(BaseClient):
                 json=data
             )
             resp.raise_for_status()
-            return schemas.ConversationListResponse(**resp.json())
+            return conv_schemas.ConversationListResponse(**resp.json())
 
     async def create_conversation(
             self,
             access_token: str,
             title: str
-    ) -> schemas.ConversationCreateResponse:
+    ) -> conv_schemas.ConversationCreateResponse:
         """
         Создание нового диалога.
 
@@ -61,7 +122,7 @@ class ChatAPIServiceClient(BaseClient):
 
         :raise CreateConversationException: В случае ошибки создания диалога.
         """
-        data = schemas.ConversationCreateRequest(title=title).model_dump()
+        data = conv_schemas.ConversationCreateRequest(title=title).model_dump()
         try:
             async with self._get_client(access_token) as client:
                 resp = await client.post(
@@ -69,7 +130,7 @@ class ChatAPIServiceClient(BaseClient):
                     json=data
                 )
                 resp.raise_for_status()
-                return schemas.ConversationCreateResponse(**resp.json())
+                return conv_schemas.ConversationCreateResponse(**resp.json())
         except HTTPStatusError as err:
             logger.error(
                 f"Ошибка создания диалога \"{title}\": {err.response.text} "
@@ -93,13 +154,33 @@ class ChatAPIServiceClient(BaseClient):
                 "Не удалось создать диалог", title
             )
 
+    async def update_message_status(
+        self, access_token: str, message_id: UUID, status: str
+    ) -> bool:
+        """Изменение статуса сообщения"""
+        async with await self._get_client(access_token) as client:
+            try:
+                resp = await client.patch(
+                    f"/conversation/messages/{message_id}/status",
+                    json=MessageStatusUpdate(status=status).model_dump()
+                )
+                resp.raise_for_status()
+                return True
+            except HTTPStatusError as e:
+                logger.error(f"Ошибка обновления статуса: {e.response.text}")
+                return False
+
+    @conv_error_handler(
+        errors.ConversationHistoryException,
+        "Ошибка получения истории диалога"
+    )
     async def get_conversation_history(
             self,
             access_token: str,
             conversation_id: UUID,
             limit: int = 20,
             offset: int = 0
-    ) -> schemas.ConversationHistoryResponse:
+    ) -> conv_schemas.ConversationHistoryResponse:
         """
         История сообщений в диалоге.
 
@@ -111,45 +192,60 @@ class ChatAPIServiceClient(BaseClient):
         :return: История сообщений в диалоге.
 
         :raise ConversationAccessException: Если доступ к диалогу запрещен.
+        :raise ConversationNotFoundException: Если диалог не найден.
         :raise ConversationHistoryException: В случае ошибки получения истории.
         """
-        try:
-            async with self._get_client(access_token) as client:
-                resp = await client.post(
-                    "/conversation/history",
-                    params={"conversation_id": str(conversation_id)},
-                    json=PaginationRequest(limit=limit,
-                                           offset=offset).model_dump(
-                        exclude_unset=True)
-                )
-                resp.raise_for_status()
-                return schemas.ConversationHistoryResponse(**resp.json())
-        except HTTPStatusError as err:
-            if err.response.status_code == status.HTTP_403_FORBIDDEN:
-                logger.error(
-                    f"Доступ к диалогу \"{conversation_id}\" запрещен"
-                )
-                raise errors.ConversationAccessException(
-                    "Доступ запрещен",
-                    conversation_id=conversation_id
-                )
-            else:
-                logger.error(
-                    f"Ошибка получения истории диалога: {err.response.text} "
-                    f"(status_code={err.response.status_code}"
-                )
-                raise errors.ConversationHistoryException(
-                    err.response.text,
-                    conversation_id=conversation_id
-                )
-        except Exception as err:
-            logger.error(
-                f"Ошибка получения истории диалога: "
-                f"{err} ({err.__class__.__name__})"
+        async with self._get_client(access_token) as client:
+            resp = await client.post(
+                "/conversation/history",
+                params={"conversation_id": str(conversation_id)},
+                json=PaginationRequest(limit=limit,
+                                       offset=offset).model_dump(
+                    exclude_unset=True)
             )
-            raise errors.ConversationHistoryException(
-                "Не удалось получить историю диалога",
-                conversation_id=conversation_id
-            )
+            resp.raise_for_status()
+            return conv_schemas.ConversationHistoryResponse(**resp.json())
 
+    @conv_error_handler(
+        errors.LLMQueryException,
+        "Ошибка запроса к LLM"
+    )
+    async def query_llm(
+            self,
+            access_token: str,
+            conversation_id: UUID,
+            content: str,
+            temperature: float | None = 0.7,
+            idempotency_key: str | None = None
+    ) -> LLMQueryResponse:
+        """
+        Запрос к LLM.
+
+        :param access_token: Токен доступа пользователя.
+        :param conversation_id: Идентификатор диалога.
+        :param content: Текст запроса.
+        :param temperature: Температура генерации ответа.
+        :param idempotency_key: Ключ идемпотентности запроса.
+
+        :return: Ответ LLM.
+
+        :raise ConversationAccessException: Если доступ к диалогу запрещен.
+        :raise ConversationNotFoundException: Если диалог не найден.
+        :raise LLMQueryException: В случае ошибки запроса к LLM.
+        """
+        headers = {}
+        if idempotency_key:
+            headers["X-Idempotency-Key"] = idempotency_key
+        async with self._get_client(access_token) as client:
+            resp = await client.post(
+                "/chat/llm/query",
+                headers=headers,
+                json=LLMQueryRequest(
+                    conversation_id=conversation_id,
+                    content=content,
+                    temperature=temperature
+                ).model_dump()
+            )
+            resp.raise_for_status()
+            return LLMQueryResponse(**resp.json())
 
