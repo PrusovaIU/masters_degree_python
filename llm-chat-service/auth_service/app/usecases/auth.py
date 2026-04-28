@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 
 from libs.jwt_token.token_data import TokenData
-from auth_service.app.schemas.user import UserPublic
+from libs.schemas.user import UserPublic
 from auth_service.app.consts.user_role import UserRole
 from auth_service.app.core.exceptions import users as users_exc, security as security_exc
 from auth_service.app.core.security.password import PWDContext

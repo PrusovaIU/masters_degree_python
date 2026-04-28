@@ -141,3 +141,46 @@ class LogConfig(BaseModel):
         default="1 day",
         description="Ротация логов"
     )
+
+
+class ConfigWithPasswd(BaseModel):
+    password: str = Field(description="Пароль")
+
+    @property
+    def password_quoted(self) -> str:
+        """
+        :return: Пароль с экранированными символами.
+        """
+        return quote_plus(self.password) \
+            if self.password \
+            else ""
+
+
+class RabbitMQConfig(ConfigWithPasswd):
+    """Конфигурация RabbitMQ"""
+    host: str = Field(description="Хост RabbitMQ сервера")
+    port: int = Field(description="Порт RabbitMQ сервера")
+    user: str = Field(description="Имя пользователя RabbitMQ")
+    vhost: str | None = Field(
+        default=None,
+        description="Виртуальный хост RabbitMQ"
+    )
+    message_queue: str = Field(
+        default="messages",
+        description="Имя очереди сообщений"
+    )
+
+    @property
+    def url(self) -> str:
+        """
+        :return: Строка подключения к RabbitMQ.
+        """
+        url = (
+            f"amqp://{self.user}:"
+            f"{self.password_quoted}@"
+            f"{self.host}:{self.port}"
+        )
+        if self.vhost:
+            url += f"/{self.vhost}"
+        print(url)
+        return url

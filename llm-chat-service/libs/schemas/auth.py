@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
-from auth_service.app.consts.user_role import UserRole
 
 
 class RegisterRequest(BaseModel):

@@ -1,7 +1,7 @@
-from pydantic import Field, BaseModel, AnyHttpUrl
+from pydantic import Field, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from libs.schemas.config import LogConfig, CORSSettings
+from libs.schemas.config import LogConfig, CORSSettings, RabbitMQConfig
 
 
 class ServiceSettings(BaseModel):
@@ -27,11 +27,11 @@ class AuthCookieSettings(ServiceSettings):
         default="refresh_token",
         description="Имя куки для токена обновления"
     )
-    token_cookie_secure: bool = Field(
+    cookie_secure: bool = Field(
         default=True,
         description="Флаг, указывающий на то, что куки должны быть защищены"
     )
-    token_cookie_same_site: str = Field(
+    cookie_same_site: str = Field(
         default="lax",
         description="SameSite атрибут для кук"
     )
@@ -152,4 +152,8 @@ class Settings(BaseSettings):
     pagination: PaginationSettings = Field(
         default_factory=PaginationSettings,
         description="Настройки пагинации"
+    )
+
+    rabbitmq: RabbitMQConfig = Field(
+        description="Настройки RabbitMQ"
     )

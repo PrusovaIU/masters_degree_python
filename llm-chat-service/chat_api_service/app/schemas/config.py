@@ -2,22 +2,9 @@ from typing import Self
 
 from pydantic import Field, computed_field, BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from libs.schemas.config import LogConfig, DatabaseConfig, JWTSecret, CORSSettings
-from urllib.parse import quote_plus
+from libs.schemas.config import LogConfig, DatabaseConfig, JWTSecret, \
+    CORSSettings, ConfigWithPasswd, RabbitMQConfig
 from chat_api_service.app.core.jwt import JWTBearer
-
-
-class ConfigWithPasswd(BaseModel):
-    password: str = Field(description="Пароль")
-
-    @property
-    def password_quoted(self) -> str:
-        """
-        :return: Пароль с экранированными символами.
-        """
-        return quote_plus(self.password) \
-            if self.password \
-            else ""
 
 
 class RateLimitingConfig(BaseModel):
@@ -72,36 +59,6 @@ class RedisConfig(ConfigWithPasswd):
         """
         return (f"redis://:{self.password_quoted}@{self.host}:"
                 f"{self.port}/{self.db}")
-
-
-class RabbitMQConfig(ConfigWithPasswd):
-    """Конфигурация RabbitMQ"""
-    host: str = Field(description="Хост RabbitMQ сервера")
-    port: int = Field(description="Порт RabbitMQ сервера")
-    user: str = Field(description="Имя пользователя RabbitMQ")
-    vhost: str | None = Field(
-        default=None,
-        description="Виртуальный хост RabbitMQ"
-    )
-    message_queue: str = Field(
-        default="messages",
-        description="Имя очереди сообщений"
-    )
-
-    @property
-    def url(self) -> str:
-        """
-        :return: Строка подключения к RabbitMQ.
-        """
-        url = (
-            f"amqp://{self.user}:"
-            f"{self.password_quoted}@"
-            f"{self.host}:{self.port}"
-        )
-        if self.vhost:
-            url += f"/{self.vhost}"
-        print(url)
-        return url
 
 
 class JWTConfig(BaseModel):

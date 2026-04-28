@@ -5,8 +5,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from auth_service.app.api.deps import AuthUseCaseDep, UserDataDep
 from auth_service.app.core.config import settings
-from auth_service.app.schemas import auth as auth_schemas
-from auth_service.app.schemas.user import UserPublic
+from libs.schemas import auth as auth_schemas
+from libs.schemas.user import UserPublic
 from auth_service.app.consts.user_role import UserRole
 from libs.schemas.error_detail import Detail
 
