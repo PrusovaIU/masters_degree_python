@@ -38,7 +38,7 @@ async def test_call_openrouter_success(openrouter_client, openrouter_config):
                   "total_tokens": 60},
     }
     route = respx.post(
-        f"{openrouter_config._base_url}/chat/completions"
+        f"{openrouter_config.base_url}/chat/completions"
     ).mock(
         return_value=Response(
             status_code=200,
