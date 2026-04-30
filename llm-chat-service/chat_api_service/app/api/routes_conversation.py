@@ -7,8 +7,7 @@ from chat_api_service.app.api.deps.jwt import UserDataDep
 from libs.schemas import conversation
 from chat_api_service.app.db.models import Conversation
 from chat_api_service.app.api.deps.usecases import ConversationUsecaseDep
-from chat_api_service.app.schemas.message import MessageResponse, \
-    MessageStatusUpdate
+from libs.schemas.message import MessageStatusUpdate, MessageResponse
 from libs.schemas.pagination import PaginationRequest
 from chat_api_service.app.core.exceptions import conversation as errs
 from chat_api_service.app.core.exceptions import message as msg_errs

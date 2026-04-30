@@ -11,6 +11,8 @@ from loguru import logger
 from web_service.app.core.exceptions import chat_api_client as errors
 from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from functools import wraps
+from libs.schemas.message import MessageStatusUpdate
+from libs.schemas.message import MessageResponse
 
 
 def conv_error_handler(
@@ -24,6 +26,7 @@ def conv_error_handler(
     :param title: Заголовок для логирования.
     """
     async def decorator(func):
+        @wraps(func)
         async def wrapper(*args, conversation_id: UUID, **kwargs):
             try:
                 return await func(*args, **kwargs)
@@ -33,7 +36,7 @@ def conv_error_handler(
                         logger.error(
                             f"Доступ к диалогу \"{conversation_id}\" запрещен"
                         )
-                        raise errors.ConversationAccessException(
+                        raise errors.AccessException(
                             "Доступ запрещен",
                             conversation_id=conversation_id
                         )
@@ -155,20 +158,67 @@ class ChatAPIServiceClient(BaseClient):
             )
 
     async def update_message_status(
-        self, access_token: str, message_id: UUID, status: str
-    ) -> bool:
-        """Изменение статуса сообщения"""
-        async with await self._get_client(access_token) as client:
-            try:
+            self,
+            access_token: str,
+            message_id: UUID,
+            new_status: str
+    ) -> MessageResponse:
+        """
+        Изменение статуса сообщения.
+        :param access_token: Токен доступа пользователя.
+        :param message_id: Идентификатор сообщения.
+        :param new_status: Новый статус сообщения.
+
+        :return: Обновленное сообщение.
+        """
+        title = "Ошибка изменения статуса сообщения"
+        try:
+            async with self._get_client(access_token) as client:
                 resp = await client.patch(
                     f"/conversation/messages/{message_id}/status",
-                    json=MessageStatusUpdate(status=status).model_dump()
+                    json=MessageStatusUpdate(status=new_status).model_dump()
                 )
                 resp.raise_for_status()
-                return True
-            except HTTPStatusError as e:
-                logger.error(f"Ошибка обновления статуса: {e.response.text}")
-                return False
+                return MessageResponse(**resp.json())
+        except HTTPStatusError as err:
+            match err.response.status_code:
+                case status.HTTP_403_FORBIDDEN:
+                    logger.error(
+                        f"Доступ к сообщению \"{message_id}\" запрещен"
+                    )
+                    raise errors.AccessException(
+                        "Доступ запрещен",
+                        _id=message_id
+                    )
+                case status.HTTP_404_NOT_FOUND:
+                    logger.error(f"Сообщение \"{message_id}\" не найдено")
+                    raise errors.MessageNotFoundException(
+                        "Сообщение не найдено",
+                        message_id=message_id
+                    )
+                case _:
+                    logger.error(
+                        f"{title}: {err.response.text} "
+                        f"(status_code={err.response.status_code}"
+                    )
+                    raise errors.ChangeMessageStatusException(
+                        err.response.text,
+                        message_id=message_id
+                    )
+        except TimeoutException:
+            logger.error(f"{title}: timeout error")
+            raise errors.ChangeMessageStatusException(
+                "timeout error",
+                message_id=message_id
+            )
+        except Exception as err:
+            logger.error(
+                f"{title}: {err} ({err.__class__.__name__})"
+            )
+            raise errors.ChangeMessageStatusException(
+                title,
+                message_id=message_id
+            )
 
     @conv_error_handler(
         errors.ConversationHistoryException,
@@ -248,4 +298,3 @@ class ChatAPIServiceClient(BaseClient):
             )
             resp.raise_for_status()
             return LLMQueryResponse(**resp.json())
-

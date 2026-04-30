@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from chat_api_service.app.schemas.message import MessageResponse
+from libs.schemas.message import MessageResponse
 from libs.schemas.pagination import PaginationMeta
 
 

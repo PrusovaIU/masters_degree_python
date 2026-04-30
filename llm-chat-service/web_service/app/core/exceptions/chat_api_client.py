@@ -35,14 +35,27 @@ class ConversationHistoryException(ConversationException):
         super().__init__(message, conversation_id=conversation_id)
 
 
-class ConversationAccessException(ConversationWithIDException):
-    """Доступ к диалогу запрещен."""
-    pass
+class AccessException(AppException):
+    """Доступ к объекту запрещен."""
+    def __init__(self, message: str, _id: UUID):
+        super().__init__(message, id=_id)
 
 
 class ConversationNotFoundException(ConversationWithIDException):
     """Диалог не найден."""
     pass
+
+
+class MessageNotFoundException(AppException):
+    """Сообщение не найдено."""
+    def __init__(self, message: str, message_id: UUID):
+        super().__init__(message, message_id=message_id)
+
+
+class ChangeMessageStatusException(AppException):
+    """Ошибка при изменении статуса сообщения."""
+    def __init__(self, message: str, message_id: UUID):
+        super().__init__(message, message_id=message_id)
 
 
 class LLMQueryException(ChatApiClientException):
