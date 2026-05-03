@@ -17,7 +17,7 @@ class ServiceSettings(BaseModel):
     port: int = Field(description="Порт сервиса")
 
 
-class AuthCookieSettings(ServiceSettings):
+class AuthCookieSettings(BaseModel):
     """Настройки кук авторизации"""
     access_token_cookie_name: str = Field(
         default="access_token",
@@ -56,11 +56,11 @@ class SessionCookieSettings(BaseModel):
 class JinjaTemplatesSettings(BaseModel):
     """Настройки шаблонизатора"""
     dir: str = Field(
-        default="web_service/app/templates",
+        default="./web_service/app/templates",
         description="Путь к директории с шаблонами"
     )
     static_dir: str = Field(
-        default="web_service/app/static",
+        default="./web_service/app/static",
         description="Путь к директории со статикой"
     )
     static_url: str = Field(
@@ -110,7 +110,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         env_nested_delimiter="__",
-        env_file=".env"
+        env_file="/home/hex/git/masters_degree_python/llm-chat-service/web_service/.env"
     )
     app_name: str = Field(
         default="Chat API service",

@@ -1,7 +1,4 @@
-from collections.abc import AsyncGenerator
-
-from httpx import AsyncClient, HTTPStatusError, Timeout, TimeoutException, \
-    Response
+from httpx import HTTPStatusError, TimeoutException, Response
 
 from libs.schemas.auth import (
     RegisterRequest, RegisterResponse, LoginResponse,
@@ -113,7 +110,7 @@ class AuthClient(BaseClient):
     async def refresh_token(
             self,
             refresh_token: str
-    ) -> RefreshTokenResponse | None:
+    ) -> RefreshTokenResponse:
         """
         Обновление access токена по refresh токену.
 
@@ -137,7 +134,7 @@ class AuthClient(BaseClient):
         errs.ProfileError,
         "Ошибка получения профиля"
     )
-    async def get_me(self, access_token: str) -> UserPublic | None:
+    async def get_me(self, access_token: str) -> UserPublic:
         """
         Получение профиля текущего пользователя.
 

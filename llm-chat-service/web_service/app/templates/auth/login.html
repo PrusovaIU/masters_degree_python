@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в систему - {{ settings.app_name }}{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Войдите в свой аккаунт для доступа к чату с ИИ">
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', path='/auth/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card" id="authCard">
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="logo">
+                <span class="logo-icon">🤖</span>
+                <span>{{ settings.app_name }}</span>
+            </div>
+            <p>Войдите для продолжения работы с ИИ-ассистентом</p>
+        </div>
+
+        <!-- Body -->
+        <div class="auth-body">
+            <!-- Сообщения об ошибках/успехе -->
+            {% if error %}
+            <div class="alert alert-error" role="alert" id="errorAlert">
+                <span class="icon">⚠️</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            {% if request.query_params.get('registered') %}
+            <div class="alert alert-success" role="alert">
+                <span class="icon">✅</span>
+                <span>Регистрация успешна! Теперь войдите в систему.</span>
+            </div>
+            {% endif %}
+
+            <!-- Форма входа -->
+            <form id="loginForm" action="/auth/login" method="POST" novalidate>
+                <!-- Email / Username -->
+                <div class="form-group">
+                    <label for="username">
+                        Email или имя пользователя
+                        <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-control"
+                        placeholder="user@example.com"
+                        autocomplete="username"
+                        required
+                        minlength="3"
+                        maxlength="256"
+                        value="{{ form_data.username if form_data else '' }}"
+                    >
+                    <span class="error-text" id="usernameError">Введите корректный email или имя пользователя</span>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">
+                        Пароль
+                        <span class="required">*</span>
+                    </label>
+                    <div class="password-toggle">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-control"
+                            placeholder="••••••••"
+                            autocomplete="current-password"
+                            required
+                            minlength="8"
+                        >
+                        <button
+                            type="button"
+                            class="password-toggle-btn"
+                            id="togglePassword"
+                            aria-label="Показать/скрыть пароль"
+                        >
+                            👁️
+                        </button>
+                    </div>
+                    <span class="error-text" id="passwordError">Пароль должен содержать минимум 8 символов</span>
+                </div>
+
+                <!-- Options -->
+                <div class="form-options">
+                    <label class="checkbox-group">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span>Запомнить меня</span>
+                    </label>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span class="btn-text">Войти</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            Нет аккаунта?
+            <a href="/auth/register">Создать аккаунт</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', path='/auth/auth.js') }}"></script>
+{% endblock %}

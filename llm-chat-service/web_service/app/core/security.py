@@ -12,27 +12,16 @@ logger = logging.getLogger(__name__)
 class AuthCookieMiddleware(BaseHTTPMiddleware):
     """Middleware для автоматической подстановки токенов из cookie"""
 
-    def __init__(
-            self,
-            app: ASGIApp,
-            static_url: str,
-            access_token_cookie_name: str,
-            dispatch: DispatchFunction | None = None,
-    ):
-        super().__init__(app, dispatch)
-        self._static_url = static_url
-        self._access_token_cookie_name = access_token_cookie_name
-
-
     async def dispatch(self, request: Request, call_next):
+        state = request.app.state
         if (
-                request.url.path.startswith(self._static_url) or
-                request.url.path == "/health"
+                request.url.path.startswith(state.static_url) or
+                request.url.path in ("/", "/health", "/auth/login")
         ):
             return await call_next(request)
 
         access_token: str | None = request.cookies.get(
-            self._access_token_cookie_name
+            state.access_token_cookie_name
         )
         if not access_token:
             raise HTTPException(

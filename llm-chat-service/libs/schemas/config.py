@@ -158,7 +158,10 @@ class ConfigWithPasswd(BaseModel):
 
 class RabbitMQConfig(ConfigWithPasswd):
     """Конфигурация RabbitMQ"""
-    host: str = Field(description="Хост RabbitMQ сервера")
+    host: str = Field(
+        default="127.0.0.1",
+        description="Хост RabbitMQ сервера"
+    )
     port: int = Field(description="Порт RabbitMQ сервера")
     user: str = Field(description="Имя пользователя RabbitMQ")
     vhost: str | None = Field(
