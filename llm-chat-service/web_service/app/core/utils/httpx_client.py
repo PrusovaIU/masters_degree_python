@@ -4,6 +4,7 @@ from typing import Type
 from httpx import AsyncClient, HTTPStatusError, Timeout, TimeoutException
 from loguru import logger
 from web_service.app.core.exceptions.base import AppException
+from contextlib import asynccontextmanager
 
 
 def error_handler_decorator(err_type: Type[AppException], title: str):
@@ -50,6 +51,7 @@ class BaseClient:
         self._timeout = Timeout(timeout)
         self._auth_token_name = auth_token_name
 
+    @asynccontextmanager
     async def _get_client(
             self,
             access_token: str  | None = None

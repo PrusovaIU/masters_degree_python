@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Request, Form, status, Depends
 from fastapi.responses import RedirectResponse, HTMLResponse
 
+from libs.schemas.auth import LoginResponse
 from libs.schemas.user import UserPublic
-from web_service.app.core.config import settings
 from web_service.app.core.security import set_auth_cookies, clear_auth_cookies
 from web_service.app.services.auth_client import AuthClient
 from .deps.usecases import AuthUsecaseDep
+from web_service.app.core.exceptions import auth_client as errors
+from ..schemas.config import Settings
 
 router_auth = APIRouter()
 
@@ -26,22 +28,74 @@ async def login_page(
             url="/chat",
             status_code=status.HTTP_302_FOUND
         )
-    return request.app.state.templates.TemplateResponse(
+    return request.app.state.settings.jinja.templates.TemplateResponse(
         request=request,
         name="auth/login.html",
         context={"settings": request.app.state.settings}
     )
-    # return request.app.state.templates.TemplateResponse(
-    #     "auth/login.html",
-    #     {"request": request}
-    # )
 
 
-# @router.post("/auth/login", include_in_schema=False)
+@router_auth.post(
+    "/auth/login",
+    response_class=HTMLResponse,
+    include_in_schema=False
+)
+async def login_process(
+        request: Request,
+        auth_usecase: AuthUsecaseDep,
+        username: str = Form(),
+        password: str = Form(),
+        remember: bool = Form(False)
+):
+    """
+    Обработка POST-запроса с формой входа
+    """
+    settings: Settings = request.app.state.settings
+    try:
+        login_data: LoginResponse = await auth_usecase.auth(
+            username, password
+        )
+    except errors.LoginError as err:
+        context = {
+            "settings": settings,
+            "error": str(err),
+            "form_data": {"username": username}
+        }
+        response = settings.jinja.templates.TemplateResponse(
+            request=request,
+            name="auth/login.html",
+            context=context,
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+    else:
+        response = RedirectResponse(
+            url="/chat",
+            status_code=status.HTTP_302_FOUND
+        )
+        response.set_cookie(
+            key=settings.auth_cookie.access_token_cookie_name,
+            value=login_data.access_token,
+            httponly=True,
+            secure=settings.auth_cookie.cookie_secure,
+            samesite=settings.auth_cookie.cookie_same_site,
+            max_age=login_data.expires_in if remember else None
+        )
+        response.set_cookie(
+            key=settings.auth_cookie.refresh_token_cookie_name,
+            value=login_data.refresh_token,
+            httponly=True,
+            secure=settings.auth_cookie.cookie_secure,
+            samesite=settings.auth_cookie.cookie_same_site,
+            max_age=login_data.refresh_expires_in if remember else None
+        )
+    return response
+
+
+# @router_auth.post("/auth/login", include_in_schema=False)
 # async def login_submit(
 #         request: Request,
-#         username: str = Form(...),
-#         password: str = Form(...)
+#         username: str = Form(),
+#         password: str = Form()
 # ):
 #     """Обработка формы входа"""
 #     client = AuthClient()

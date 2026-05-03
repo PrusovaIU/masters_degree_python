@@ -1,7 +1,10 @@
-from pydantic import Field, BaseModel
+from typing import Self
+
+from pydantic import Field, BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from libs.schemas.config import LogConfig, CORSSettings, RabbitMQConfig
+from fastapi.templating import Jinja2Templates
 
 
 class ServiceSettings(BaseModel):
@@ -15,6 +18,17 @@ class ServiceSettings(BaseModel):
         description="Адрес сервиса"
     )
     port: int = Field(description="Порт сервиса")
+    timeout: int = Field(
+        default=10,
+        description="Таймаут запроса"
+    )
+
+    @property
+    def url(self) -> str:
+        """
+        :return: URL сервиса.
+        """
+        return f"{self.protocol}://{self.host}:{self.port}"
 
 
 class AuthCookieSettings(BaseModel):
@@ -53,7 +67,7 @@ class SessionCookieSettings(BaseModel):
     )
 
 
-class JinjaTemplatesSettings(BaseModel):
+class JinjaSettings(BaseModel):
     """Настройки шаблонизатора"""
     dir: str = Field(
         default="./web_service/app/templates",
@@ -68,25 +82,18 @@ class JinjaTemplatesSettings(BaseModel):
         description="URL префикс для статики"
     )
 
+    _templates: Jinja2Templates | None = None
 
-class JinjaSettings(BaseModel):
-    """Настройки Jinja2"""
-    templates: JinjaTemplatesSettings = Field(
-        default_factory=JinjaTemplatesSettings,
-        description="Настройки шаблонизатора"
-    )
-    auto_reload: bool = Field(
-        default=False,
-        description="Авто-перезагрузка шаблонов"
-    )
-    trim_blocks: bool = Field(
-        default=True,
-        description="Удалять пустые строки в шаблонах"
-    )
-    lstrip_blocks: bool = Field(
-        default=True,
-        description="Удалять пробелы слева от блоков"
-    )
+    @model_validator(mode="after")
+    def init_templates(self) -> Self:
+        self._templates = Jinja2Templates(
+            directory=self.dir
+        )
+        return self
+
+    @property
+    def templates(self) -> Jinja2Templates:
+        return self._templates
 
 
 class PaginationSettings(BaseModel):
@@ -156,4 +163,9 @@ class Settings(BaseSettings):
 
     rabbitmq: RabbitMQConfig = Field(
         description="Настройки RabbitMQ"
+    )
+
+    auth_header_name: str = Field(
+        default="Authorization",
+        description="Имя заголовка с токеном авторизации"
     )
