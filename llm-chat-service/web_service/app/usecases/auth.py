@@ -28,33 +28,14 @@ class AuthUsecase:
         self._auth_client = auth_client
         self._settings = settings
 
-    @staticmethod
-    def _get_authenticated(request: Request) -> str | None:
-        """
-        Получение токена авторизации из запроса.
-
-        :param request: Запрос пользователя.
-        :return: Access токен, если пользователь авторизован, иначе None.
-        """
-        if not getattr(request.state, "is_authenticated", False):
-            return None
-        return request.state.access_token
-
-    async def get_user_data(self, request: Request) -> UserPublic | None:
+    async def get_user_data(self, access_token: str) -> UserPublic | None:
         """
         Получение данных пользователя.
 
-        :param request: Запрос пользователя.
+        :param access_token: Токен доступа.
         :return: Данные пользователя, если пользователь авторизован, иначе None.
         """
-        access_token: str | None = self._get_authenticated(request)
-        if access_token is None:
-            return None
-        try:
-            resp: UserPublic = await AuthClient.get_me(access_token)
-        except Exception:
-            return None
-        return resp
+        return await AuthClient.get_me(access_token)
 
     async def auth(self, username: str, password: str) -> LoginResponse:
         """

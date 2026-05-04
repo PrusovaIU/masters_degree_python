@@ -241,7 +241,7 @@ class ChatAPIServiceClient(BaseClient):
 
         :return: История сообщений в диалоге.
 
-        :raise ConversationAccessException: Если доступ к диалогу запрещен.
+        :raise AccessException: Если доступ к диалогу запрещен.
         :raise ConversationNotFoundException: Если диалог не найден.
         :raise ConversationHistoryException: В случае ошибки получения истории.
         """

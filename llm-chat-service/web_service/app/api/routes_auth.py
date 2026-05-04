@@ -9,24 +9,24 @@ from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
 from web_service.app.schemas.config import Settings
 from web_service.app.core.exceptions import auth_usecase as usecase_errors
+from .deps.current_user import AccessTokenDep
 
 
-router_auth = APIRouter()
+router_auth = APIRouter(prefix="/auth")
 
 
 @router_auth.get(
-    "/auth/login",
+    "/login",
     response_class=HTMLResponse,
     include_in_schema=False
 )
 async def login_page(
         request: Request,
-        auth_usecase: AuthUsecaseDep,
+        access_token: AccessTokenDep,
         registered: bool = False
 ):
     """Страница входа"""
-    user: UserPublic | None = await auth_usecase.get_user_data(request)
-    if user:
+    if access_token:
         return RedirectResponse(
             url="/chat",
             status_code=status.HTTP_302_FOUND
@@ -42,7 +42,7 @@ async def login_page(
 
 
 @router_auth.post(
-    "/auth/login",
+    "/login",
     response_class=HTMLResponse,
     include_in_schema=False
 )
@@ -90,17 +90,16 @@ async def login_process(
 
 
 @router_auth.get(
-    "/auth/register",
+    "/register",
     response_class=HTMLResponse,
     include_in_schema=False
 )
 async def register_page(
         request: Request,
-        auth_usecase: AuthUsecaseDep
+        access_token: AccessTokenDep
 ):
     """Страница регистрации"""
-    user: UserPublic | None = await auth_usecase.get_user_data(request)
-    if user:
+    if access_token:
         return RedirectResponse(
             url="/chat",
             status_code=status.HTTP_302_FOUND
@@ -112,7 +111,7 @@ async def register_page(
     )
 
 
-@router_auth.post("/auth/register", include_in_schema=False)
+@router_auth.post("/register", include_in_schema=False)
 async def register_submit(
         request: Request,
         auth_usecase: AuthUsecaseDep,

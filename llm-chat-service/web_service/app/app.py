@@ -5,9 +5,7 @@ from loguru import logger
 from fastapi import FastAPI, Request
 from starlette.middleware.cors import CORSMiddleware
 from web_service.app.api import routers
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from jinja2 import Environment, FileSystemLoader
+from web_service.app.api.login_redirect import LOGIN_REDIRECT
 from web_service.app.core.security import AuthCookieMiddleware
 from fastapi.responses import RedirectResponse
 
@@ -60,4 +58,4 @@ class App:
 
     @staticmethod
     async def root(request: Request):
-        return RedirectResponse(url="/auth/login", status_code=302)
+        return LOGIN_REDIRECT
