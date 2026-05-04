@@ -11,6 +11,7 @@ from web_service.app.api.login_redirect import LOGIN_REDIRECT
 from web_service.app.core.exceptions import chat_api_client as errors
 from web_service.app.schemas.config import Settings
 from libs.schemas.conversation import ConversationHistoryResponse
+from loguru import logger
 
 router_conversation = APIRouter(prefix="/conversation")
 
@@ -35,9 +36,6 @@ async def conversations_list_page(
         created: bool = False
 ):
     """Главная страница чата — список диалогов"""
-    if not access_token:
-        return LOGIN_REDIRECT
-
     conversations, total_pages, total = await usecase.conversation_all(
         access_token, limit, page
     )
@@ -67,9 +65,6 @@ async def new_conversation_page(
         access_token: AccessTokenDep
 ):
     """Страница создания нового диалога"""
-    if not access_token:
-        return LOGIN_REDIRECT
-
     return request.app.state.settings.jinja.templates.TemplateResponse(
         request=request,
         name=Templates.NEW_CONVERSATION,
@@ -96,9 +91,6 @@ async def new_conversation(
     :param usecase: Usecase для работы с диалогами.
     :param title: Заголовок диалога.
     """
-    if not access_token:
-        return LOGIN_REDIRECT
-
     try:
         await usecase.new_conversation(access_token, title)
     except Exception as err:
@@ -134,15 +126,11 @@ async def conversation_page(
         page: int = 1
 ):
     """Страница диалога"""
-    if not access_token:
-        return LOGIN_REDIRECT
-
     settings: Settings = request.app.state.settings
     try:
         messages, total_pages, total = await usecase.conversation_history(
             access_token, conversation_id, limit, page
         )
-        messages: dict[UUID, str]
     except Exception as err:
         match type(err):
             case errors.AccessException:
@@ -153,7 +141,12 @@ async def conversation_page(
                 status_code = status.HTTP_502_BAD_GATEWAY
         context = {
             "settings": settings,
-            "error": str(err)
+            "error": str(err),
+            "messages": {},
+            "limit": limit,
+            "page": page,
+            "total_pages": 0,
+            "total": 0,
         }
         response = settings.jinja.templates.TemplateResponse(
             request=request,
@@ -165,6 +158,7 @@ async def conversation_page(
         context = {
             "settings": settings,
             "messages": messages,
+            "limit": limit,
             "page": page,
             "total_pages": total_pages,
             "total": total,
@@ -201,15 +195,13 @@ async def conversation_query(
     :param content: Содержимое сообщения.
     :param temperature: Температура генерации ответа.
     """
-    if not access_token:
-        return LOGIN_REDIRECT
-
     settings: Settings = request.app.state.settings
     try:
         message_id: UUID = await usecase.send_message(
             access_token, conversation_id, content, temperature
         )
     except Exception as err:
+        logger.trace(err)
         match type(err):
             case errors.AccessException:
                 status_code = status.HTTP_403_FORBIDDEN

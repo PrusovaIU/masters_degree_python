@@ -58,7 +58,7 @@ class ChatUsecase:
             conversation_id: UUID,
             limit: int,
             page: int
-    ) -> tuple[dict[UUID, str], int, int]:
+    ) -> tuple[list[schemas.MessageResponse], int, int]:
         """
         Получение истории диалога.
 
@@ -67,18 +67,20 @@ class ChatUsecase:
         :param limit: Количество сообщений на странице.
         :param page: Номер страницы.
 
-        :return: Список сообщений {UUID сообщения: текст сообщения},
+        :return: Список сообщений,
             количество страниц,
             общее количество сообщений.
         """
         offset = (page - 1) * limit
         response: schemas.ConversationHistoryResponse = \
             await self._chat_api_client.get_conversation_history(
-                access_token, conversation_id, limit, offset
+                access_token=access_token,
+                conversation_id=conversation_id,
+                limit=limit,
+                offset=offset
             )
-        messages = {m.id: m.text for m in response.messages}
         total_page = ceil(response.pagination.total / limit)
-        return messages, total_page, response.pagination.total
+        return response.messages, total_page, response.pagination.total
 
     async def send_message(
             self,

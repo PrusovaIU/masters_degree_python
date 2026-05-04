@@ -25,11 +25,11 @@ def conv_error_handler(
     :param error_type: Тип пробрасываемого исключения.
     :param title: Заголовок для логирования.
     """
-    async def decorator(func):
+    def decorator(func):
         @wraps(func)
         async def wrapper(*args, conversation_id: UUID, **kwargs):
             try:
-                return await func(*args, **kwargs)
+                return await func(*args, conversation_id=conversation_id, **kwargs)
             except HTTPStatusError as err:
                 match err.response.status_code:
                     case status.HTTP_403_FORBIDDEN:

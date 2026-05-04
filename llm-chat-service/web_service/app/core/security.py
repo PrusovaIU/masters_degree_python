@@ -204,8 +204,8 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         :return: Access токен и данные о новом access токене.
         """
         auth_client = AuthClient(
-            settings.url,
-            settings.timeout,
+            settings.auth_service.url,
+            settings.auth_service.timeout,
             settings.auth_header_name
         )
         try:

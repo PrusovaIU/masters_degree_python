@@ -40,7 +40,7 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Мои диалоги</h1>
-            <a href="/conversation/new" class="btn btn-primary">
+            <a href="/chat/conversation/new" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Новый диалог
             </a>
         </div>
@@ -55,7 +55,7 @@
         <!-- Список диалогов сверху вниз -->
         <div class="conversations-list">
             {% for conv_id, title in conversations.items() %}
-            <div class="card conversation-card" onclick="window.location.href='/conversation/{{ conv_id }}'">
+            <div class="card conversation-card" onclick="window.location.href='/chat/conversation/{{ conv_id }}'">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
@@ -132,7 +132,7 @@
         <div class="text-center py-5">
             <h3>У вас пока нет диалогов</h3>
             <p class="text-muted">Создайте новый диалог, чтобы начать общение с LLM</p>
-            <a href="/conversation/new" class="btn btn-primary btn-lg">Создать первый диалог</a>
+            <a href="/chat/conversation/new" class="btn btn-primary btn-lg">Создать первый диалог</a>
         </div>
         {% endif %}
     </div>
