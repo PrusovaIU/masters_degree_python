@@ -1,4 +1,5 @@
 from httpx import HTTPStatusError, TimeoutException, Response
+from starlette import status
 
 from libs.schemas.auth import (
     RegisterRequest, RegisterResponse, LoginResponse,
@@ -26,6 +27,7 @@ class AuthClient(BaseClient):
         :return: Ответ сервиса авторизации.
 
         :raises RegisterError: Ошибка регистрации.
+        :raises UserAlreadyExistsError: Пользователь уже существует.
         """
         title_err = f"Ошибка регистрации пользователя \"{data.email}\""
         try:
@@ -37,6 +39,10 @@ class AuthClient(BaseClient):
                 resp.raise_for_status()
                 return RegisterResponse(**resp.json())
         except HTTPStatusError:
+            if resp.status_code == status.HTTP_409_CONFLICT:
+                raise errs.UserAlreadyExistsError(
+                    "Пользователь уже существует", data.email
+                )
             logger.error(
                 f"{title_err}: {resp.text} (status={resp.status_code})"
             )

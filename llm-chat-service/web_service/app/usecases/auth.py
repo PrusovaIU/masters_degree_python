@@ -10,6 +10,7 @@ from libs.schemas.auth import (
     RefreshTokenRequest, RefreshTokenResponse
 )
 from web_service.app.core.exceptions import auth_client as errors
+from web_service.app.core.exceptions import auth_usecase as usecase_errors
 
 
 class AuthUsecase:
@@ -64,3 +65,25 @@ class AuthUsecase:
         :return: Ответ от сервиса авторизации.
         """
         return await self._auth_client.login(username, password)
+
+    async def register(
+            self,
+            username: str,
+            password: str,
+            password_confirm: str
+    ) -> RegisterResponse:
+        """
+        Регистрация пользователя.
+
+        :param username: Имя пользователя.
+        :param password: Пароль пользователя.
+        :param password_confirm: Подтверждение пароля.
+        :return: Ответ от сервиса авторизации.
+        """
+        if password != password_confirm:
+            raise usecase_errors.PasswordNotMatchException(
+                "Пароли не совпадают"
+            )
+        return await self._auth_client.register(
+            RegisterRequest(email=username, password=password)
+        )

@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Request, Form, status, Depends
 from fastapi.responses import RedirectResponse, HTMLResponse
 
-from libs.schemas.auth import LoginResponse
+from libs.schemas.auth import LoginResponse, RegisterResponse
 from libs.schemas.user import UserPublic
 from web_service.app.core.security import set_auth_cookies
 from web_service.app.services.auth_client import AuthClient
 from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
-from ..schemas.config import Settings
+from web_service.app.schemas.config import Settings
+from web_service.app.core.exceptions import auth_usecase as usecase_errors
+
 
 router_auth = APIRouter()
 
@@ -19,7 +21,8 @@ router_auth = APIRouter()
 )
 async def login_page(
         request: Request,
-        auth_usecase: AuthUsecaseDep
+        auth_usecase: AuthUsecaseDep,
+        registered: bool = False
 ):
     """Страница входа"""
     user: UserPublic | None = await auth_usecase.get_user_data(request)
@@ -31,7 +34,10 @@ async def login_page(
     return request.app.state.settings.jinja.templates.TemplateResponse(
         request=request,
         name="auth/login.html",
-        context={"settings": request.app.state.settings}
+        context={
+            "settings": request.app.state.settings,
+            "registered": registered
+        }
     )
 
 
@@ -106,35 +112,48 @@ async def register_page(
     )
 
 
-# @router.post("/auth/register", include_in_schema=False)
-# async def register_submit(
-#         request: Request,
-#         email: str = Form(...),
-#         password: str = Form(...),
-#         password_confirm: str = Form(...)
-# ):
-#     """Обработка формы регистрации"""
-#     if password != password_confirm:
-#         return templates.TemplateResponse(
-#             "auth/register.html",
-#             {"request": request, "error": "Пароли не совпадают"},
-#             status_code=status.HTTP_400_BAD_REQUEST
-#         )
-#
-#     client = AuthClient()
-#     result = await client.register(
-#         RegisterRequest(email=email, password=password))
-#
-#     if result:
-#         return RedirectResponse(url="/auth/login?registered=1",
-#                                 status_code=status.HTTP_302_FOUND)
-#
-#     return templates.TemplateResponse(
-#         "auth/register.html",
-#         {"request": request,
-#          "error": "Пользователь с таким email уже существует"},
-#         status_code=status.HTTP_409_CONFLICT
-#     )
+@router_auth.post("/auth/register", include_in_schema=False)
+async def register_submit(
+        request: Request,
+        auth_usecase: AuthUsecaseDep,
+        email: str = Form(),
+        password: str = Form(),
+        password_confirm: str = Form()
+):
+    """Обработка формы регистрации"""
+    settings: Settings = request.app.state.settings
+    try:
+        await auth_usecase.register(
+            email, password, password_confirm
+        )
+    except usecase_errors.PasswordNotMatchException as err:
+        context = {
+            "settings": settings,
+            "error": str(err)
+        }
+        response = settings.jinja.templates.TemplateResponse(
+            request=request,
+            name="auth/register.html",
+            context=context,
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    except errors.UserAlreadyExistsError as err:
+        context = {
+            "settings": settings,
+            "error": str(err)
+        }
+        response = settings.jinja.templates.TemplateResponse(
+            request=request,
+            name="auth/register.html",
+            context=context,
+            status_code=status.HTTP_409_CONFLICT
+        )
+    else:
+        response = RedirectResponse(
+            url="/auth/login?registered=True",
+            status_code=status.HTTP_302_FOUND
+        )
+    return response
 #
 #
 # @router.get("/auth/logout", include_in_schema=False)

@@ -16,6 +16,11 @@ class RegisterError(AuthClientUserError):
     pass
 
 
+class UserAlreadyExistsError(RegisterError):
+    """Пользователь уже существует."""
+    pass
+
+
 class LoginError(AuthClientUserError):
     """Ошибка при авторизации пользователя."""
     pass
