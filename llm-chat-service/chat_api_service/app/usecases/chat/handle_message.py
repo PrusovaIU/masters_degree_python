@@ -2,13 +2,13 @@ from uuid import UUID
 
 from celery import Task
 
-from chat_api_service.app.consts.message import MessageStatus
+from libs.consts.message import MessageStatus
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.services.openrouter_client import OpenRouterClient
 from chat_api_service.app.schemas.llm_tasks import MessageSchema
-from chat_api_service.app.consts.message import SenderType
+from libs.consts.message import SenderType
 import loguru
 from chat_api_service.app.schemas.message import MessageCreate
 from chat_api_service.app.core.exceptions import chat_new_message as errors

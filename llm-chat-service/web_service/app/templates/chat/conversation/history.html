@@ -142,7 +142,7 @@
         </div>
         {% elif messages %}
             {% for message in messages %}
-            <div class="message {% if message.sender_type == 'user' %}user{% else %}assistant{% endif %}"
+            <div class="message {% if message.sender_type.value.lower() == 'user' %}user{% else %}assistant{% endif %}"
                  data-message-id="{{ message.id }}">
                 <div class="message-bubble">
                     {{ message.content }}

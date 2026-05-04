@@ -1,21 +1,5 @@
-from collections.abc import Generator
-
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, Mock
-from uuid import UUID, uuid4
-from datetime import datetime, timezone
-
-from chat_api_service.app.tasks import llm_tasks
-from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
-from chat_api_service.app.consts.message import MessageStatus, SenderType
-from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from libs.schemas.llm_query import LLMQueryRequest
-from chat_api_service.app.db.models import Message
-from chat_api_service.app.core.exceptions.conversation import (
-    ConversationNotFound,
-    ConversationAccessDenied
-)
-from pytest_mock import MockerFixture
+from unittest.mock import AsyncMock
 
 
 @pytest.fixture

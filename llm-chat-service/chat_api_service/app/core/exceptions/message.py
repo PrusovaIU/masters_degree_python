@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from .base import AppException
-from chat_api_service.app.consts.message import MessageStatus
+from libs.consts.message import MessageStatus
 
 
 class InvalidMessageStatus(AppException):

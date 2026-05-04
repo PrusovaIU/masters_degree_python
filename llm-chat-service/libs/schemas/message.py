@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from chat_api_service.app.consts.message import MessageStatus, SenderType
+from libs.consts.message import MessageStatus, SenderType
 
 
 class MessageStatusUpdate(BaseModel):

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from chat_api_service.app.consts.message import MessageStatus, SenderType
+from libs.consts.message import MessageStatus, SenderType
 
 
 class MessageCreate(BaseModel):

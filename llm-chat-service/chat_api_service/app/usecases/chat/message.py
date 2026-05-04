@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from chat_api_service.app.consts.message import MessageStatus
+from libs.consts.message import MessageStatus
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.repositories.conversation import \
     ConversationRepository

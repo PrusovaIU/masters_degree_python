@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from chat_api_service.app.consts.message import MessageStatus, SenderType, VALID_TRANSITIONS
+from libs.consts.message import MessageStatus, SenderType, VALID_TRANSITIONS
 from .base import Base
 from chat_api_service.app.core.exceptions.message import InvalidMessageStatus
 

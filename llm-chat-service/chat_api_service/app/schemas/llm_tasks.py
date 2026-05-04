@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.consts.message import SenderType
+from libs.consts.message import SenderType
 
 
 class LLMTaskStatusSchema(BaseModel):

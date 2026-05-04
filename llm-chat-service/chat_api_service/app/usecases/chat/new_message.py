@@ -1,4 +1,4 @@
-from chat_api_service.app.consts.message import MessageStatus, SenderType
+from libs.consts.message import MessageStatus, SenderType
 from chat_api_service.app.core.idempotency_key import generate_idempotency_key
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.infra.redis import RedisClient
