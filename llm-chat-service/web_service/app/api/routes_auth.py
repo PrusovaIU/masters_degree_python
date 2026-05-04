@@ -22,7 +22,7 @@ async def login_page(
         auth_usecase: AuthUsecaseDep
 ):
     """Страница входа"""
-    user: UserPublic | None = await auth_usecase.auth_page(request)
+    user: UserPublic | None = await auth_usecase.get_user_data(request)
     if user:
         return RedirectResponse(
             url="/chat",
@@ -76,53 +76,36 @@ async def login_process(
             response,
             settings.auth_cookie,
             login_data.access_token,
-            login_data.expires_in,
+            login_data.expires_in if remember else None,
             login_data.refresh_token,
-            login_data.refresh_expires_in
+            login_data.refresh_expires_in if remember else None
         )
     return response
 
 
-# @router_auth.post("/auth/login", include_in_schema=False)
-# async def login_submit(
-#         request: Request,
-#         username: str = Form(),
-#         password: str = Form()
-# ):
-#     """Обработка формы входа"""
-#     client = AuthClient()
-#     result = await client.login(username, password)
-#
-#     if result:
-#         response = RedirectResponse(url="/chat",
-#                                     status_code=status.HTTP_302_FOUND)
-#         set_auth_cookies(
-#             response,
-#             access_token=result.access_token,
-#             refresh_token=result.refresh_token,
-#             access_expires=result.expires_in,
-#             refresh_expires=result.refresh_expires_in
-#         )
-#         return response
-#
-#     return templates.TemplateResponse(
-#         "auth/login.html",
-#         {"request": request, "error": "Неверный email или пароль"},
-#         status_code=status.HTTP_401_UNAUTHORIZED
-#     )
-#
-#
-# @router.get("/auth/register", response_class=HTMLResponse,
-#             include_in_schema=False)
-# async def register_page(request: Request):
-#     """Страница регистрации"""
-#     user = await get_authenticated_user(request)
-#     if user:
-#         return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
-#     return templates.TemplateResponse("auth/register.html",
-#                                       {"request": request})
-#
-#
+@router_auth.get(
+    "/auth/register",
+    response_class=HTMLResponse,
+    include_in_schema=False
+)
+async def register_page(
+        request: Request,
+        auth_usecase: AuthUsecaseDep
+):
+    """Страница регистрации"""
+    user: UserPublic | None = await auth_usecase.get_user_data(request)
+    if user:
+        return RedirectResponse(
+            url="/chat",
+            status_code=status.HTTP_302_FOUND
+        )
+    return request.app.state.settings.jinja.templates.TemplateResponse(
+        request=request,
+        name="auth/register.html",
+        context={"settings": request.app.state.settings}
+    )
+
+
 # @router.post("/auth/register", include_in_schema=False)
 # async def register_submit(
 #         request: Request,

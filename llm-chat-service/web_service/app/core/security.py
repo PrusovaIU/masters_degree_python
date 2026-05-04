@@ -136,6 +136,7 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         "/",
         "/health",
         "/auth/login",
+        "/auth/register",
         "/favicon.ico"
     )
 

@@ -35,20 +35,11 @@ class App:
                 allow_methods=config.cors.methods,
                 allow_headers=config.cors.headers
             )
-        self._app.mount(
-            config.jinja.static_url,
-            StaticFiles(directory=config.jinja.static_dir),
-            name="static"
-        )
         self._app.add_middleware(AuthCookieMiddleware)
 
         for router in routers:
             self._app.include_router(router)
         self._app.add_api_route("/", self.root)
-
-        # self._templates = Jinja2Templates(
-        #     directory=config.jinja.templates.dir
-        # )
 
     async def lifespan(self, app: FastAPI) -> AsyncGenerator:
         app.state.static_url = self.settings.jinja.static_url
