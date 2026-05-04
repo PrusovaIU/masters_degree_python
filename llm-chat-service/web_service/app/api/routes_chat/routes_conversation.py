@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from starlette import status
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, RedirectResponse
+from starlette.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from web_service.app.api.deps.current_user import AccessTokenDep
 from web_service.app.api.deps.usecases import ChatUsecaseDep
@@ -87,6 +87,14 @@ async def new_conversation(
         usecase: ChatUsecaseDep,
         title: str
 ):
+    """
+    Создание нового диалога.
+
+    :param request: Запрос пользователя.
+    :param access_token: Access token пользователя.
+    :param usecase: Usecase для работы с диалогами.
+    :param title: Заголовок диалога.
+    """
     if not access_token:
         return LOGIN_REDIRECT
 
@@ -124,10 +132,9 @@ async def conversation_page(
         limit: int = 10,
         page: int = 1
 ):
+    """Страница диалога"""
     if not access_token:
         return LOGIN_REDIRECT
-
-
 
     settings: Settings = request.app.state.settings
     try:
@@ -165,6 +172,62 @@ async def conversation_page(
             name=Templates.MESSAGE_HISTORY,
             context=context,
             status_code=status.HTTP_302_FOUND
+        )
+    return response
+
+
+@router_conversation.post(
+    "/{conversation_id}/query",
+    response_class=HTMLResponse,
+    include_in_schema=False
+)
+async def conversation_query(
+        request: Request,
+        access_token: AccessTokenDep,
+        usecase: ChatUsecaseDep,
+        conversation_id: UUID,
+        content: str,
+        temperature: float = 0.7
+):
+    """
+    Отправка сообщения в диалог.
+
+    :param request: Запрос пользователя.
+    :param access_token: Access token пользователя.
+    :param usecase: Usecase для работы с диалогами.
+    :param conversation_id: Идентификатор диалога.
+    :param content: Содержимое сообщения.
+    :param temperature: Температура генерации ответа.
+    """
+    if not access_token:
+        return LOGIN_REDIRECT
+
+    settings: Settings = request.app.state.settings
+    try:
+        message_id: UUID = await usecase.send_message(
+            access_token, conversation_id, content, temperature
+        )
+    except Exception as err:
+        match type(err):
+            case errors.AccessException:
+                status_code = status.HTTP_403_FORBIDDEN
+            case errors.ConversationNotFoundException:
+                status_code = status.HTTP_404_NOT_FOUND
+            case _:
+                status_code = status.HTTP_502_BAD_GATEWAY
+        context = {
+            "settings": settings,
+            "error": str(err)
+        }
+        response = settings.jinja.templates.TemplateResponse(
+            request=request,
+            name=Templates.MESSAGE_HISTORY,
+            context=context,
+            status_code=status_code
+        )
+    else:
+        response = JSONResponse(
+            content={"message_id": str(message_id)}
         )
     return response
 

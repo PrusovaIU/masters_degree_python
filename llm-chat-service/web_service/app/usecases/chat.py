@@ -3,6 +3,7 @@ from uuid import UUID
 from web_service.app.services.chat_client import ChatAPIServiceClient
 from libs.schemas import conversation as schemas
 from math import ceil
+from libs.schemas.llm_query import LLMQueryResponse
 
 
 class ChatUsecase:
@@ -78,3 +79,25 @@ class ChatUsecase:
         messages = {m.id: m.text for m in response.messages}
         total_page = ceil(response.pagination.total / limit)
         return messages, total_page, response.pagination.total
+
+    async def send_message(
+            self,
+            access_token: str,
+            conversation_id: UUID,
+            content: str,
+            temperature: float
+    ) -> UUID:
+        """
+        Отправка сообщения в диалог.
+
+        :param access_token: Access token пользователя.
+        :param conversation_id: Идентификатор диалога.
+        :param content: Содержимое сообщения.
+        :param temperature: Температура генерации ответа.
+        :return: Идентификатор сообщения.
+        """
+        response: LLMQueryResponse = await self._chat_api_client.query_llm(
+            access_token, conversation_id, content, temperature
+        )
+        return response.message_id
+
