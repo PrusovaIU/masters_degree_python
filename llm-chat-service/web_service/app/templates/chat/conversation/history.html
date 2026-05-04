@@ -108,6 +108,17 @@
         padding-top: 4px;
         border-top: 1px solid rgba(0,0,0,0.1);
     }
+    .limit-selector {
+        width: auto;
+        margin-left: 10px;
+    }
+    .pagination-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
 </style>
 {% endblock %}
 
@@ -183,27 +194,74 @@
         </div>
     </div>
 
-    <!-- Пагинация -->
-    {% if total_pages > 1 %}
-    <nav class="mb-3">
-        <ul class="pagination pagination-sm justify-content-center">
-            {% if page > 1 %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page-1 }}&limit={{ limit }}">← Пред.</a>
-            </li>
+    <!-- Пагинация и выбор limit -->
+    {% if total_pages > 0 %}
+    <div class="mb-3">
+        <div class="pagination-info">
+            <!-- Выбор количества сообщений на странице -->
+            <div class="d-flex align-items-center">
+                <label class="me-2 text-muted small">Сообщений на странице:</label>
+                <select id="limitSelect" class="form-select form-select-sm limit-selector" style="width: auto;">
+                    <option value="5" {% if limit == 5 %}selected{% endif %}>5</option>
+                    <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
+
+            <!-- Пагинация -->
+            {% if total_pages > 1 %}
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage({{ page-1 }}); return false;">← Пред.</a>
+                    </li>
+                    {% endif %}
+
+                    {% set start_page = [page - 2, 1]|max %}
+                    {% set end_page = [start_page + 4, total_pages]|min %}
+
+                    {% if start_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
+                    </li>
+                    {% if start_page > 2 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="#" onclick="changePage({{ p }}); return false;">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if end_page < total_pages %}
+                    {% if end_page < total_pages - 1 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage({{ total_pages }}); return false;">{{ total_pages }}</a>
+                    </li>
+                    {% endif %}
+
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage({{ page+1 }}); return false;">След. →</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
             {% endif %}
 
-            <li class="page-item disabled">
-                <span class="page-link">Страница {{ page }} из {{ total_pages }}</span>
-            </li>
-
-            {% if page < total_pages %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page+1 }}&limit={{ limit }}">След. →</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+            <!-- Информация о сообщениях -->
+            <div class="text-muted small">
+                Всего сообщений: {{ total }}
+            </div>
+        </div>
+    </div>
     {% endif %}
 
     <!-- Форма отправки сообщения -->
@@ -246,6 +304,34 @@ const sendBtn = document.getElementById('sendBtn');
 const typingIndicator = document.getElementById('typingIndicator');
 const temperatureSlider = document.getElementById('temperature');
 const tempValue = document.getElementById('tempValue');
+const limitSelect = document.getElementById('limitSelect');
+
+// Функция для изменения страницы
+function changePage(newPage) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const limit = limitSelect ? limitSelect.value : (urlParams.get('limit') || '10');
+
+    urlParams.set('page', newPage);
+    urlParams.set('limit', limit);
+
+    window.location.search = urlParams.toString();
+}
+
+// Функция для изменения limit
+function changeLimit() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const newLimit = limitSelect.value;
+
+    urlParams.set('limit', newLimit);
+    urlParams.set('page', '1'); // Сбрасываем на первую страницу
+
+    window.location.search = urlParams.toString();
+}
+
+// Обработчик изменения limit
+if (limitSelect) {
+    limitSelect.addEventListener('change', changeLimit);
+}
 
 // Авто-прокрутка вниз
 function scrollToBottom() {
@@ -448,31 +534,5 @@ messageInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 100) + 'px';
 });
-
-// Периодическое обновление статусов сообщений
-<!--function startStatusPolling() {-->
-<!--    setInterval(async () => {-->
-<!--        const messages = document.querySelectorAll('[data-message-id]');-->
-<!--        for (const message of messages) {-->
-<!--            const messageId = message.getAttribute('data-message-id');-->
-<!--            if (messageId && !messageId.startsWith('temp_')) {-->
-<!--                try {-->
-<!--                    const response = await fetch(`/chat/message/${messageId}`);-->
-<!--                    if (response.ok) {-->
-<!--                        const data = await response.json();-->
-<!--                        updateMessageStatus(messageId, data.status);-->
-<!--                    }-->
-<!--                } catch (error) {-->
-<!--                    console.error('Error updating message status:', error);-->
-<!--                }-->
-<!--            }-->
-<!--        }-->
-<!--    }, 5000); // Обновляем каждые 5 секунд-->
-<!--}-->
-
-// Запускаем polling статусов после загрузки страницы
-if (document.querySelectorAll('[data-message-id]').length > 0) {
-    startStatusPolling();
-}
 </script>
 {% endblock %}
