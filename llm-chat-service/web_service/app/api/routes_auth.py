@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 
 from libs.schemas.auth import LoginResponse
 from libs.schemas.user import UserPublic
-from web_service.app.core.security import set_auth_cookies, clear_auth_cookies
+from web_service.app.core.security import set_auth_cookies
 from web_service.app.services.auth_client import AuthClient
 from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
@@ -72,21 +72,13 @@ async def login_process(
             url="/chat",
             status_code=status.HTTP_302_FOUND
         )
-        response.set_cookie(
-            key=settings.auth_cookie.access_token_cookie_name,
-            value=login_data.access_token,
-            httponly=True,
-            secure=settings.auth_cookie.cookie_secure,
-            samesite=settings.auth_cookie.cookie_same_site,
-            max_age=login_data.expires_in if remember else None
-        )
-        response.set_cookie(
-            key=settings.auth_cookie.refresh_token_cookie_name,
-            value=login_data.refresh_token,
-            httponly=True,
-            secure=settings.auth_cookie.cookie_secure,
-            samesite=settings.auth_cookie.cookie_same_site,
-            max_age=login_data.refresh_expires_in if remember else None
+        set_auth_cookies(
+            response,
+            settings.auth_cookie,
+            login_data.access_token,
+            login_data.expires_in,
+            login_data.refresh_token,
+            login_data.refresh_expires_in
         )
     return response
 
