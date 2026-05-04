@@ -9,19 +9,8 @@ from .exceptions.security import NotAuthenticated
 
 from web_service.app.schemas.config import AuthCookieSettings, Settings
 from web_service.app.api.login_redirect import LOGIN_REDIRECT
-
-
-def _get_seconds_until_expiry(expires_in: int) -> int:
-    """
-    Подсчет количества секунд от текущего момента до указанного expires_in.
-
-    :param expires_in: Timestamp (Unix время в секундах) истечения токена
-
-    :return: Количество секунд до истечения или 0, если токен уже истек.
-    """
-    current_timestamp = int(datetime.now().timestamp())
-    seconds_left = expires_in - current_timestamp
-    return max(0, seconds_left)
+from libs.jwt_token import get_access_payload, AccessTokenData
+from web_service.app.schemas.user import User
 
 
 def set_access_token_cookie(
@@ -39,8 +28,6 @@ def set_access_token_cookie(
     :param expires_in: Время жизни токена;
     :return: None
     """
-    if expires_in:
-        expires_in = _get_seconds_until_expiry(expires_in)
     response.set_cookie(
         key=settings.access_token_cookie_name,
         value=access_token,
@@ -66,8 +53,6 @@ def set_refresh_token_cookie(
     :param expires_in: Время жизни токена;
     :return: None
     """
-    if expires_in:
-        expires_in = _get_seconds_until_expiry(expires_in)
     response.set_cookie(
         key=settings.refresh_token_cookie_name,
         value=refresh_token,
@@ -152,17 +137,16 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
             access_token, new_access_token = await self._get_or_refresh_token(
                 request, settings)
             self._set_auth_state(request, access_token)
+            response = await call_next(request)
         except NotAuthenticated:
             return LOGIN_REDIRECT
-        else:
-            response = await call_next(request)
-            if new_access_token:
-                set_access_token_cookie(
-                    response,
-                    settings.auth_cookie,
-                    new_access_token.access_token,
-                    new_access_token.expires_in
-                )
+        if new_access_token:
+            set_access_token_cookie(
+                response,
+                settings.auth_cookie,
+                new_access_token.access_token,
+                new_access_token.expires_in
+            )
         return response
 
     def _should_skip_auth(self, request: Request, settings: Settings) -> bool:
@@ -244,5 +228,8 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         :param access_token: Access токен.
         :return: None.
         """
+        token_payload: AccessTokenData = get_access_payload(access_token)
+        user = User(email=token_payload.sub, role=token_payload.role)
+        request.state.user = user
         request.state.access_token = access_token
         request.state.is_authenticated = True

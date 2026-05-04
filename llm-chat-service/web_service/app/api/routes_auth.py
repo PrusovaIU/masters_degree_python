@@ -50,8 +50,7 @@ async def login_process(
         request: Request,
         auth_usecase: AuthUsecaseDep,
         username: str = Form(),
-        password: str = Form(),
-        remember: bool = Form(False)
+        password: str = Form()
 ):
     """
     Обработка POST-запроса с формой входа
@@ -82,9 +81,9 @@ async def login_process(
             response,
             settings.auth_cookie,
             login_data.access_token,
-            login_data.expires_in if remember else None,
+            login_data.expires_in,
             login_data.refresh_token,
-            login_data.refresh_expires_in if remember else None
+            login_data.refresh_expires_in
         )
     return response
 

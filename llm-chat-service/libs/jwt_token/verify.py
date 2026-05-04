@@ -156,3 +156,14 @@ def verify_refresh_token(
         alg,
         verify_exp
     )
+
+
+def get_access_payload(token: str) -> AccessTokenData:
+    """
+    Получение payload из access токена.
+
+    :param token: Access токен.
+    :return: Payload токена.
+    """
+    payload = jwt.decode(token, options={"verify_signature": False})
+    return AccessTokenData(**payload)
