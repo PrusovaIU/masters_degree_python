@@ -5,8 +5,10 @@ from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
 from web_service.app.services.auth_client import AuthClient
 from libs.schemas.auth import RefreshTokenResponse
 from loguru import logger
+from .exceptions.security import NotAuthenticated
 
-from web_service.app.schemas.config import AuthCookieSettings, Settings, ServiceSettings
+from web_service.app.schemas.config import AuthCookieSettings, Settings
+from web_service.app.api.login_redirect import LOGIN_REDIRECT
 
 
 def _get_seconds_until_expiry(expires_in: int) -> int:
@@ -146,19 +148,21 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         if self._should_skip_auth(request, settings):
             return await call_next(request)
 
-        access_token, new_access_token = await self._get_or_refresh_token(
-            request, settings)
-        self._set_auth_state(request, access_token)
-
-        response = await call_next(request)
-        if new_access_token:
-            set_access_token_cookie(
-                response,
-                settings.auth_cookie,
-                new_access_token.access_token,
-                new_access_token.expires_in
-            )
-
+        try:
+            access_token, new_access_token = await self._get_or_refresh_token(
+                request, settings)
+            self._set_auth_state(request, access_token)
+        except NotAuthenticated:
+            return LOGIN_REDIRECT
+        else:
+            response = await call_next(request)
+            if new_access_token:
+                set_access_token_cookie(
+                    response,
+                    settings.auth_cookie,
+                    new_access_token.access_token,
+                    new_access_token.expires_in
+                )
         return response
 
     def _should_skip_auth(self, request: Request, settings: Settings) -> bool:
@@ -198,10 +202,7 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         )
 
         if not refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authorized"
-            )
+            raise NotAuthenticated("Пользователь не авторизован")
 
         return await self._refresh_access_token(refresh_token, settings)
 
@@ -232,10 +233,7 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
                 f"Ошибка обновления токена: {err} "
                 f"({err.__class__.__name__})"
             )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authorized"
-            )
+            raise NotAuthenticated("Не удалось обновить access токен")
 
     @staticmethod
     def _set_auth_state(request: Request, access_token: str) -> None:

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Новый диалог - LLM Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-form-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-card {
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .error-message {
+        animation: shake 0.5s;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-form-container">
+    <div class="card form-card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Создание нового диалога</h3>
+        </div>
+        <div class="card-body">
+            {% if error %}
+            <div class="alert alert-danger error-message" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                Ошибка: {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/conversation/new" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="title" class="form-label">Название диалога</label>
+                    <input type="text"
+                           class="form-control"
+                           id="title"
+                           name="title"
+                           required
+                           placeholder="Например: Обсуждение Python, Вопросы по API, ..."
+                           minlength="3"
+                           maxlength="100">
+                    <div class="invalid-feedback">
+                        Пожалуйста, введите название диалога (от 3 до 100 символов)
+                    </div>
+                    <div class="form-text">
+                        Хорошее название поможет легко найти диалог в будущем
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-chat-dots"></i> Создать диалог
+                    </button>
+                    <a href="/conversation/all" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Назад к списку
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">💡 Советы</h5>
+            <ul class="list-unstyled">
+                <li><i class="bi bi-check-circle text-success"></i> Имена диалогов должны быть уникальными и понятными</li>
+                <li><i class="bi bi-check-circle text-success"></i> Вы сможете переименовать диалог позже</li>
+                <li><i class="bi bi-check-circle text-success"></i> Каждый диалог сохраняет всю историю сообщений</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Валидация формы на клиенте
+(function () {
+    'use strict'
+    const forms = document.querySelectorAll('.needs-validation')
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

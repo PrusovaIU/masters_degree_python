@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Диалог с LLM - Чат{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+    .messages-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        animation: slideIn 0.3s ease;
+    }
+    .message.user {
+        justify-content: flex-end;
+    }
+    .message.assistant {
+        justify-content: flex-start;
+    }
+    .message-bubble {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 18px;
+        word-wrap: break-word;
+    }
+    .message.user .message-bubble {
+        background: #007bff;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    .message.assistant .message-bubble {
+        background: white;
+        color: #212529;
+        border: 1px solid #dee2e6;
+        border-bottom-left-radius: 4px;
+    }
+    .message-meta {
+        font-size: 0.7rem;
+        margin-top: 5px;
+        opacity: 0.7;
+    }
+    .typing-indicator {
+        display: none;
+        padding: 10px 15px;
+        background: white;
+        border-radius: 18px;
+        border: 1px solid #dee2e6;
+        width: fit-content;
+    }
+    .typing-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6c757d;
+        margin: 0 2px;
+        animation: typing 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+    }
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .temperature-slider {
+        width: 150px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Заголовок чата -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Чат с LLM</h2>
+        <a href="/conversation/all" class="btn btn-outline-secondary">
+            ← Все диалоги
+        </a>
+    </div>
+
+    <!-- Область сообщений -->
+    <div class="messages-area" id="messagesArea">
+        {% if error %}
+        <div class="alert alert-danger">
+            <h5>Ошибка загрузки диалога</h5>
+            <p>{{ error }}</p>
+            <a href="/conversation/all" class="btn btn-primary">Вернуться к списку</a>
+        </div>
+        {% elif messages %}
+            {% for message_id, content in messages.items() %}
+            <div class="message {% if message_id.startswith('user') %}user{% else %}assistant{% endif %}">
+                <div class="message-bubble">
+                    {{ content }}
+                    <div class="message-meta">
+                        {{ message_id[:8] }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <h4>Нет сообщений</h4>
+            <p>Начните диалог, отправив первое сообщение</p>
+        </div>
+        {% endif %}
+
+        <!-- Индикатор печатания -->
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+    </div>
+
+    <!-- Пагинация -->
+    {% if total_pages > 1 %}
+    <nav class="mb-3">
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page-1 }}&limit={{ limit }}">← Пред.</a>
+            </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Страница {{ page }} из {{ total_pages }}</span>
+            </li>
+
+            {% if page < total_pages %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page+1 }}&limit={{ limit }}">След. →</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Форма отправки сообщения -->
+    <div class="input-group">
+        <div class="dropdown me-2">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Температура: <span id="tempValue">0.7</span>
+            </button>
+            <div class="dropdown-menu p-3" style="min-width: 250px;">
+                <input type="range"
+                       class="form-range temperature-slider"
+                       id="temperature"
+                       min="0"
+                       max="1.5"
+                       step="0.05"
+                       value="0.7">
+                <div class="small text-muted mt-2">
+                    0 - точные ответы | 1.5 - креативные ответы
+                </div>
+            </div>
+        </div>
+
+        <textarea class="form-control"
+                  id="messageInput"
+                  rows="1"
+                  placeholder="Введите сообщение... (Shift+Enter для новой строки, Enter для отправки)"
+                  style="resize: none;"></textarea>
+
+        <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()">
+            Отправить
+        </button>
+    </div>
+</div>
+
+<script>
+const conversationId = window.location.pathname.split('/').pop();
+const messagesArea = document.getElementById('messagesArea');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingIndicator = document.getElementById('typingIndicator');
+const temperatureSlider = document.getElementById('temperature');
+const tempValue = document.getElementById('tempValue');
+
+// Авто-прокрутка вниз
+function scrollToBottom() {
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+// Отображение температуры
+temperatureSlider.addEventListener('input', function() {
+    tempValue.textContent = this.value;
+});
+
+// Автоматическая прокрутка при загрузке
+scrollToBottom();
+
+// Отправка сообщения
+async function sendMessage() {
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    // Добавляем сообщение пользователя в UI
+    addMessage('user', content);
+    messageInput.value = '';
+    sendBtn.disabled = true;
+
+    // Показываем индикатор печатания
+    typingIndicator.style.display = 'block';
+    scrollToBottom();
+
+    try {
+        const temperature = temperatureSlider.value;
+        const formData = new URLSearchParams();
+        formData.append('content', content);
+        formData.append('temperature', temperature);
+
+        const response = await fetch(`/conversation/${conversationId}/query`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            // Ждем ответа ассистента (здесь нужно реализовать polling или WebSocket)
+            await waitForAssistantResponse(data.message_id);
+        } else {
+            const errorText = await response.text();
+            addMessage('assistant', `❌ Ошибка: ${response.status} - ${errorText}`);
+        }
+    } catch (error) {
+        addMessage('assistant', `❌ Ошибка соединения: ${error.message}`);
+    } finally {
+        typingIndicator.style.display = 'none';
+        sendBtn.disabled = false;
+        messageInput.focus();
+    }
+}
+
+// Функция для добавления сообщения в чат
+function addMessage(role, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            ${escapeHtml(content)}
+            <div class="message-meta">
+                ${new Date().toLocaleTimeString()}
+            </div>
+        </div>
+    `;
+    messagesArea.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+// Ожидание ответа ассистента (простая реализация с polling)
+async function waitForAssistantResponse(messageId) {
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Здесь должен быть запрос к API для получения ответа
+        // В реальном приложении лучше использовать Server-Sent Events или WebSocket
+        attempts++;
+    }
+}
+
+// Escape HTML для безопасности
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Отправка по Enter (без Shift)
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Автоматическое изменение высоты textarea
+messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+// Загрузка истории при прокрутке вверх (infinite scroll)
+let isLoading = false;
+messagesArea.addEventListener('scroll', async () => {
+    if (messagesArea.scrollTop === 0 && !isLoading && {{ page }} < {{ total_pages }}) {
+        isLoading = true;
+        // Здесь можно реализовать загрузку предыдущих сообщений
+        isLoading = false;
+    }
+});
+</script>
+{% endblock %}

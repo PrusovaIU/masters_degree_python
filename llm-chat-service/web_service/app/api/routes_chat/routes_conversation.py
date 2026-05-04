@@ -41,6 +41,7 @@ async def conversations_list_page(
     conversations, total_pages, total = await usecase.conversation_all(
         access_token, limit, page
     )
+    conversations: dict[UUID, str]
 
     return request.app.state.settings.jinja.templates.TemplateResponse(
         request=request,
@@ -141,6 +142,7 @@ async def conversation_page(
         messages, total_pages, total = await usecase.conversation_history(
             access_token, conversation_id, limit, page
         )
+        messages: dict[UUID, str]
     except Exception as err:
         match type(err):
             case errors.AccessException:
@@ -230,4 +232,3 @@ async def conversation_query(
             content={"message_id": str(message_id)}
         )
     return response
-

@@ -15,7 +15,7 @@ def error_handler_decorator(err_type: Type[AppException], title: str):
     :param title: Заголовок ошибки.
     :return:
     """
-    async def decorator(func):
+    def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             try:

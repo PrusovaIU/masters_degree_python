@@ -23,4 +23,4 @@ def chat_usecase(chat_client: ChatClientDep) -> ChatUsecase:
 
 
 AuthUsecaseDep = Annotated[AuthUsecase, Depends(auth_usecase)]
-ChatUsecaseDep = Annotated[ChatUsecase, Depends(ChatUsecase)]
+ChatUsecaseDep = Annotated[ChatUsecase, Depends(chat_usecase)]

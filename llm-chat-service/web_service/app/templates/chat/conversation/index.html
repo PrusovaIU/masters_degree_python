@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Мои диалоги - LLM Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversation-card {
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .conversation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .conversation-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .alert-created {
+        animation: fadeOut 3s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        70% { opacity: 1; }
+        100% { opacity: 0; visibility: hidden; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Мои диалоги</h1>
+            <a href="/conversation/new" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Новый диалог
+            </a>
+        </div>
+
+        {% if created %}
+        <div class="alert alert-success alert-created" role="alert">
+            Диалог успешно создан!
+        </div>
+        {% endif %}
+
+        {% if conversations %}
+        <div class="row">
+            {% for conv_id, title in conversations.items() %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card conversation-card" onclick="window.location.href='/conversation/{{ conv_id }}'">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ title }}</h5>
+                        <p class="card-text">
+                            <small class="conversation-date">
+                                ID: {{ conv_id[:8] }}...
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        {% if total_pages > 1 %}
+        <nav aria-label="Navigation">
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page-1 }}&limit={{ limit }}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}&limit={{ limit }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page+1 }}&limit={{ limit }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        <div class="text-muted mt-3">
+            Всего диалогов: {{ total }}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h3>У вас пока нет диалогов</h3>
+            <p class="text-muted">Создайте новый диалог, чтобы начать общение с LLM</p>
+            <a href="/conversation/new" class="btn btn-primary btn-lg">Создать первый диалог</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
