@@ -12,7 +12,7 @@ REST API для создания диалогов, отправки сообще
 3. [Создание нового диалога](docs/create_conversation/README.md);
 4. [Список диалогов](docs/list_conversation/README.md);
 5. [Список сообщений диалога](docs/conversation_history/README.md);
-6. [Сведения о диалоге](docs/conversation_info/README.md)
+6. [Сведения о диалоге](docs/conversation_info/README.md);
 7. [Обновление статуса сообщения](docs/message_status_update/README.md);
 8. [Запрос LLM](docs/llm_query/README.md);
 9. [[ADMIN] Получение статуса задачи](docs/admin/task_status/README.md);

@@ -36,7 +36,7 @@ curl -X 'GET' \
 
 Сведения о диалоге успешно получены
 
-![200_OK.png](request.png)
+![200_OK.png](200_OK.png)
 
 **403 - Forbidden**
 
