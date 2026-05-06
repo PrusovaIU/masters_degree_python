@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Request, Form, status, Depends
+from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 
-from libs.schemas.auth import LoginResponse, RegisterResponse
+from libs.schemas.auth import LoginResponse
 from libs.schemas.user import UserPublic
-from web_service.app.core.security import set_auth_cookies
-from web_service.app.services.auth_client import AuthClient
+from web_service.app.core.security import set_auth_cookies, set_user_cookie
 from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
 from web_service.app.schemas.config import Settings
@@ -60,6 +59,7 @@ async def login_process(
         login_data: LoginResponse = await auth_usecase.auth(
             username, password
         )
+        me_data: UserPublic = await auth_usecase.me(login_data.access_token)
     except errors.LoginError as err:
         context = {
             "settings": settings,
@@ -84,6 +84,12 @@ async def login_process(
             login_data.expires_in,
             login_data.refresh_token,
             login_data.refresh_expires_in
+        )
+        set_user_cookie(
+            response,
+            settings.cookie,
+            me_data,
+            login_data.expires_in
         )
     return response
 

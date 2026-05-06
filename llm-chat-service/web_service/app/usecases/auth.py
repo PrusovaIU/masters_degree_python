@@ -68,3 +68,12 @@ class AuthUsecase:
         return await self._auth_client.register(
             RegisterRequest(email=username, password=password)
         )
+
+    async def me(self, access_token: str) -> UserPublic:
+        """
+        Получение данных пользователя.
+
+        :param access_token: Access token.
+        :return: Данные пользователя.
+        """
+        return await self._auth_client.get_me(access_token)

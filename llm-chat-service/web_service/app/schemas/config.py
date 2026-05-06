@@ -51,6 +51,21 @@ class AuthCookieSettings(BaseModel):
     )
 
 
+class CookieSettings(BaseModel):
+    user_id_cookie_name: str = Field(
+        default="user_id",
+        description="Имя куки для ID пользователя"
+    )
+    user_email_cookie_name: str = Field(
+        default="user_email",
+        description="Имя куки для email пользователя"
+    )
+    user_role_cookie_name: str = Field(
+        default="user_role",
+        description="Имя куки для роли пользователя"
+    )
+
+
 class SessionCookieSettings(BaseModel):
     """Настройки сессии"""
     name: str = Field(
@@ -144,6 +159,11 @@ class Settings(BaseSettings):
     auth_cookie: AuthCookieSettings = Field(
         default_factory=AuthCookieSettings,
         description="Настройки кук авторизации"
+    )
+
+    cookie: CookieSettings = Field(
+        default_factory=CookieSettings,
+        description="Настройки кук"
     )
 
     session_cookie: SessionCookieSettings = Field(

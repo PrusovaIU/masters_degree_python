@@ -6,8 +6,9 @@ from web_service.app.services.auth_client import AuthClient
 from libs.schemas.auth import RefreshTokenResponse
 from loguru import logger
 from .exceptions.security import NotAuthenticated
+from libs.schemas.user import UserPublic
 
-from web_service.app.schemas.config import AuthCookieSettings, Settings
+from web_service.app.schemas.config import AuthCookieSettings, Settings, CookieSettings
 from web_service.app.api.login_redirect import LOGIN_REDIRECT
 from libs.jwt_token import get_access_payload, AccessTokenData
 from web_service.app.schemas.user import User
@@ -96,6 +97,39 @@ def set_auth_cookies(
     )
 
 
+def set_user_cookie(
+        response: Response,
+        settings: CookieSettings,
+        user_data: UserPublic,
+        access_expires: int | None
+) -> None:
+    """
+    Установка cookie с данными пользователя. Cookie устанавливаются на время
+    жизни access токена.
+
+    :param response: Response - объект ответа FastAPI.
+    :param settings: Настройки cookie.
+    :param user_data: Данные пользователя.
+    :param access_expires: Время жизни токена.
+    :return: None
+    """
+    response.set_cookie(
+        key=settings.user_email_cookie_name,
+        value=user_data.email,
+        max_age=access_expires
+    )
+    response.set_cookie(
+        key=settings.user_role_cookie_name,
+        value=user_data.role,
+        max_age=access_expires
+    )
+    response.set_cookie(
+        key=settings.user_id_cookie_name,
+        value=str(user_data.id),
+        max_age=access_expires
+    )
+
+
 def clear_auth_cookies(
         response: Response,
         cookie_settings: AuthCookieSettings
@@ -136,7 +170,7 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         try:
             access_token, new_access_token = await self._get_or_refresh_token(
                 request, settings)
-            self._set_auth_state(request, access_token)
+            self._set_auth_state(request, settings.cookie, access_token)
             response = await call_next(request)
         except NotAuthenticated:
             return LOGIN_REDIRECT
@@ -220,16 +254,26 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
             raise NotAuthenticated("Не удалось обновить access токен")
 
     @staticmethod
-    def _set_auth_state(request: Request, access_token: str) -> None:
+    def _set_auth_state(
+            request: Request,
+            cookie_settings: CookieSettings,
+            access_token: str
+    ) -> None:
         """
         Установка состояния аутентификации пользователя.
 
         :param request: Запрос пользователя.
+        :param cookie_settings: Настройки cookie.
         :param access_token: Access токен.
         :return: None.
         """
-        token_payload: AccessTokenData = get_access_payload(access_token)
-        user = User(email=token_payload.sub, role=token_payload.role)
+        user_id: str = request.cookies.get(cookie_settings.user_id_cookie_name)
+        email: str = request.cookies.get(
+            cookie_settings.user_email_cookie_name
+        )
+        role: str = request.cookies.get(cookie_settings.user_role_cookie_name)
+
+        user = User(id=user_id, email=email, role=role)
         request.state.user = user
         request.state.access_token = access_token
         request.state.is_authenticated = True
