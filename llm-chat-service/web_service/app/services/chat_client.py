@@ -314,8 +314,8 @@ class ChatAPIServiceClient(BaseClient):
             "limit": limit
         }
         async with self._get_client(access_token) as client:
-            resp = await client.post(
-                "/conversation/history",
+            resp = await client.get(
+                "/conversation/history/before",
                 params=params
             )
             resp.raise_for_status()

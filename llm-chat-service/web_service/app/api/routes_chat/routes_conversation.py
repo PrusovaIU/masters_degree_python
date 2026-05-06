@@ -277,7 +277,7 @@ async def history_before(
         access_token: AccessTokenDep,
         usecase: ChatUsecaseDep,
         conversation_id: UUID,
-        message_id: UUID,
+        before_id: UUID,
         limit: int = 10
 ) -> ConversationHistoryBeforeResponse:
     """
@@ -286,13 +286,13 @@ async def history_before(
     :param access_token: Access token пользователя.
     :param usecase: Usecase для работы с диалогами.
     :param conversation_id: Идентификатор диалога.
-    :param message_id: Идентификатор сообщения.
+    :param before_id: Идентификатор сообщения.
     :param limit: Лимит сообщений.
     :return: Список сообщений.
     """
     try:
         return await usecase.conversation_history_before(
-            access_token, conversation_id, message_id, limit
+            access_token, conversation_id, before_id, limit
         )
     except errors.AccessException as err:
         raise HTTPException(
