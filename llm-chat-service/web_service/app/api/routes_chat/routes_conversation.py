@@ -78,7 +78,7 @@ async def new_conversation(
         request: Request,
         access_token: AccessTokenDep,
         usecase: ChatUsecaseDep,
-        title: str
+        title: str = Form()
 ):
     """
     Создание нового диалога.
@@ -103,7 +103,7 @@ async def new_conversation(
         )
     else:
         response = RedirectResponse(
-            url=f"{Templates.CONVERSATION_LIST}?created=true",
+            url=f"/chat/conversation/all?created=true",
             status_code=status.HTTP_302_FOUND
         )
     return response
@@ -309,3 +309,6 @@ async def history_before(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(err)
         )
+
+
+
