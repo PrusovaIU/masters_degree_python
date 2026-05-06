@@ -10,6 +10,8 @@ from .exceptions.security import NotAuthenticated
 from web_service.app.schemas.config import Settings, CookieSettings
 from web_service.app.api.login_redirect import LOGIN_REDIRECT
 from web_service.app.schemas.user import User
+from .exceptions.cookie import CookieUnfoundException
+from .cookie import clear_auth_cookies
 
 
 class AuthCookieMiddleware(BaseHTTPMiddleware):
@@ -33,8 +35,10 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
                 request, settings)
             self._set_auth_state(request, settings.cookie, access_token)
             response = await call_next(request)
-        except NotAuthenticated:
-            return LOGIN_REDIRECT
+        except (NotAuthenticated, CookieUnfoundException):
+            response = LOGIN_REDIRECT
+            clear_auth_cookies(response, settings)
+            return response
         if new_access_token:
             set_access_token_cookie(
                 response,
@@ -127,6 +131,8 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         :param cookie_settings: Настройки cookie.
         :param access_token: Access токен.
         :return: None.
+
+        :raise CookieUnfoundException: если cookie не найдены.
         """
         user: User = get_user_cookie(request, cookie_settings)
         request.state.user = user

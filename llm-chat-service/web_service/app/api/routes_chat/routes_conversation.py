@@ -1,16 +1,14 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from web_service.app.api.deps.current_user import AccessTokenDep
 from web_service.app.api.deps.usecases import ChatUsecaseDep
-from web_service.app.api.login_redirect import LOGIN_REDIRECT
 from web_service.app.core.exceptions import chat_api_client as errors
 from web_service.app.schemas.config import Settings
-from libs.schemas.conversation import ConversationHistoryResponse
 from loguru import logger
 
 router_conversation = APIRouter(prefix="/conversation")
@@ -182,8 +180,8 @@ async def conversation_query(
         access_token: AccessTokenDep,
         usecase: ChatUsecaseDep,
         conversation_id: UUID,
-        content: str,
-        temperature: float = 0.7
+        content: str = Form(),
+        temperature: float = Form(0.7)
 ):
     """
     Отправка сообщения в диалог.

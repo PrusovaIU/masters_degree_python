@@ -99,7 +99,10 @@ class ChatUsecase:
         :return: Идентификатор сообщения.
         """
         response: LLMQueryResponse = await self._chat_api_client.query_llm(
-            access_token, conversation_id, content, temperature
+            access_token=access_token,
+            conversation_id=conversation_id,
+            content=content,
+            temperature=temperature
         )
         return response.message_id
 

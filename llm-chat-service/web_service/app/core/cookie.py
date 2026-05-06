@@ -3,6 +3,8 @@ from fastapi import Response, Request
 from libs.schemas.user import UserPublic
 from web_service.app.schemas.config import AuthCookieSettings, CookieSettings, Settings
 from web_service.app.schemas.user import User
+from .exceptions.cookie import CookieUnfoundException
+from loguru import logger
 
 
 def set_access_token_cookie(
@@ -131,13 +133,21 @@ def get_user_cookie(
     :param request: Запрос FastAPI.
     :param cookie_settings: Настройки cookie.
     :return: Данные пользователя.
+
+    :raises CookieUnfoundException: Cookie не найден.
     """
-    user_id: str = request.cookies.get(cookie_settings.user_id_cookie_name)
-    email: str = request.cookies.get(
-        cookie_settings.user_email_cookie_name
-    )
-    role: str = request.cookies.get(cookie_settings.user_role_cookie_name)
-    return User(id=user_id, email=email, role=role)
+    try:
+        user_id: str = request.cookies[cookie_settings.user_id_cookie_name]
+        email: str = request.cookies[cookie_settings.user_email_cookie_name]
+        role: str = request.cookies[cookie_settings.user_role_cookie_name]
+        return User(id=user_id, email=email, role=role)
+    except KeyError as err:
+        logger.warning(f"Cookie не найден: {err}")
+        raise CookieUnfoundException(
+            "Cookie не найден",
+            cookie_name=str(err)
+        )
+
 
 
 def clear_auth_cookies(
