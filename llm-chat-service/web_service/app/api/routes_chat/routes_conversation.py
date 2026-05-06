@@ -182,9 +182,9 @@ async def stream_conversation_updates(
     SSE эндпоинт для получения real-time обновлений чата
     """
     try:
-        event_generator = await usecase.event_generator(
-            access_token,
-            conversation_id
+        event_stream = usecase.event_generator(
+            access_token=access_token,
+            conversation_id=conversation_id
         )
     except errors.AccessException as err:
         raise HTTPException(
@@ -196,9 +196,14 @@ async def stream_conversation_updates(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(err)
         )
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(err)
+        )
 
     return StreamingResponse(
-        event_generator(),
+        event_stream,
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

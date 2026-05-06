@@ -361,7 +361,7 @@ class ChatAPIServiceClient(BaseClient):
         :raise GetConversationException: В случае ошибки получения данных.
         """
         async with self._get_client(access_token) as client:
-            resp = await client.patch(
+            resp = await client.get(
                 f"/conversation/info",
                 params={"conversation_id": str(conversation_id)}
             )

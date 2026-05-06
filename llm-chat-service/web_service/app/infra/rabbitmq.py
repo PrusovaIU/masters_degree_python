@@ -54,7 +54,7 @@ class RabbitMQClient:
     async def consume_messages(
             self,
             queue_name: str
-    ) -> AsyncGenerator[str]:
+    ) -> AsyncGenerator[str, None]:
         """
         Старт цикла обработки сообщений из очереди.
 
@@ -63,11 +63,12 @@ class RabbitMQClient:
         :yield: Сообщение пользователю.
         """
         logger.info(f"Начало обработки сообщений из очереди {queue_name}")
-        queue = await self._channel.declare_queue(
-            queue_name,
-            durable=True
-        )
         try:
+            queue = await self._channel.declare_queue(
+                queue_name,
+                durable=True
+            )
+
             async with queue.iterator() as queue_iter:
                 async for message in queue_iter:
                     async with self._handle_message(message) as data:
@@ -76,6 +77,7 @@ class RabbitMQClient:
             logger.error(
                 f"SSE stream завершен для очереди {queue_name}"
             )
+            raise
         except Exception as err:
             logger.error(
                 f"Ошибка SSE stream: "

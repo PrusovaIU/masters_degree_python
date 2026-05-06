@@ -32,7 +32,7 @@ class StreamChatUsecase:
             self,
             access_token: str,
             conversation_id: UUID
-    ) -> Callable[[], AsyncGenerator[str]]:
+    ) -> AsyncGenerator[str, None]:
         """
         Создание итератора для получения сообщений из диалога.
 
@@ -51,8 +51,8 @@ class StreamChatUsecase:
         )
         queue_name = f"{self._queue_prefix}_{conversation_id}"
 
-        return partial(
-            self._rabbit_client.consume_messages,
-            queue_name=queue_name
-        )
+        async with self._rabbit_client.consume_messages(
+                queue_name=queue_name) as message_generator:
+            async for message in message_generator:
+                yield message
 
