@@ -13,10 +13,11 @@ REST API для создания диалогов, отправки сообще
 4. [Список диалогов](docs/list_conversation/README.md);
 5. [Список сообщений диалога](docs/conversation_history/README.md);
 6. [Сведения о диалоге](docs/conversation_info/README.md);
-7. [Обновление статуса сообщения](docs/message_status_update/README.md);
-8. [Запрос LLM](docs/llm_query/README.md);
-9. [[ADMIN] Получение статуса задачи](docs/admin/task_status/README.md);
-10. [[ADMIN] Получение списка всех диалогов](docs/admin/all_conversations/README.md);
-11. [Задача Celery](docs/celery/README.md);
-12. [Тестирование](docs/tests/README.md);
-13. [Health check](docs/health/README.md).
+7. [Получение сообщения](docs/message/README.md);
+8. [Обновление статуса сообщения](docs/message_status_update/README.md);
+9. [Запрос LLM](docs/llm_query/README.md);
+10. [[ADMIN] Получение статуса задачи](docs/admin/task_status/README.md);
+11. [[ADMIN] Получение списка всех диалогов](docs/admin/all_conversations/README.md);
+12. [Задача Celery](docs/celery/README.md);
+13. [Тестирование](docs/tests/README.md);
+14. [Health check](docs/health/README.md).

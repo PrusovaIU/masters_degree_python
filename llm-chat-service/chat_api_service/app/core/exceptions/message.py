@@ -43,6 +43,11 @@ class MessageNotFound(MessageError):
     pass
 
 
+class MessageAccessDenied(MessageError):
+    """Доступ к сообщению запрещён."""
+    pass
+
+
 class UpdateMessageError(MessageError):
     """Ошибка при обновлении сообщения."""
     pass

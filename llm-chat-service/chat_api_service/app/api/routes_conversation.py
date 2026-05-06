@@ -14,6 +14,7 @@ from chat_api_service.app.core.exceptions import message as msg_errs
 from libs.schemas.error_detail import Detail
 from fastapi.encoders import jsonable_encoder
 from .deps.usecases import MessageUsecaseDep
+from chat_api_service.app.db.models import Message
 
 
 router_conversation = APIRouter(prefix="/conversation", tags=["chat"])
@@ -165,7 +166,7 @@ async def update_message_status(
     :return: Обновленное сообщение.
     """
     try:
-        updated_message = await msg_usecase.status_update(
+        updated_message: Message = await msg_usecase.status_update(
             message_id,
             str(current_user.user_id),
             new_status.status
@@ -189,6 +190,51 @@ async def update_message_status(
         updated_message,
         from_attributes=True
     )
+
+
+@router_conversation.get(
+    "/messages/{message_id}",
+    response_model=MessageResponse,
+    summary="Данные сообщения",
+    description="Получение сообщения",
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": Detail
+        },
+    }
+)
+async def get_message(
+        message_id: UUID,
+        current_user: UserDataDep,
+        msg_usecase: MessageUsecaseDep
+):
+    """
+    Получение сообщения.
+
+    :param message_id: Идентификатор сообщения.
+    :param current_user: Текущий пользователь.
+    :param msg_usecase: Usecase сообщений.
+    :return: Сообщение.
+    """
+    try:
+        message: Message = await msg_usecase.get_by_id(
+            message_id,
+            str(current_user.user_id)
+        )
+    except errs.ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=err.detail_jsonable_encoder
+        )
+    except msg_errs.MessageNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=err.detail_jsonable_encoder
+        )
+    return MessageResponse.model_validate(message,from_attributes=True)
 
 
 @router_conversation.get(

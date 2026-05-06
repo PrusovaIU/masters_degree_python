@@ -7,6 +7,7 @@ from chat_api_service.app.repositories.conversation import \
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.core.exceptions.message import MessageNotFound, UpdateMessageError
 from loguru import logger
+from chat_api_service.app.core.exceptions import message as errors
 
 
 class MessageUsecase:
@@ -89,3 +90,26 @@ class MessageUsecase:
                 message_id=message_id
             )
         return new_message
+
+    async def get_by_id(self, message_id: UUID, user_id: str) -> Message:
+        """
+        Получение сообщения по идентификатору.
+
+        :param message_id: Идентификатор сообщения.
+        :param user_id: Идентификатор пользователя.
+        :return: Сообщение.
+
+        :raises MessageNotFound: Если сообщение не найдено.
+        :raises ConversationAccessDenied: Если доступ к диалогу запрещен.
+        """
+        message: Message = await self._msg_repo.get_by_id(message_id)
+        if not message:
+            raise errors.MessageNotFound(
+                "Сообщение не найдено", message_id
+            )
+        await self._check_message_access(
+            message,
+            message_id,
+            user_id
+        )
+        return message
