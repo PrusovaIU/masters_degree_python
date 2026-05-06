@@ -249,9 +249,10 @@ class ChatAPIServiceClient(BaseClient):
             resp = await client.post(
                 "/conversation/history",
                 params={"conversation_id": str(conversation_id)},
-                json=PaginationRequest(limit=limit,
-                                       offset=offset).model_dump(
-                    exclude_unset=True)
+                json=PaginationRequest(
+                    limit=limit,
+                    offset=offset
+                ).model_dump(exclude_unset=True)
             )
             resp.raise_for_status()
             return conv_schemas.ConversationHistoryResponse(**resp.json())
@@ -338,3 +339,31 @@ class ChatAPIServiceClient(BaseClient):
                 conversation_id=conversation_id,
                 content=content
             )
+
+    @conv_error_handler(
+        errors.GetConversationException,
+        "Ошибка получения данных диалога"
+    )
+    async def get_conversation_info(
+            self,
+            access_token: str,
+            conversation_id: UUID
+    ) -> conv_schemas.ConversationResponse:
+        """
+        Получение данных диалога.
+
+        :param access_token: Access token.
+        :param conversation_id: Идентификатор диалога.
+        :return: Данные диалога.
+
+        :raise ConversationAccessException: Если доступ к диалогу запрещен.
+        :raise ConversationNotFoundException: Если диалог не найден.
+        :raise GetConversationException: В случае ошибки получения данных.
+        """
+        async with self._get_client(access_token) as client:
+            resp = await client.patch(
+                f"/conversation/info",
+                params={"conversation_id": str(conversation_id)}
+            )
+            resp.raise_for_status()
+            return conv_schemas.ConversationResponse(**resp.json())

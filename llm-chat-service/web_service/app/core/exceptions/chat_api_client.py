@@ -31,8 +31,12 @@ class ConversationWithIDException(ConversationException):
 
 class ConversationHistoryException(ConversationException):
     """Ошибка при получении истории диалога."""
-    def __init__(self, message: str, conversation_id: UUID):
-        super().__init__(message, conversation_id=conversation_id)
+    pass
+
+
+class GetConversationException(ConversationException):
+    """Ошибка при получении диалога."""
+    pass
 
 
 class AccessException(AppException):
