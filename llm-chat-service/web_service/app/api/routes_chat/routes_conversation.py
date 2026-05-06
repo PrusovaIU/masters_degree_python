@@ -8,6 +8,7 @@ from web_service.app.api.deps.usecases import ChatUsecaseDep, StreamChatUsecaseD
 from web_service.app.core.exceptions import chat_api_client as errors
 from web_service.app.schemas.config import Settings
 from loguru import logger
+from libs.schemas.conversation import ConversationHistoryBeforeResponse
 
 router_conversation = APIRouter(prefix="/conversation")
 
@@ -265,3 +266,46 @@ async def conversation_query(
             content={"message_id": str(message_id)}
         )
     return response
+
+
+@router_conversation.get(
+    "/{conversation_id}/messages",
+    response_model=ConversationHistoryBeforeResponse,
+    include_in_schema=False
+)
+async def history_before(
+        access_token: AccessTokenDep,
+        usecase: ChatUsecaseDep,
+        conversation_id: UUID,
+        message_id: UUID,
+        limit: int = 10
+) -> ConversationHistoryBeforeResponse:
+    """
+    Получение истории сообщений до сообщения с заданным ID.
+
+    :param access_token: Access token пользователя.
+    :param usecase: Usecase для работы с диалогами.
+    :param conversation_id: Идентификатор диалога.
+    :param message_id: Идентификатор сообщения.
+    :param limit: Лимит сообщений.
+    :return: Список сообщений.
+    """
+    try:
+        return await usecase.conversation_history_before(
+            access_token, conversation_id, message_id, limit
+        )
+    except errors.AccessException as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(err)
+        )
+    except errors.ConversationNotFoundException as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(err)
+        )

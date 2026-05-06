@@ -133,7 +133,7 @@ async def get_history(
     return history
 
 
-@router_conversation.post(
+@router_conversation.get(
     "/history/before",
     response_model=conversation.ConversationHistoryBeforeResponse,
     summary="История сообщений в диалоге",

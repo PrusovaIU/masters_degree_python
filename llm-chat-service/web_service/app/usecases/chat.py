@@ -86,6 +86,38 @@ class ChatUsecase:
         total_page = ceil(response.pagination.total / limit)
         return response.messages, total_page, response.pagination.total
 
+    async def conversation_history_before(
+            self,
+            access_token: str,
+            conversation_id: UUID,
+            before_message_id: UUID,
+            limit: int
+    ) -> schemas.ConversationHistoryBeforeResponse:
+        """
+        Получение истории диалога.
+
+        :param access_token: Access token пользователя.
+
+        :param conversation_id: ID диалога.
+
+        :param before_message_id: ID сообщения, до которого нужно получить
+            историю.
+
+        :param limit: Количество сообщений на странице.
+
+        :return: Ответ от сервиса chat_api.
+
+        :raise AccessException: Если доступ к диалогу запрещен.
+        :raise ConversationNotFoundException: Если диалог не найден.
+        :raise ConversationHistoryException: В случае ошибки получения истории.
+        """
+        return await self._chat_api_client.conversation_history_before(
+            access_token=access_token,
+            conversation_id=conversation_id,
+            before_message_id=before_message_id,
+            limit=limit
+        )
+
     async def send_message(
             self,
             access_token: str,

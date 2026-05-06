@@ -279,6 +279,50 @@ class ChatAPIServiceClient(BaseClient):
             resp.raise_for_status()
             return conv_schemas.ConversationHistoryResponse(**resp.json())
 
+    @conv_error_handler(
+        errors.ConversationHistoryException,
+        "Ошибка получения истории диалога"
+    )
+    async def conversation_history_before(
+            self,
+            access_token: str,
+            conversation_id: UUID,
+            before_message_id: UUID,
+            limit: int = 20
+    ) -> conv_schemas.ConversationHistoryBeforeResponse:
+        """
+        История сообщений в диалоге до определенного сообщения.
+
+        :param access_token: Токен доступа пользователя.
+
+        :param conversation_id: Идентификатор диалога.
+
+        :param before_message_id: Идентификатор сообщения, до которого нужно
+            получить историю.
+
+        :param limit: Количество сообщений на странице.
+
+        :return: История сообщений в диалоге.
+
+        :raise AccessException: Если доступ к диалогу запрещен.
+        :raise ConversationNotFoundException: Если диалог не найден.
+        :raise ConversationHistoryException: В случае ошибки получения истории.
+        """
+        params = {
+            "conversation_id": str(conversation_id),
+            "before_message_id": str(before_message_id),
+            "limit": limit
+        }
+        async with self._get_client(access_token) as client:
+            resp = await client.post(
+                "/conversation/history",
+                params=params
+            )
+            resp.raise_for_status()
+            return conv_schemas.ConversationHistoryBeforeResponse(
+                **resp.json()
+            )
+
     async def query_llm(
             self,
             access_token: str,
