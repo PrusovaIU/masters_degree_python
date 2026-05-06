@@ -65,7 +65,7 @@ def conv_error_handler(
                 logger.error(
                     f"{title}: {err} ({err.__class__.__name__})"
                 )
-                raise errors.ConversationHistoryException(
+                raise error_type(
                     title,
                     conversation_id=conversation_id
                 )
@@ -256,10 +256,6 @@ class ChatAPIServiceClient(BaseClient):
             resp.raise_for_status()
             return conv_schemas.ConversationHistoryResponse(**resp.json())
 
-    @conv_error_handler(
-        errors.LLMQueryException,
-        "Ошибка запроса к LLM"
-    )
     async def query_llm(
             self,
             access_token: str,
@@ -283,18 +279,62 @@ class ChatAPIServiceClient(BaseClient):
         :raise ConversationNotFoundException: Если диалог не найден.
         :raise LLMQueryException: В случае ошибки запроса к LLM.
         """
-        headers = {}
+        title = "Ошибка запроса к LLM"
+        headers = {"Content-Type": "application/json"}
         if idempotency_key:
             headers["X-Idempotency-Key"] = idempotency_key
-        async with self._get_client(access_token) as client:
-            resp = await client.post(
-                "/chat/llm/query",
-                headers=headers,
-                json=LLMQueryRequest(
-                    conversation_id=conversation_id,
-                    content=content,
-                    temperature=temperature
-                ).model_dump()
+        try:
+            async with self._get_client(access_token) as client:
+                resp = await client.post(
+                    "/chat/llm/query",
+                    headers=headers,
+                    data=LLMQueryRequest(
+                        conversation_id=conversation_id,
+                        content=content,
+                        temperature=temperature
+                    ).model_dump_json()
+                )
+                resp.raise_for_status()
+                return LLMQueryResponse(**resp.json())
+        except HTTPStatusError as err:
+            match err.response.status_code:
+                case status.HTTP_403_FORBIDDEN:
+                    logger.error(
+                        f"Доступ к диалогу \"{conversation_id}\" запрещен"
+                    )
+                    raise errors.AccessException(
+                        "Доступ запрещен",
+                        _id=conversation_id
+                    )
+                case status.HTTP_404_NOT_FOUND:
+                    logger.error(f"Диалог \"{conversation_id}\" не найден")
+                    raise errors.ConversationNotFoundException(
+                        "Диалог не найден",
+                        conversation_id=conversation_id
+                    )
+                case _:
+                    logger.error(
+                        f"{title}: {err.response.text} "
+                        f"(status_code={err.response.status_code}"
+                    )
+                    raise errors.LLMQueryException(
+                        err.response.text,
+                        conversation_id=conversation_id,
+                        content=content
+                    )
+        except TimeoutException:
+            logger.error(f"{title}: timeout error")
+            raise errors.LLMQueryException(
+                "timeout error",
+                conversation_id=conversation_id,
+                content=content
             )
-            resp.raise_for_status()
-            return LLMQueryResponse(**resp.json())
+        except Exception as err:
+            logger.error(
+                f"{title}: {err} ({err.__class__.__name__})"
+            )
+            raise errors.LLMQueryException(
+                title,
+                conversation_id=conversation_id,
+                content=content
+            )
