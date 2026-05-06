@@ -189,3 +189,52 @@ async def update_message_status(
         updated_message,
         from_attributes=True
     )
+
+
+@router_conversation.post(
+    "/info",
+    response_model=conversation.ConversationCreateResponse,
+    summary="Данные диалога",
+    description="Получение данных диалога",
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": Detail
+        },
+    }
+)
+async def info(
+        conversation_id: UUID,
+        current_user: UserDataDep,
+        conversation_usecase: ConversationUsecaseDep,
+):
+    """
+    Получение истории сообщений в диалоге.
+
+    :param conversation_id: ID диалога.
+    :param current_user: Текущий пользователь.
+    :param conversation_usecase: Usecase для работы с диалогами.
+    :return: Данные диалога.
+    """
+    user_id = str(current_user.user_id)
+    try:
+        conv_data: Conversation = await conversation_usecase.get_info(
+            conversation_id, user_id
+        )
+    except errs.ConversationNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=jsonable_encoder(err.detail)
+        )
+    except errs.ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=jsonable_encoder(err.detail)
+        )
+    return conversation.ConversationCreateResponse(
+        id=conv_data.id,
+        title=conv_data.title,
+        created_at=conv_data.created_at
+    )

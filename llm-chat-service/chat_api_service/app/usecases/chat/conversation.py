@@ -42,6 +42,7 @@ class ConversationUsecase:
         conv_data: Conversation = await self._conv_repo.create(
             user_id, title
         )
+        logger.success(f"Диалог '{title}' создан для пользователя {user_id}")
         return conv_data
 
     async def list_conversations(
@@ -133,3 +134,22 @@ class ConversationUsecase:
                 total=total_count
             )
         )
+
+    async def get_info(
+            self,
+            conversation_id: UUID,
+            user_id: str
+    ) -> Conversation:
+        """
+        Получение информации о диалоге.
+
+        :param conversation_id: Идентификатор диалога.
+        :param user_id: Идентификатор пользователя.
+        :return: Данные диалога.
+
+        :raises ConversationNotFound: Если диалог не существует.
+
+        :raises ConversationAccessDenied: Если диалог не принадлежит
+            пользователю.
+        """
+        return await self._conv_repo.get(conversation_id, user_id)
