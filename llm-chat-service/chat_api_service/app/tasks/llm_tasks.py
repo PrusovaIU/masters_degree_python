@@ -112,7 +112,8 @@ async def llm_request(
     await RedisClient.setup(settings.redis, True)
     await RabbitMQClient.setup(
         settings.rabbitmq.url,
-        settings.rabbitmq.message_queue
+        settings.rabbitmq.message_queue,
+        has_set=True
     )
     status: LLMTaskStatusSchema | None = None
     try:

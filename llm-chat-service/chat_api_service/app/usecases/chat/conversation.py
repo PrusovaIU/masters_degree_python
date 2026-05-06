@@ -10,6 +10,7 @@ from libs.schemas.message import MessageResponse
 from libs.schemas.conversation import \
     ConversationHistoryResponse, ConversationResponse
 from libs.schemas.pagination import PaginationMeta
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 
 
 class ConversationUsecase:
@@ -42,6 +43,7 @@ class ConversationUsecase:
         conv_data: Conversation = await self._conv_repo.create(
             user_id, title
         )
+        await RabbitMQClient.create_queue(conv_data.id)
         logger.success(f"Диалог '{title}' создан для пользователя {user_id}")
         return conv_data
 

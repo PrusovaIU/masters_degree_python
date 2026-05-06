@@ -4,7 +4,7 @@ import asyncio
 
 from aio_pika.abc import AbstractIncomingMessage
 from loguru import logger
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from collections.abc import AsyncGenerator
 
 
@@ -85,6 +85,9 @@ class RabbitMQClient:
             )
             data = json.dumps({"error": str(err)})
             yield f"data: {data}\n\n"
+            import traceback
+            traceback.print_exc()
+            raise
         finally:
             logger.info(
                 f"Завершение обработки сообщений из очереди {queue_name}"
@@ -105,4 +108,7 @@ class RabbitMQClient:
                 f"Ошибка обработки сообщения: "
                 f"{err} ({err.__class__.__name__})"
             )
+            import traceback
+            traceback.print_exc()
             await message.nack(requeue=False)
+            raise

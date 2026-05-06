@@ -280,6 +280,7 @@ class ChatNewMessageUsecase:
             f"{self._rabbitmq_exchange}_{self._conversation_id}"
         )
 
+
     async def _change_status(self, assistant_message_id: UUID) -> None:
         """
         Изменение статуса сообщения в БД на "delivered".

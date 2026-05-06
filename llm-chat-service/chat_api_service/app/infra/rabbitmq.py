@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from aio_pika import Message, connect_robust
 from aio_pika.abc import DeliveryMode, AbstractRobustConnection, \
@@ -48,18 +49,20 @@ class RabbitMQClient:
         )
         cls._channel = await cls._connection.channel()
         await cls._channel.set_qos(prefetch_count=10)
-        await cls._create_queue(queue_name)
+        cls._queue_name = queue_name
+        # await cls._create_queue(queue_name)
 
         cls._is_connected = True
         logger.info("RabbitMQ клиент инициализирован.")
 
     @classmethod
-    async def _create_queue(cls, queue_name: str) -> None:
+    async def create_queue(cls, conversation_id: UUID) -> None:
         """
-        Создание очереди в RabbitMQ.
+        Создание очереди для конкретного диалога в RabbitMQ.
 
-        :param queue_name: Имя очереди.
+        :param conversation_id: Идентификатор диалога.
         """
+        queue_name = f"{cls._queue_name}_{conversation_id}"
         await cls._channel.declare_queue(
             name=queue_name,
             durable=True,
@@ -82,7 +85,6 @@ class RabbitMQClient:
     @property
     def is_connected(self) -> bool:
         return self._is_connected
-
 
     @classmethod
     async def publish(
@@ -175,4 +177,8 @@ class RabbitMQClient:
                 str(err),
                 "default_exchange",
                 cls._queue_name
+            )
+        else:
+            logger.success(
+                f"Сообщение отправлено в очередь '{routing_key}'."
             )

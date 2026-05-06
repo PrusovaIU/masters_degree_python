@@ -1,20 +1,9 @@
-import asyncio
-import json
-from collections.abc import AsyncGenerator, Callable
 from uuid import UUID
 
 from web_service.app.services.chat_client import ChatAPIServiceClient
-from libs.schemas import conversation as schemas
-from math import ceil
-from libs.schemas.llm_query import LLMQueryResponse
-from web_service.app.core.exceptions import chat_api_client as errors
-from contextlib import asynccontextmanager
 
 from web_service.app.infra.rabbitmq import RabbitMQClient
-from loguru import logger
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
-from functools import partial
 
 
 class StreamChatUsecase:
