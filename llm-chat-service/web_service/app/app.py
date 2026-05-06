@@ -7,6 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 from web_service.app.api import routers
 from web_service.app.core.security import AuthCookieMiddleware
 from fastapi.responses import RedirectResponse
+from web_service.app.infra.rabbitmq import RabbitMQClient
 
 
 class App:
@@ -38,14 +39,20 @@ class App:
             self._app.include_router(router)
         self._app.add_api_route("/", self.root)
 
+        self._rabbitmq_client = RabbitMQClient(
+            self._config.rabbitmq.url
+        )
+
     async def lifespan(self, app: FastAPI) -> AsyncGenerator:
+        await self._rabbitmq_client.connect()
         app.state.static_url = self.settings.jinja.static_url
         app.state.access_token_cookie_name = (
             self.settings.auth_cookie.access_token_cookie_name
         )
-        # app.state.templates = self._templates
+        app.state.rabbitmq_client = self._rabbitmq_client
         app.state.settings = self._config
         yield
+        await self._rabbitmq_client.close()
 
     @property
     def app(self) -> FastAPI:

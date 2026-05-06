@@ -70,6 +70,10 @@ class ChatUsecase:
         :return: Список сообщений,
             количество страниц,
             общее количество сообщений.
+
+        :raise AccessException: Если доступ к диалогу запрещен.
+        :raise ConversationNotFoundException: Если диалог не найден.
+        :raise ConversationHistoryException: В случае ошибки получения истории.
         """
         offset = (page - 1) * limit
         response: schemas.ConversationHistoryResponse = \

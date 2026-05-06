@@ -185,5 +185,4 @@ class RabbitMQConfig(ConfigWithPasswd):
         )
         if self.vhost:
             url += f"/{self.vhost}"
-        print(url)
         return url

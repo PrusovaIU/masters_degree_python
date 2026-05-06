@@ -1,12 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Form
-from starlette import status
-from starlette.requests import Request
-from starlette.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import APIRouter, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 
 from web_service.app.api.deps.current_user import AccessTokenDep
-from web_service.app.api.deps.usecases import ChatUsecaseDep
+from web_service.app.api.deps.usecases import ChatUsecaseDep, StreamChatUsecaseDep
 from web_service.app.core.exceptions import chat_api_client as errors
 from web_service.app.schemas.config import Settings
 from loguru import logger
@@ -140,7 +138,7 @@ async def conversation_page(
         context = {
             "settings": settings,
             "error": str(err),
-            "messages": {},
+            "messages": [],
             "limit": limit,
             "page": page,
             "total_pages": 0,
@@ -165,9 +163,49 @@ async def conversation_page(
             request=request,
             name=Templates.MESSAGE_HISTORY,
             context=context,
-            status_code=status.HTTP_302_FOUND
+            status_code=status.HTTP_200_OK
         )
     return response
+
+
+@router_conversation.get(
+    "/{conversation_id}/stream",
+    response_class=StreamingResponse,
+    include_in_schema=False
+)
+async def stream_conversation_updates(
+        access_token: AccessTokenDep,
+        conversation_id: UUID,
+        usecase: StreamChatUsecaseDep
+):
+    """
+    SSE эндпоинт для получения real-time обновлений чата
+    """
+    try:
+        event_generator = await usecase.event_generator(
+            access_token,
+            conversation_id
+        )
+    except errors.AccessException as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(err)
+        )
+    except errors.ConversationNotFoundException as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 
 @router_conversation.post(
