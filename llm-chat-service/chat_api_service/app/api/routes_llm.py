@@ -3,15 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, status, Header, HTTPException
 from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from libs.schemas.error_detail import Detail
-from .deps.jwt import UserDataDep, AdminDep
+from .deps.jwt import UserDataDep
 from .deps.rate_limit import RateLimitDep
 from .deps.db import MessagesRepoDep, ConversationRepoDep
 from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
-from chat_api_service.app.schemas.llm import CeleryTaskResponse
 from chat_api_service.app.core.exceptions.conversation import (
     ConversationNotFound, ConversationAccessDenied)
-from .deps.usecases import MessageUsecaseDep
-
 
 router_llm = APIRouter(prefix="/chat/llm", tags=["llm"])
 

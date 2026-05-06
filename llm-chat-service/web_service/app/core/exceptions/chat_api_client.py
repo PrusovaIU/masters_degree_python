@@ -83,3 +83,8 @@ class LLMQueryException(ChatApiClientException):
             conversation_id=conversation_id,
             content=content
         )
+
+
+class GetTaskStatusException(ChatApiClientException):
+    """Ошибка при получении статуса задачи."""
+    pass

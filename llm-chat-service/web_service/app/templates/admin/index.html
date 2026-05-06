@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админка чата</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Task Status Section */
+        .task-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .task-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .task-input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        /* Status Cards */
+        .status-card {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .status-field {
+            margin: 8px 0;
+            padding: 5px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .status-value {
+            color: #333;
+        }
+
+        /* Conversations Table */
+        .conversations-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        .page-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        /* Error */
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        /* Traceback */
+        .traceback {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Админ-панель чата</h1>
+            <p>Управление задачами и диалогами пользователей</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tasks')">📋 Статус задачи</button>
+            <button class="tab-btn" onclick="switchTab('conversations')">💬 Все диалоги</button>
+        </div>
+
+        <!-- Tab 1: Task Status -->
+        <div id="tasks-tab" class="tab-content active">
+            <div class="task-section">
+                <div class="task-input-group">
+                    <input type="text" id="taskId" placeholder="Введите task_id (например: 123e4567-e89b-12d3-a456-426614174000)" />
+                    <button class="btn" onclick="checkTaskStatus()">🔍 Получить статус</button>
+                </div>
+                <div id="taskResult"></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Conversations -->
+        <div id="conversations-tab" class="tab-content">
+            <div class="conversations-table">
+                <div style="padding: 20px; background: #f8f9fa; border-bottom: 1px solid #ddd;">
+                    <button class="btn" onclick="loadConversations()">🔄 Обновить список</button>
+                </div>
+                <div id="conversationsList">
+                    <div class="loading">Загрузка диалогов...</div>
+                </div>
+                <div id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentOffset = 0;
+        const limit = 20;
+
+        function switchTab(tab) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'tasks') {
+                document.getElementById('tasks-tab').classList.add('active');
+            } else {
+                document.getElementById('conversations-tab').classList.add('active');
+                loadConversations();
+            }
+        }
+
+        // Task status check
+        async function checkTaskStatus() {
+            const taskId = document.getElementById('taskId').value.trim();
+            const resultDiv = document.getElementById('taskResult');
+
+            if (!taskId) {
+                resultDiv.innerHTML = '<div class="error-message">❌ Пожалуйста, введите task_id</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading">⏳ Загрузка статуса задачи...</div>';
+
+            try {
+                const response = await fetch(`/admin/tasks/${taskId}/status`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.result) {
+                    displayTaskStatus(data.result);
+                    if (data.traceback) {
+                        displayTraceback(data.traceback);
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="error-message">❌ Ошибка: ${data.status || 'Неизвестная ошибка'}</div>`;
+                    if (data.traceback) {
+                        displayTraceback(data.traceback);
+                    }
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">❌ Ошибка запроса: ${error.message}</div>`;
+            }
+        }
+
+        function displayTaskStatus(result) {
+            const statusColors = {
+                'pending': '#ffc107',
+                'processing': '#17a2b8',
+                'completed': '#28a745',
+                'failed': '#dc3545',
+                'rate_limited': '#fd7e14'
+            };
+
+            const statusColor = statusColors[result.status] || '#6c757d';
+
+            const html = `
+                <div class="status-card" style="border-left-color: ${statusColor}">
+                    <h3 style="margin-bottom: 15px;">📊 Статус задачи</h3>
+                    <div class="status-field">
+                        <span class="status-label">Статус:</span>
+                        <span class="status-value" style="color: ${statusColor}; font-weight: bold;">${result.status || '—'}</span>
+                    </div>
+                    <div class="status-field">
+                        <span class="status-label">Task ID:</span>
+                        <span class="status-value"><code>${result.task_id || '—'}</code></span>
+                    </div>
+                    <div class="status-field">
+                        <span class="status-label">Message ID:</span>
+                        <span class="status-value"><code>${result.message_id || '—'}</code></span>
+                    </div>
+                    <div class="status-field">
+                        <span class="status-label">Response ID:</span>
+                        <span class="status-value"><code>${result.response_id || '—'}</code></span>
+                    </div>
+                    ${result.retry_after ? `
+                    <div class="status-field">
+                        <span class="status-label">Retry After:</span>
+                        <span class="status-value">${result.retry_after} сек</span>
+                    </div>
+                    ` : ''}
+                    ${result.content ? `
+                    <div class="status-field">
+                        <span class="status-label">Содержание:</span>
+                        <div class="status-value" style="background: #fff; padding: 8px; margin-top: 5px; border-radius: 4px;">${escapeHtml(result.content)}</div>
+                    </div>
+                    ` : ''}
+                    ${result.note ? `
+                    <div class="status-field">
+                        <span class="status-label">Примечание:</span>
+                        <span class="status-value">${escapeHtml(result.note)}</span>
+                    </div>
+                    ` : ''}
+                    ${result.error_type ? `
+                    <div class="status-field">
+                        <span class="status-label">Тип ошибки:</span>
+                        <span class="status-value" style="color: #dc3545;">${result.error_type}</span>
+                    </div>
+                    ` : ''}
+                    ${result.error ? `
+                    <div class="status-field">
+                        <span class="status-label">Ошибка:</span>
+                        <span class="status-value" style="color: #dc3545;">${escapeHtml(result.error)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('taskResult').innerHTML = html;
+        }
+
+        function displayTraceback(traceback) {
+            const tracebackHtml = `
+                <div class="status-card">
+                    <h3 style="margin-bottom: 10px; color: #dc3545;">⚠️ Traceback</h3>
+                    <div class="traceback">${escapeHtml(traceback)}</div>
+                </div>
+            `;
+            document.getElementById('taskResult').innerHTML += tracebackHtml;
+        }
+
+        // Load conversations
+        async function loadConversations(offset = 0) {
+            currentOffset = offset;
+            const container = document.getElementById('conversationsList');
+            container.innerHTML = '<div class="loading">⏳ Загрузка диалогов...</div>';
+
+            try {
+                const response = await fetch('/admin/conversation/all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        limit: limit,
+                        offset: offset
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.conversations) {
+                    displayConversations(data.conversations);
+                    displayPagination(data.pagination);
+                } else {
+                    container.innerHTML = `<div class="error-message">❌ Ошибка загрузки: ${data.status || 'Неизвестная ошибка'}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="error-message">❌ Ошибка запроса: ${error.message}</div>`;
+            }
+        }
+
+        function displayConversations(conversations) {
+            const container = document.getElementById('conversationsList');
+
+            if (!conversations || conversations.length === 0) {
+                container.innerHTML = '<div class="loading">📭 Нет диалогов</div>';
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User ID</th>
+                            <th>Заголовок</th>
+                            <th>Создан</th>
+                            <th>Обновлен</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${conversations.map(conv => `
+                            <tr>
+                                <td><code>${conv.id}</code></td>
+                                <td><strong>${escapeHtml(conv.user_id)}</strong></td>
+                                <td>${escapeHtml(conv.title || 'Без заголовка')}</td>
+                                <td>${formatDate(conv.created_at)}</td>
+                                <td>${formatDate(conv.updated_at)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function displayPagination(pagination) {
+            const container = document.getElementById('pagination');
+            if (!pagination || pagination.total <= pagination.limit) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(pagination.total / pagination.limit);
+            const currentPage = Math.floor(pagination.offset / pagination.limit) + 1;
+
+            let buttons = '<div class="pagination">';
+
+            // Previous button
+            if (pagination.offset > 0) {
+                buttons += `<button class="page-btn" onclick="loadConversations(${pagination.offset - pagination.limit})">← Назад</button>`;
+            }
+
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                buttons += `<button class="page-btn" onclick="loadConversations(0)">1</button>`;
+                if (startPage > 2) buttons += `<span class="page-btn" style="border: none;">...</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const offset = (i - 1) * pagination.limit;
+                buttons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="loadConversations(${offset})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) buttons += `<span class="page-btn" style="border: none;">...</span>`;
+                buttons += `<button class="page-btn" onclick="loadConversations(${(totalPages - 1) * pagination.limit})">${totalPages}</button>`;
+            }
+
+            // Next button
+            if (pagination.offset + pagination.limit < pagination.total) {
+                buttons += `<button class="page-btn" onclick="loadConversations(${pagination.offset + pagination.limit})">Вперед →</button>`;
+            }
+
+            buttons += '</div>';
+            buttons += `<div style="text-align: center; margin-top: 10px; color: #666;">Всего: ${pagination.total} диалогов</div>`;
+
+            container.innerHTML = buttons;
+        }
+
+        // Helper functions
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '—';
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU');
+        }
+
+        // Load initial conversations if on that tab
+        if (document.getElementById('conversations-tab').classList.contains('active')) {
+            loadConversations();
+        }
+    </script>
+</body>
+</html>

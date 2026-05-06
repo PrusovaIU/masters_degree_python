@@ -8,6 +8,7 @@ from web_service.app.usecases.stream_chat import StreamChatUsecase
 from fastapi import Request
 from web_service.app.infra.rabbitmq import RabbitMQClient
 from web_service.app.schemas.config import Settings
+from web_service.app.usecases.admin import AdminUsecase
 
 
 def auth_usecase(auth_client: AuthClientDep) -> AuthUsecase:
@@ -44,9 +45,18 @@ def stream_chat_usecase(
     )
 
 
+def admin_usecase(chat_client: ChatClientDep) -> AdminUsecase:
+    """
+    :param chat_client: Экземпляр класса ChatClient.
+    :return: Экземпляр класса AdminUsecase.
+    """
+    return AdminUsecase(chat_client)
+
+
 AuthUsecaseDep = Annotated[AuthUsecase, Depends(auth_usecase)]
 ChatUsecaseDep = Annotated[ChatUsecase, Depends(chat_usecase)]
 StreamChatUsecaseDep = Annotated[
     StreamChatUsecase,
     Depends(stream_chat_usecase)
 ]
+AdminUsecaseDep = Annotated[AdminUsecase, Depends(admin_usecase)]

@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from libs.schemas.error_detail import Detail
 from .deps.jwt import AdminDep
-from chat_api_service.app.schemas.llm import CeleryTaskResponse
+from libs.schemas.llm import CeleryTaskResponse
 from .deps.usecases import TasksUsecaseDep, ConversationUsecaseDep
 from ..core.exceptions.task import TaskNotFound
 from libs.schemas.conversation import ConversationListResponse

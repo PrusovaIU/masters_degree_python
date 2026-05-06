@@ -13,6 +13,7 @@ from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from functools import wraps
 from libs.schemas.message import MessageStatusUpdate
 from libs.schemas.message import MessageResponse
+from libs.schemas.llm import LLMTaskStatusSchema
 
 
 def conv_error_handler(
@@ -456,3 +457,44 @@ class ChatAPIServiceClient(BaseClient):
             )
             resp.raise_for_status()
             return conv_schemas.MessageResponse(**resp.json())
+
+    async def admin_task_status(self, task_id: UUID) -> LLMTaskStatusSchema:
+        """
+        Получение статуса задачи.
+
+        :param task_id: Идентификатор задачи.
+        :return: Данные о статусе задачи.
+
+        :raise AccessException: Если доступ запрещен.
+        :raise GetTaskStatusException: В случае ошибки получения статуса.
+        """
+        try:
+            async with self._get_client() as client:
+                resp = await client.get(f"/admin/task/{task_id}/status")
+                resp.raise_for_status()
+        except HTTPStatusError as err:
+            match err.response.status_code:
+                case status.HTTP_403_FORBIDDEN:
+                    logger.error(
+                        f"Доступ к эндпоинту разрешен только администраторам"
+                    )
+                    raise errors.AccessException(
+                        "Доступ запрещен",
+                        _id=task_id
+                    )
+                case _:
+                    logger.error(
+                        f"Ошибка получения статуса задачи: "
+                        f"{err.response.text} "
+                        f"(status_code={err.response.status_code}"
+                    )
+                    raise errors.GetTaskStatusException(err.response.text)
+        except Exception as err:
+            logger.error(
+                f"Ошибка получения статуса задачи: "
+                f"{err} ({err.__class__.__name__})"
+            )
+            raise errors.GetTaskStatusException(
+                "Не удалось получить статус задачи"
+            )
+        return LLMTaskStatusSchema(**resp.json())
