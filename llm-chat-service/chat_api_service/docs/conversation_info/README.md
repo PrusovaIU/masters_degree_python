@@ -4,7 +4,7 @@
 
 ## Request
 
-**URL** `POST /conversation/history`
+**URL** `GET /conversation/history`
 
 **Headers**:
 
@@ -23,11 +23,10 @@
 **CURL:**
 
 ```shell
-curl -X 'POST' \
+curl -X 'GET' \
   'http://127.0.0.1:8001/conversation/info?conversation_id=30f278a6-a07c-414c-b2f4-7f1ec0da7dbd' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzc4MDYwNDM5LCJpYXQiOjE3NzgwNTk1MzksInR5cGUiOiJhY2Nlc3MiLCJyb2xlIjoiYWRtaW4ifQ.CrereAl095S_mKnri9xT7iDMCmV8AV8FOtRzh_iJm8Q' \
-  -d ''
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzc4MDcxMDI0LCJpYXQiOjE3NzgwNzAxMjQsInR5cGUiOiJhY2Nlc3MiLCJyb2xlIjoiYWRtaW4ifQ.sPT4S9hxtsxO_Aj2tZMyva4E1F4_ARmjxWc2aa-PMuk'
 ```
 
 
@@ -37,7 +36,7 @@ curl -X 'POST' \
 
 Сведения о диалоге успешно получены
 
-![200_OK.png](200_OK.png)
+![200_OK.png](request.png)
 
 **403 - Forbidden**
 

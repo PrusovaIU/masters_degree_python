@@ -46,7 +46,8 @@ class StreamChatUsecase:
         """
         # Проверка доступа к диалогу:
         await self._chat_api_client.get_conversation_info(
-            access_token, conversation_id
+            access_token=access_token,
+            conversation_id=conversation_id
         )
         queue_name = f"{self._queue_prefix}_{conversation_id}"
 

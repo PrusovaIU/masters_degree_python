@@ -191,7 +191,7 @@ async def update_message_status(
     )
 
 
-@router_conversation.post(
+@router_conversation.get(
     "/info",
     response_model=conversation.ConversationResponse,
     summary="Данные диалога",
