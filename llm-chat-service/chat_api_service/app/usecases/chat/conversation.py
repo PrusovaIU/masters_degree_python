@@ -1,14 +1,15 @@
+from collections.abc import Sequence
 from uuid import UUID
 
 from loguru import logger
 
-from chat_api_service.app.db.models import Conversation
+from chat_api_service.app.db.models import Conversation, Message
 from chat_api_service.app.repositories.conversation import \
     ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
 from libs.schemas.message import MessageResponse
 from libs.schemas.conversation import \
-    ConversationHistoryResponse, ConversationResponse
+    ConversationHistoryResponse, ConversationResponse, ConversationHistoryBeforeResponse
 from libs.schemas.pagination import PaginationMeta
 from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 
@@ -135,6 +136,44 @@ class ConversationUsecase:
                 offset=offset,
                 total=total_count
             )
+        )
+
+    async def get_history_before(
+            self,
+            conversation_id: UUID,
+            user_id: str,
+            before_message_id: UUID,
+            limit: int
+    ) -> ConversationHistoryBeforeResponse:
+        """
+        Получение сообщений до указанного сообщения.
+
+        :param conversation_id: Идентификатор диалога.
+
+        :param user_id: Идентификатор пользователя.
+
+        :param before_message_id: Идентификатор сообщения, до которого нужно
+            получить сообщения.
+
+        :param limit: Лимит сообщений.
+        :return: Список сообщений.
+
+        :raises ConversationNotFound: Если диалог не найден.
+
+        :raises ConversationAccessDenied: Если доступ к диалогу запрещён.
+        """
+        # проверка доступа к диалогу:
+        await self._conv_repo.get(conversation_id, user_id)
+
+        msgs: Sequence[Message] = await self._msg_repo.list_before(
+            conversation_id, before_message_id
+        )
+        return ConversationHistoryBeforeResponse(
+            messages=[
+                MessageResponse.model_validate(msg, from_attributes=True)
+                for msg in msgs[:limit]
+            ],
+            has_more=len(msgs) > limit
         )
 
     async def get_info(

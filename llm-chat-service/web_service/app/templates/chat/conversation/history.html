@@ -16,6 +16,7 @@
         background: #f8f9fa;
         border-radius: 10px;
         margin-bottom: 20px;
+        position: relative;
     }
     .message {
         margin-bottom: 15px;
@@ -108,16 +109,30 @@
         padding-top: 4px;
         border-top: 1px solid rgba(0,0,0,0.1);
     }
-    .limit-selector {
-        width: auto;
-        margin-left: 10px;
+    /* Индикатор загрузки старых сообщений */
+    .load-more-indicator {
+        display: none;
+        text-align: center;
+        padding: 10px;
+        color: #6c757d;
+        font-size: 0.9rem;
     }
-    .pagination-info {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        flex-wrap: wrap;
+    .load-more-indicator.show {
+        display: block;
+    }
+    .load-more-indicator .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #dee2e6;
+        border-top-color: #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
@@ -132,8 +147,13 @@
         </a>
     </div>
 
-    <!-- Область сообщений -->
+    <!-- Область сообщений с индикатором загрузки -->
     <div class="messages-area" id="messagesArea">
+        <!-- Индикатор загрузки старых сообщений -->
+        <div class="load-more-indicator" id="loadMoreIndicator">
+            <span class="spinner"></span>Загрузка сообщений...
+        </div>
+
         {% if error %}
         <div class="alert alert-danger">
             <h5>Ошибка загрузки диалога</h5>
@@ -194,76 +214,6 @@
         </div>
     </div>
 
-    <!-- Пагинация и выбор limit -->
-    {% if total_pages > 0 %}
-    <div class="mb-3">
-        <div class="pagination-info">
-            <!-- Выбор количества сообщений на странице -->
-            <div class="d-flex align-items-center">
-                <label class="me-2 text-muted small">Сообщений на странице:</label>
-                <select id="limitSelect" class="form-select form-select-sm limit-selector" style="width: auto;">
-                    <option value="5" {% if limit == 5 %}selected{% endif %}>5</option>
-                    <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
-                    <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
-                    <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
-                    <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
-                </select>
-            </div>
-
-            <!-- Пагинация -->
-            {% if total_pages > 1 %}
-            <nav>
-                <ul class="pagination pagination-sm justify-content-center mb-0">
-                    {% if page > 1 %}
-                    <li class="page-item">
-                        <a class="page-link" href="#" onclick="changePage({{ page-1 }}); return false;">← Пред.</a>
-                    </li>
-                    {% endif %}
-
-                    {% set start_page = [page - 2, 1]|max %}
-                    {% set end_page = [start_page + 4, total_pages]|min %}
-
-                    {% if start_page > 1 %}
-                    <li class="page-item">
-                        <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
-                    </li>
-                    {% if start_page > 2 %}
-                    <li class="page-item disabled"><span class="page-link">...</span></li>
-                    {% endif %}
-                    {% endif %}
-
-                    {% for p in range(start_page, end_page + 1) %}
-                    <li class="page-item {% if p == page %}active{% endif %}">
-                        <a class="page-link" href="#" onclick="changePage({{ p }}); return false;">{{ p }}</a>
-                    </li>
-                    {% endfor %}
-
-                    {% if end_page < total_pages %}
-                    {% if end_page < total_pages - 1 %}
-                    <li class="page-item disabled"><span class="page-link">...</span></li>
-                    {% endif %}
-                    <li class="page-item">
-                        <a class="page-link" href="#" onclick="changePage({{ total_pages }}); return false;">{{ total_pages }}</a>
-                    </li>
-                    {% endif %}
-
-                    {% if page < total_pages %}
-                    <li class="page-item">
-                        <a class="page-link" href="#" onclick="changePage({{ page+1 }}); return false;">След. →</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
-
-            <!-- Информация о сообщениях -->
-            <div class="text-muted small">
-                Всего сообщений: {{ total }}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <!-- Форма отправки сообщения -->
     <div class="input-group">
         <div class="dropdown me-2">
@@ -304,7 +254,13 @@ const sendBtn = document.getElementById('sendBtn');
 const typingIndicator = document.getElementById('typingIndicator');
 const temperatureSlider = document.getElementById('temperature');
 const tempValue = document.getElementById('tempValue');
-const limitSelect = document.getElementById('limitSelect');
+const loadMoreIndicator = document.getElementById('loadMoreIndicator');
+
+// Параметры для бесконечной прокрутки
+let oldestMessageId = null;  // ID самого старого загруженного сообщения
+let isLoadingOlder = false;   // Флаг загрузки старых сообщений
+let hasMoreMessages = true;   // Есть ли ещё сообщения для загрузки
+const LOAD_BATCH_SIZE = 20;   // Количество сообщений за одну загрузку
 
 // SSE подключение для real-time обновлений
 let eventSource = null;
@@ -312,36 +268,141 @@ let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 let pollingInterval = null;
 
-// Функция для изменения страницы
-function changePage(newPage) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const limit = limitSelect ? limitSelect.value : (urlParams.get('limit') || '10');
-
-    urlParams.set('page', newPage);
-    urlParams.set('limit', limit);
-
-    window.location.search = urlParams.toString();
-}
-
-// Функция для изменения limit
-function changeLimit() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const newLimit = limitSelect.value;
-
-    urlParams.set('limit', newLimit);
-    urlParams.set('page', '1');
-
-    window.location.search = urlParams.toString();
-}
-
-// Обработчик изменения limit
-if (limitSelect) {
-    limitSelect.addEventListener('change', changeLimit);
-}
-
 // Авто-прокрутка вниз
 function scrollToBottom() {
     messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+// Сохраняем позицию прокрутки относительно низа
+function saveScrollPosition() {
+    return messagesArea.scrollHeight - messagesArea.scrollTop;
+}
+
+// Восстанавливаем позицию прокрутки относительно низа
+function restoreScrollPosition(previousHeight) {
+    messagesArea.scrollTop = messagesArea.scrollHeight - previousHeight;
+}
+
+// Инициализация: находим самый старый сообщение
+function initOldestMessageId() {
+    const messages = messagesArea.querySelectorAll('.message[data-message-id]');
+    if (messages.length > 0) {
+        oldestMessageId = messages[0].getAttribute('data-message-id');
+    }
+}
+
+// Обработчик прокрутки для загрузки старых сообщений
+function handleScroll() {
+    // Если уже загружаем или больше нет сообщений — ничего не делаем
+    if (isLoadingOlder || !hasMoreMessages) return;
+
+    // Если прокрутили до верха (с небольшим запасом)
+    if (messagesArea.scrollTop < 50) {
+        loadOlderMessages();
+    }
+}
+
+// Загрузка более старых сообщений
+async function loadOlderMessages() {
+    if (!oldestMessageId || !hasMoreMessages) return;
+
+    isLoadingOlder = true;
+    loadMoreIndicator.classList.add('show');
+
+    try {
+        // Запрашиваем сообщения, которые старше текущего самого старого
+        const response = await fetch(
+            `/chat/conversation/${conversationId}/messages?before_id=${oldestMessageId}&limit=${LOAD_BATCH_SIZE}`
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+
+            if (data.messages && data.messages.length > 0) {
+                // Сохраняем текущую высоту для восстановления позиции
+                const previousScrollHeight = messagesArea.scrollHeight;
+
+                // Добавляем сообщения в начало (в обратном порядке, чтобы хронология сохранилась)
+                const fragment = document.createDocumentFragment();
+                for (const msg of data.messages.reverse()) {
+                    const role = msg.sender_type === 'user' ? 'user' : 'assistant';
+                    const messageDiv = createMessageElement(role, msg.content, msg.id, msg.status, msg.metadata, msg.created_at);
+                    fragment.appendChild(messageDiv);
+                }
+                messagesArea.insertBefore(fragment, loadMoreIndicator);
+
+                // Обновляем ID самого старого сообщения
+                oldestMessageId = data.messages[0].id;
+
+                // Восстанавливаем позицию прокрутки, чтобы не "прыгало"
+                restoreScrollPosition(previousScrollHeight);
+
+                // Если сообщений меньше, чем запрашивали — вероятно, это конец
+                if (data.messages.length < LOAD_BATCH_SIZE) {
+                    hasMoreMessages = false;
+                }
+            } else {
+                // Нет больше сообщений
+                hasMoreMessages = false;
+            }
+        } else {
+            console.error('Failed to load older messages:', response.status);
+        }
+    } catch (error) {
+        console.error('Error loading older messages:', error);
+    } finally {
+        isLoadingOlder = false;
+        loadMoreIndicator.classList.remove('show');
+    }
+}
+
+// Создание элемента сообщения (универсальная функция)
+function createMessageElement(role, content, messageId, status, metadata = null, createdAt = null) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    messageDiv.setAttribute('data-message-id', messageId);
+
+    const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString() : new Date().toLocaleTimeString();
+    let statusHtml = '';
+    if (role === 'assistant') {
+        const statusText = {
+            'processing': '⏳ Обработка...',
+            'delivered': '✓ Доставлено',
+            'read': '✓✓ Прочитано',
+            'failed': '❌ Ошибка',
+            'done': '✓ Готово'
+        }[status] || status;
+        const statusClass = {
+            'processing': 'status-processing',
+            'delivered': 'status-delivered',
+            'read': 'status-delivered',
+            'failed': 'status-failed'
+        }[status] || '';
+        statusHtml = `<span class="message-status ${statusClass}">${statusText}</span>`;
+    }
+
+    let metadataHtml = '';
+    if (metadata) {
+        const parts = [];
+        if (metadata.model) parts.push(`Модель: ${metadata.model}`);
+        if (metadata.temperature) parts.push(`🌡️ ${metadata.temperature}`);
+        if (metadata.tokens) parts.push(`🎯 ${metadata.tokens} токенов`);
+        if (parts.length > 0) {
+            metadataHtml = `<div class="message-metadata text-muted"><small>${parts.join(' | ')}</small></div>`;
+        }
+    }
+
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            ${escapeHtml(content)}
+            <div class="message-meta">
+                ${timeStr}
+                ${statusHtml}
+            </div>
+            ${metadataHtml}
+        </div>
+    `;
+    return messageDiv;
 }
 
 // Отображение температуры
@@ -350,9 +411,6 @@ if (temperatureSlider) {
         tempValue.textContent = this.value;
     });
 }
-
-// Автоматическая прокрутка при загрузке
-scrollToBottom();
 
 // Функции для работы с SSE
 function connectSSE() {
@@ -376,7 +434,6 @@ function connectSSE() {
 
             if (data.message_id) {
                 const existingMessage = document.querySelector(`[data-message-id="${data.message_id}"]`);
-
                 if (!existingMessage) {
                     await fetchAndAddMessage(data.answer_id);
                 }
@@ -412,7 +469,7 @@ async function fetchAndAddMessage(messageId) {
 
             const existingMessage = document.querySelector(`[data-message-id="${messageId}"]`);
             if (!existingMessage) {
-                addMessage(role, messageData.content, messageId, messageData.status);
+                addMessage(role, messageData.content, messageId, messageData.status, messageData.metadata, messageData.created_at);
             }
         }
     } catch (error) {
@@ -420,7 +477,7 @@ async function fetchAndAddMessage(messageId) {
     }
 }
 
-// Функция для обновления статуса сообщения
+// Обновление статуса сообщения
 async function updateMessageStatus(messageId, status) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
@@ -433,29 +490,21 @@ async function updateMessageStatus(messageId, status) {
 
 // Обновление UI статуса
 function updateStatusUI(statusSpan, status) {
-    switch(status) {
-        case 'processing':
-            statusSpan.textContent = '⏳ Обработка...';
-            statusSpan.className = 'message-status status-processing';
-            break;
-        case 'delivered':
-            statusSpan.textContent = '✓ Доставлено';
-            statusSpan.className = 'message-status status-delivered';
-            break;
-        case 'read':
-            statusSpan.textContent = '✓✓ Прочитано';
-            statusSpan.className = 'message-status status-delivered';
-            break;
-        case 'failed':
-            statusSpan.textContent = '❌ Ошибка';
-            statusSpan.className = 'message-status status-failed';
-            break;
-        default:
-            if (status === 'done') {
-                statusSpan.textContent = '✓ Готово';
-                statusSpan.className = 'message-status status-delivered';
-            }
-    }
+    const statusText = {
+        'processing': '⏳ Обработка...',
+        'delivered': '✓ Доставлено',
+        'read': '✓✓ Прочитано',
+        'failed': '❌ Ошибка',
+        'done': '✓ Готово'
+    }[status] || status;
+    const statusClass = {
+        'processing': 'status-processing',
+        'delivered': 'status-delivered',
+        'read': 'status-delivered',
+        'failed': 'status-failed'
+    }[status] || '';
+    statusSpan.textContent = statusText;
+    statusSpan.className = `message-status ${statusClass}`;
 }
 
 // Показываем ошибку при проблемах с подключением
@@ -471,28 +520,18 @@ function showReconnectionError() {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     messagesArea.insertBefore(errorAlert, messagesArea.firstChild);
-
-    setTimeout(() => {
-        if (errorAlert.parentNode) {
-            errorAlert.remove();
-        }
-    }, 10000);
+    setTimeout(() => { if (errorAlert.parentNode) errorAlert.remove(); }, 10000);
 }
 
 // Функция для проверки наличия новых сообщений (fallback)
 function startPollingFallback() {
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
-    }
-
+    if (pollingInterval) clearInterval(pollingInterval);
     pollingInterval = setInterval(async () => {
         try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const currentLimit = urlParams.get('limit') || '10';
-            const response = await fetch(`/chat/conversation/${conversationId}/messages?limit=${currentLimit}&page=1`);
+            const response = await fetch(`/chat/conversation/${conversationId}/messages?limit=10`);
             if (response.ok) {
                 const data = await response.json();
-                const currentMessageCount = document.querySelectorAll('.message').length;
+                const currentMessageCount = messagesArea.querySelectorAll('.message[data-message-id]').length;
                 if (data.messages && data.messages.length > currentMessageCount) {
                     window.location.reload();
                 }
@@ -522,9 +561,7 @@ async function sendMessage() {
 
         const response = await fetch(`/chat/conversation/${conversationId}/query`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData
         });
 
@@ -559,7 +596,7 @@ function addTemporaryMessage(role, content) {
             </div>
         </div>
     `;
-    messagesArea.appendChild(messageDiv);
+    messagesArea.insertBefore(messageDiv, loadMoreIndicator);
     scrollToBottom();
     return tempId;
 }
@@ -578,25 +615,10 @@ function updateMessageWithId(tempId, realId) {
     }
 }
 
-// Добавление сообщения
-function addMessage(role, content, messageId = null, status = 'delivered') {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}`;
-    if (messageId) {
-        messageDiv.setAttribute('data-message-id', messageId);
-    }
-    messageDiv.innerHTML = `
-        <div class="message-bubble">
-            ${escapeHtml(content)}
-            <div class="message-meta">
-                ${new Date().toLocaleTimeString()}
-                <span class="message-status status-${status}">
-                    ${status === 'processing' ? '⏳ Обработка...' : '✓ Доставлено'}
-                </span>
-            </div>
-        </div>
-    `;
-    messagesArea.appendChild(messageDiv);
+// Добавление нового сообщения (в конец)
+function addMessage(role, content, messageId = null, status = 'delivered', metadata = null, createdAt = null) {
+    const messageDiv = createMessageElement(role, content, messageId, status, metadata, createdAt);
+    messagesArea.insertBefore(messageDiv, loadMoreIndicator);
     scrollToBottom();
 }
 
@@ -607,10 +629,21 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Инициализация SSE при загрузке страницы
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
+    // Инициализируем самый старый ID сообщения
+    initOldestMessageId();
+
+    // Подключаем обработчик прокрутки
+    messagesArea.addEventListener('scroll', handleScroll);
+
+    // Подключаем SSE
     connectSSE();
 
+    // Прокручиваем вниз при загрузке
+    scrollToBottom();
+
+    // Fallback polling
     setTimeout(() => {
         if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
             console.log('Starting polling fallback');
@@ -621,12 +654,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Очищаем ресурсы при уходе со страницы
 window.addEventListener('beforeunload', () => {
-    if (eventSource) {
-        eventSource.close();
-    }
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
-    }
+    if (eventSource) eventSource.close();
+    if (pollingInterval) clearInterval(pollingInterval);
+    messagesArea.removeEventListener('scroll', handleScroll);
 });
 
 // Отправка по Enter (без Shift)

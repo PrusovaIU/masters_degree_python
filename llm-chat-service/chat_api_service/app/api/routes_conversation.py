@@ -133,6 +133,66 @@ async def get_history(
     return history
 
 
+@router_conversation.post(
+    "/history/before",
+    response_model=conversation.ConversationHistoryBeforeResponse,
+    summary="История сообщений в диалоге",
+    description="История сообщений в диалоге до определенного сообщения",
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "model": Detail
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": Detail
+        },
+    }
+)
+async def get_history_before(
+        conversation_id: UUID,
+        before_message_id: UUID,
+        current_user: UserDataDep,
+        chat_history_usecase: ConversationUsecaseDep,
+        limit: int = 10,
+) -> conversation.ConversationHistoryBeforeResponse:
+    """
+    Получение истории сообщений в диалоге до определенного сообщения.
+
+    :param conversation_id: Идентификатор диалога.
+
+    :param before_message_id: Идентификатор сообщения, до которого нужно
+        получить историю.
+
+    :param limit: Максимальное количество сообщений в ответе.
+
+    :param current_user: Текущий пользователь.
+
+    :param chat_history_usecase: Usecase истории сообщений.
+
+    :return: История сообщений.
+    """
+    user_id = str(current_user.user_id)
+    try:
+        history: conversation.ConversationHistoryBeforeResponse = \
+            await chat_history_usecase.get_history_before(
+                conversation_id,
+                user_id,
+                before_message_id,
+                limit
+            )
+    except errs.ConversationNotFound as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=jsonable_encoder(err.detail)
+        )
+    except errs.ConversationAccessDenied as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=jsonable_encoder(err.detail)
+        )
+    return history
+
+
+
 @router_conversation.patch(
     "/messages/{message_id}/status",
     response_model=MessageResponse,
@@ -283,3 +343,5 @@ async def info(
         conv_data,
         from_attributes=True
     )
+
+

@@ -23,6 +23,15 @@ class ConversationHistoryResponse(BaseModel):
         from_attributes = True
 
 
+
+class ConversationHistoryBeforeResponse(BaseModel):
+    """
+    Ответ с историей сообщений диалога до указанного сообщения.
+    """
+    messages: list[MessageResponse] = Field(description="Список сообщений")
+    has_more: bool = Field(description="Флаг наличия еще сообщений")
+
+
 class ConversationResponse(BaseModel):
     """Ответ с данными диалога."""
     id: UUID = Field(description="UUID диалога")

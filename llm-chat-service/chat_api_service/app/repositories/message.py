@@ -111,13 +111,53 @@ class MessageRepository:
             Message.conversation_id == conversation_id
         )
 
-        # Сортировка и пагинация
         query = (
             query.order_by(
                 desc(Message.created_at)
             ).limit(limit)
             .offset(offset)
         )
+
+        result = await self._session.execute(query)
+        messages = result.scalars().all()
+
+        return messages
+
+    async def list_before(
+            self,
+            conversation_id: UUID,
+            before_message_id: UUID,
+            limit: int | None = None
+    ) -> Sequence[Message]:
+        """
+        Получение сообщений до указанного ID с ограничением по количеству.
+
+        :param conversation_id: Идентификатор диалога.
+
+        :param before_message_id: Идентификатор сообщения до которого получаем.
+
+        :param limit: Лимит количества сообщений. Если None, то
+            запрашиваются все данные.
+
+        :return: Список сообщений.
+        """
+        ref_time_subq = select(
+            Message.created_at
+        ).where(
+            Message.id == before_message_id
+        ).scalar_subquery()
+
+        query = (
+            select(Message)
+            .where(
+                Message.conversation_id == conversation_id,
+                Message.created_at < ref_time_subq
+            )
+            .order_by(desc(Message.created_at))
+        )
+
+        if limit:
+            query = query.limit(limit)
 
         result = await self._session.execute(query)
         messages = result.scalars().all()
