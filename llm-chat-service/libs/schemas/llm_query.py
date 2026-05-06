@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from chat_api_service.app.consts.llm_tasks import LLMTasksStatus
+from libs.consts.llm_tasks import LLMTasksStatus
 
 
 class LLMQueryRequest(BaseModel):

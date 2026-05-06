@@ -13,7 +13,7 @@ from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from functools import wraps
 from libs.schemas.message import MessageStatusUpdate
 from libs.schemas.message import MessageResponse
-from libs.schemas.llm import LLMTaskStatusSchema
+from libs.schemas.llm import CeleryTaskResponse
 
 
 def conv_error_handler(
@@ -458,10 +458,15 @@ class ChatAPIServiceClient(BaseClient):
             resp.raise_for_status()
             return conv_schemas.MessageResponse(**resp.json())
 
-    async def admin_task_status(self, task_id: UUID) -> LLMTaskStatusSchema:
+    async def admin_task_status(
+            self,
+            access_token: str,
+            task_id: UUID
+    ) -> CeleryTaskResponse:
         """
         Получение статуса задачи.
 
+        :param access_token: Access token.
         :param task_id: Идентификатор задачи.
         :return: Данные о статусе задачи.
 
@@ -469,8 +474,8 @@ class ChatAPIServiceClient(BaseClient):
         :raise GetTaskStatusException: В случае ошибки получения статуса.
         """
         try:
-            async with self._get_client() as client:
-                resp = await client.get(f"/admin/task/{task_id}/status")
+            async with self._get_client(access_token) as client:
+                resp = await client.get(f"/admin/tasks/{task_id}/status")
                 resp.raise_for_status()
         except HTTPStatusError as err:
             match err.response.status_code:
@@ -481,6 +486,12 @@ class ChatAPIServiceClient(BaseClient):
                     raise errors.AccessException(
                         "Доступ запрещен",
                         _id=task_id
+                    )
+                case status.HTTP_404_NOT_FOUND:
+                    logger.error(f"Задача \"{task_id}\" не найдена")
+                    raise errors.TaskNotFoundException(
+                        "Задача не найдена",
+                        task_id=task_id
                     )
                 case _:
                     logger.error(
@@ -497,4 +508,4 @@ class ChatAPIServiceClient(BaseClient):
             raise errors.GetTaskStatusException(
                 "Не удалось получить статус задачи"
             )
-        return LLMTaskStatusSchema(**resp.json())
+        return CeleryTaskResponse(**resp.json())

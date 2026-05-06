@@ -88,3 +88,8 @@ class LLMQueryException(ChatApiClientException):
 class GetTaskStatusException(ChatApiClientException):
     """Ошибка при получении статуса задачи."""
     pass
+
+class TaskNotFoundException(ChatApiClientException):
+    """Задача не найдена."""
+    def __init__(self, message: str, task_id: UUID):
+        super().__init__(message, task_id=task_id)
