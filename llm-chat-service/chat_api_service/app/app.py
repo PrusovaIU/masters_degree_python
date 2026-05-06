@@ -7,6 +7,7 @@ from chat_api_service.app.schemas.config import Settings
 from loguru import logger
 from chat_api_service.app.api import routers
 from chat_api_service.app.infra.redis import RedisClient
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 
 
 class App:
@@ -37,6 +38,11 @@ class App:
 
     async def lifespan(self, app: FastAPI):
         await RedisClient.setup(self._config.redis, True)
+        await RabbitMQClient.setup(
+            self._config.rabbitmq.url,
+            self._config.rabbitmq.message_queue,
+            has_set=True
+        )
         DBSession.setup(
             self._config.db.database_url,
             self._config.db.db_schema,
@@ -46,6 +52,7 @@ class App:
             await conn.run_sync(Base.metadata.create_all)
         yield
         await DBSession.close()
+        await RabbitMQClient.close()
 
     @property
     def app(self) -> FastAPI:

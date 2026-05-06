@@ -71,6 +71,7 @@ class RabbitMQClient:
                 async for message in queue_iter:
                     try:
                         body = message.body.decode()
+                        print(f"Получено сообщение: {body}")
                         data = json.loads(body)
                         yield f"data: {json.dumps(data)}\n\n"
                         await message.ack()

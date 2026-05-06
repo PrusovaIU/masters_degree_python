@@ -62,6 +62,8 @@ class RabbitMQClient:
 
         :param conversation_id: Идентификатор диалога.
         """
+        if not cls._is_connected:
+            raise SystemError("RabbitMQ клиент не инициализирован.")
         queue_name = f"{cls._queue_name}_{conversation_id}"
         await cls._channel.declare_queue(
             name=queue_name,

@@ -264,14 +264,20 @@ class ChatNewMessageUsecase:
                 f"{err} ({err.__class__.__name__})"
             )
 
-    async def _rabbbitmq_publish(self) -> None:
+    async def _rabbbitmq_publish(
+            self,
+            assistant_msg_id: UUID
+    ) -> None:
         """
         Публикация сообщения в RabbitMQ.
+
+        :param assistant_msg_id: Идентификатор сообщения с ответом LLM.
 
         :return: None.
         """
         message_status = RabbitMQMessageStatus(
             message_id=self._message_id,
+            answer_id=assistant_msg_id,
             conversation_id=self._conversation_id,
             user_id=self._user_id
         )

@@ -8,6 +8,9 @@ class RabbitMQMessageStatus(BaseModel):
     message_id: UUID = Field(
         description="Идентификатор обработанного сообщения"
     )
+    answer_id: UUID = Field(
+        description="Идентификатор ответного сообщения"
+    )
     conversation_id: UUID = Field(
         description="Идентификатор диалога"
     )
