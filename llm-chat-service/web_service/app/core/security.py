@@ -1,154 +1,15 @@
-from datetime import datetime
-
-from fastapi import Request, Response, status, HTTPException
-from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
 from web_service.app.services.auth_client import AuthClient
 from libs.schemas.auth import RefreshTokenResponse
 from loguru import logger
+
+from .cookie import set_access_token_cookie, get_user_cookie
 from .exceptions.security import NotAuthenticated
-from libs.schemas.user import UserPublic
 
-from web_service.app.schemas.config import AuthCookieSettings, Settings, CookieSettings
+from web_service.app.schemas.config import Settings, CookieSettings
 from web_service.app.api.login_redirect import LOGIN_REDIRECT
-from libs.jwt_token import get_access_payload, AccessTokenData
 from web_service.app.schemas.user import User
-
-
-def set_access_token_cookie(
-        response: Response,
-        settings: AuthCookieSettings,
-        access_token: str,
-        expires_in: int | None
-) -> None:
-    """
-    Установка cookie с access токеном.
-
-    :param response: Ответ на запрос;
-    :param settings: Настройки cookie;
-    :param access_token: Access токен;
-    :param expires_in: Время жизни токена;
-    :return: None
-    """
-    response.set_cookie(
-        key=settings.access_token_cookie_name,
-        value=access_token,
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_same_site,
-        max_age=expires_in
-    )
-
-
-def set_refresh_token_cookie(
-        response: Response,
-        settings: AuthCookieSettings,
-        refresh_token: str,
-        expires_in: int | None
-) -> None:
-    """
-    Установка cookie с refresh токеном.
-
-    :param response: Ответ на запрос;
-    :param settings: Настройки cookie;
-    :param refresh_token: Refresh токен;
-    :param expires_in: Время жизни токена;
-    :return: None
-    """
-    response.set_cookie(
-        key=settings.refresh_token_cookie_name,
-        value=refresh_token,
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_same_site,
-        max_age=expires_in
-    )
-
-
-def set_auth_cookies(
-        response: Response,
-        settings: AuthCookieSettings,
-        access_token: str,
-        access_expires: int | None,
-        refresh_token: str,
-        refresh_expires: int | None
-) -> None:
-    """
-    Установка cookie с токенами авторизации.
-
-    :param response: Response - объект ответа FastAPI;
-    :param settings: Настройки cookie.
-    :param access_token: access токен;
-    :param refresh_token: refresh токен;
-    :param access_expires: время жизни access токена;
-    :param refresh_expires: время жизни refresh токена.
-    :returns: None.
-    """
-    set_access_token_cookie(
-        response,
-        settings,
-        access_token,
-        access_expires
-    )
-    set_refresh_token_cookie(
-        response,
-        settings,
-        refresh_token,
-        refresh_expires
-    )
-
-
-def set_user_cookie(
-        response: Response,
-        settings: CookieSettings,
-        user_data: UserPublic,
-        access_expires: int | None
-) -> None:
-    """
-    Установка cookie с данными пользователя. Cookie устанавливаются на время
-    жизни access токена.
-
-    :param response: Response - объект ответа FastAPI.
-    :param settings: Настройки cookie.
-    :param user_data: Данные пользователя.
-    :param access_expires: Время жизни токена.
-    :return: None
-    """
-    response.set_cookie(
-        key=settings.user_email_cookie_name,
-        value=user_data.email,
-        max_age=access_expires
-    )
-    response.set_cookie(
-        key=settings.user_role_cookie_name,
-        value=user_data.role,
-        max_age=access_expires
-    )
-    response.set_cookie(
-        key=settings.user_id_cookie_name,
-        value=str(user_data.id),
-        max_age=access_expires
-    )
-
-
-def clear_auth_cookies(
-        response: Response,
-        cookie_settings: AuthCookieSettings
-) -> None:
-    """
-    Очистка cookie авторизации.
-
-    :param response: Response - объект ответа FastAPI.
-    :param cookie_settings: Настройки cookie.
-    :returns: None.
-    """
-    response.delete_cookie(
-        cookie_settings.access_token_cookie_name,
-        path="/"
-    )
-    response.delete_cookie(
-        cookie_settings.refresh_token_cookie_name,
-        path="/"
-    )
 
 
 class AuthCookieMiddleware(BaseHTTPMiddleware):
@@ -267,13 +128,7 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         :param access_token: Access токен.
         :return: None.
         """
-        user_id: str = request.cookies.get(cookie_settings.user_id_cookie_name)
-        email: str = request.cookies.get(
-            cookie_settings.user_email_cookie_name
-        )
-        role: str = request.cookies.get(cookie_settings.user_role_cookie_name)
-
-        user = User(id=user_id, email=email, role=role)
+        user: User = get_user_cookie(request, cookie_settings)
         request.state.user = user
         request.state.access_token = access_token
         request.state.is_authenticated = True

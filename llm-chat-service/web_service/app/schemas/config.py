@@ -189,3 +189,23 @@ class Settings(BaseSettings):
         default="Authorization",
         description="Имя заголовка с токеном авторизации"
     )
+
+    _cookies: tuple[str, ...] | None = None
+
+    @model_validator(mode="after")
+    def set_cookies(self) -> Self:
+        self._cookies = (
+            self.auth_cookie.access_token_cookie_name,
+            self.auth_cookie.refresh_token_cookie_name,
+            self.cookie.user_id_cookie_name,
+            self.cookie.user_email_cookie_name,
+            self.cookie.user_role_cookie_name
+        )
+        return self
+
+    @property
+    def cookies(self) -> tuple[str, ...]:
+        """
+        :return: Список имен кук.
+        """
+        return self._cookies

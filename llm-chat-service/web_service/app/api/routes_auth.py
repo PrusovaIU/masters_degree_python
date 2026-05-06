@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 
 from libs.schemas.auth import LoginResponse
 from libs.schemas.user import UserPublic
-from web_service.app.core.security import set_auth_cookies, set_user_cookie
+from ..core.cookie import set_auth_cookies, set_user_cookie
 from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
 from web_service.app.schemas.config import Settings
