@@ -40,8 +40,7 @@ class StreamChatUsecase:
         )
         queue_name = f"{self._queue_prefix}_{conversation_id}"
 
-        async with self._rabbit_client.consume_messages(
-                queue_name=queue_name) as message_generator:
-            async for message in message_generator:
-                yield message
+        async for message in self._rabbit_client.consume_messages(
+                queue_name=queue_name):
+            yield message
 

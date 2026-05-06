@@ -5,7 +5,7 @@ import asyncio
 from aio_pika.abc import AbstractIncomingMessage
 from loguru import logger
 from contextlib import asynccontextmanager, contextmanager
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, AsyncIterator
 
 
 class RabbitMQClient:
@@ -50,7 +50,6 @@ class RabbitMQClient:
         """Получение канала подключения."""
         return self._channel
 
-    @asynccontextmanager
     async def consume_messages(
             self,
             queue_name: str
@@ -59,8 +58,7 @@ class RabbitMQClient:
         Старт цикла обработки сообщений из очереди.
 
         :param queue_name: Имя очереди.
-
-        :yield: Сообщение пользователю.
+        :yield: Сообщение пользователю в формате SSE.
         """
         logger.info(f"Начало обработки сообщений из очереди {queue_name}")
         try:
@@ -71,8 +69,20 @@ class RabbitMQClient:
 
             async with queue.iterator() as queue_iter:
                 async for message in queue_iter:
-                    async with self._handle_message(message) as data:
-                        yield data
+                    try:
+                        body = message.body.decode()
+                        data = json.loads(body)
+                        yield f"data: {json.dumps(data)}\n\n"
+                        await message.ack()
+                    except Exception as err:
+                        logger.error(
+                            f"Ошибка обработки сообщения: "
+                            f"{err} ({err.__class__.__name__})"
+                        )
+                        import traceback
+                        traceback.print_exc()
+                        await message.nack(requeue=False)
+                        raise
         except asyncio.CancelledError:
             logger.error(
                 f"SSE stream завершен для очереди {queue_name}"
@@ -94,10 +104,9 @@ class RabbitMQClient:
             )
 
     @staticmethod
-    @asynccontextmanager
     async def _handle_message(
             message: AbstractIncomingMessage
-    ) -> AsyncGenerator[str]:
+    ) -> AsyncIterator[str]:
         try:
             body = message.body.decode()
             data = json.loads(body)
