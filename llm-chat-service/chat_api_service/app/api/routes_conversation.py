@@ -193,7 +193,7 @@ async def update_message_status(
 
 @router_conversation.post(
     "/info",
-    response_model=conversation.ConversationCreateResponse,
+    response_model=conversation.ConversationResponse,
     summary="Данные диалога",
     description="Получение данных диалога",
     responses={
@@ -233,8 +233,7 @@ async def info(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=jsonable_encoder(err.detail)
         )
-    return conversation.ConversationCreateResponse(
-        id=conv_data.id,
-        title=conv_data.title,
-        created_at=conv_data.created_at
+    return conversation.ConversationResponse.model_validate(
+        conv_data,
+        from_attributes=True
     )
