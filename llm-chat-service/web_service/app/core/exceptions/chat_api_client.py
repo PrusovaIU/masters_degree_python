@@ -50,16 +50,24 @@ class ConversationNotFoundException(ConversationWithIDException):
     pass
 
 
-class MessageNotFoundException(AppException):
+class MessageException(ChatApiClientException):
+    def __init__(self, message: str, message_id: UUID):
+        super().__init__(message, message_id=message_id)
+
+
+class MessageNotFoundException(MessageException):
     """Сообщение не найдено."""
-    def __init__(self, message: str, message_id: UUID):
-        super().__init__(message, message_id=message_id)
+    pass
 
 
-class ChangeMessageStatusException(AppException):
+class GetMessageException(MessageException):
+    """Ошибка при получении сообщения."""
+    pass
+
+
+class ChangeMessageStatusException(MessageException):
     """Ошибка при изменении статуса сообщения."""
-    def __init__(self, message: str, message_id: UUID):
-        super().__init__(message, message_id=message_id)
+    pass
 
 
 class LLMQueryException(ChatApiClientException):

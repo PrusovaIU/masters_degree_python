@@ -110,3 +110,18 @@ class ChatUsecase:
         )
         return response.message_id
 
+    async def get_message(
+            self,
+            access_token: str,
+            message_id: UUID
+    ) -> schemas.MessageResponse:
+        """
+        Получение сообщения по ID.
+
+        :param access_token: Access token пользователя.
+        :param message_id: Идентификатор сообщения.
+        :return: Сообщение.
+        """
+        return await self._chat_api_client.get_message(
+            access_token, message_id
+        )

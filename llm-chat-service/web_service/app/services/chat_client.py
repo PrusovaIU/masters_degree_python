@@ -73,6 +73,64 @@ def conv_error_handler(
     return decorator
 
 
+def msg_error_handler(
+        error_type: Type[errors.MessageException],
+        title: str
+):
+    """
+    Декоратор для обработки ошибок, связанных с сообщением.
+
+    :param error_type: Тип пробрасываемого исключения.
+    :param title: Заголовок для логирования.
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, message_id: UUID, **kwargs):
+            try:
+                return await func(*args, conversation_id=message_id, **kwargs)
+            except HTTPStatusError as err:
+                match err.response.status_code:
+                    case status.HTTP_403_FORBIDDEN:
+                        logger.error(
+                            f"Доступ к сообщению \"{message_id}\" запрещен"
+                        )
+                        raise errors.AccessException(
+                            "Доступ запрещен",
+                            _id=message_id
+                        )
+                    case status.HTTP_404_NOT_FOUND:
+                        logger.error(f"Сообщение \"{message_id}\" не найдено")
+                        raise errors.MessageNotFoundException(
+                            "Сообщение не найдено",
+                            message_id=message_id
+                        )
+                    case _:
+                        logger.error(
+                            f"{title}: {err.response.text} "
+                            f"(status_code={err.response.status_code}"
+                        )
+                        raise error_type(
+                            err.response.text,
+                            message_id=message_id
+                        )
+            except TimeoutException:
+                logger.error(f"{title}: timeout error")
+                raise error_type(
+                    "timeout error",
+                    message_id=message_id
+                )
+            except Exception as err:
+                logger.error(
+                    f"{title}: {err} ({err.__class__.__name__})"
+                )
+                raise error_type(
+                    title,
+                    message_id=message_id
+                )
+        return wrapper
+    return decorator
+
+
 
 class ChatAPIServiceClient(BaseClient):
     """Клиент для взаимодействия с сервисом chat_api."""
@@ -157,6 +215,10 @@ class ChatAPIServiceClient(BaseClient):
                 "Не удалось создать диалог", title
             )
 
+    @msg_error_handler(
+        errors.ChangeMessageStatusException,
+        "Ошибка изменения статуса сообщения"
+    )
     async def update_message_status(
             self,
             access_token: str,
@@ -172,53 +234,13 @@ class ChatAPIServiceClient(BaseClient):
         :return: Обновленное сообщение.
         """
         title = "Ошибка изменения статуса сообщения"
-        try:
-            async with self._get_client(access_token) as client:
-                resp = await client.patch(
-                    f"/conversation/messages/{message_id}/status",
-                    json=MessageStatusUpdate(status=new_status).model_dump()
-                )
-                resp.raise_for_status()
-                return MessageResponse(**resp.json())
-        except HTTPStatusError as err:
-            match err.response.status_code:
-                case status.HTTP_403_FORBIDDEN:
-                    logger.error(
-                        f"Доступ к сообщению \"{message_id}\" запрещен"
-                    )
-                    raise errors.AccessException(
-                        "Доступ запрещен",
-                        _id=message_id
-                    )
-                case status.HTTP_404_NOT_FOUND:
-                    logger.error(f"Сообщение \"{message_id}\" не найдено")
-                    raise errors.MessageNotFoundException(
-                        "Сообщение не найдено",
-                        message_id=message_id
-                    )
-                case _:
-                    logger.error(
-                        f"{title}: {err.response.text} "
-                        f"(status_code={err.response.status_code}"
-                    )
-                    raise errors.ChangeMessageStatusException(
-                        err.response.text,
-                        message_id=message_id
-                    )
-        except TimeoutException:
-            logger.error(f"{title}: timeout error")
-            raise errors.ChangeMessageStatusException(
-                "timeout error",
-                message_id=message_id
+        async with self._get_client(access_token) as client:
+            resp = await client.patch(
+                f"/conversation/messages/{message_id}/status",
+                json=MessageStatusUpdate(status=new_status).model_dump()
             )
-        except Exception as err:
-            logger.error(
-                f"{title}: {err} ({err.__class__.__name__})"
-            )
-            raise errors.ChangeMessageStatusException(
-                title,
-                message_id=message_id
-            )
+            resp.raise_for_status()
+            return MessageResponse(**resp.json())
 
     @conv_error_handler(
         errors.ConversationHistoryException,
@@ -362,8 +384,31 @@ class ChatAPIServiceClient(BaseClient):
         """
         async with self._get_client(access_token) as client:
             resp = await client.get(
-                f"/conversation/info",
+                "/conversation/info",
                 params={"conversation_id": str(conversation_id)}
             )
             resp.raise_for_status()
             return conv_schemas.ConversationResponse(**resp.json())
+
+    @msg_error_handler(
+        errors.GetMessageException,
+        "Ошибка получения данных сообщения"
+    )
+    async def get_message(
+            self,
+            access_token: str,
+            message_id: UUID
+    ) -> MessageResponse:
+        """
+        Получение сообщения.
+
+        :param access_token: Access token.
+        :param message_id: Идентификатор сообщения.
+        :return: Ответ от сервиса chat_api.
+        """
+        async with self._get_client(access_token) as client:
+            resp = await client.get(
+                f"/conversation/messages/{message_id}"
+            )
+            resp.raise_for_status()
+            return conv_schemas.MessageResponse(**resp.json())
