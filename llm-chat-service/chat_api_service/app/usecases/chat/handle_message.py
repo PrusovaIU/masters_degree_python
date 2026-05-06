@@ -327,7 +327,7 @@ class ChatNewMessageUsecase:
                 f"response_id={assistant_msg_id}, "
                 f"task_id={self._task.request.id}"
             )
-            await self._rabbbitmq_publish()
+            await self._rabbbitmq_publish(assistant_msg_id)
         except Exception as err:
             self._logger.error(
                 f"Ошибка при обработке запроса к LLM - "

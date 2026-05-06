@@ -378,9 +378,7 @@ function connectSSE() {
                 const existingMessage = document.querySelector(`[data-message-id="${data.message_id}"]`);
 
                 if (!existingMessage) {
-                    await fetchAndAddMessage(data.message_id);
-                } else {
-                    await updateMessageStatus(data.message_id, data.status);
+                    await fetchAndAddMessage(data.answer_id);
                 }
             }
         } catch (error) {

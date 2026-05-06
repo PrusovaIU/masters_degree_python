@@ -123,5 +123,6 @@ class ChatUsecase:
         :return: Сообщение.
         """
         return await self._chat_api_client.get_message(
-            access_token, message_id
+            access_token=access_token,
+            message_id=message_id
         )

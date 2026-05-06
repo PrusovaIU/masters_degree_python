@@ -87,7 +87,7 @@ def msg_error_handler(
         @wraps(func)
         async def wrapper(*args, message_id: UUID, **kwargs):
             try:
-                return await func(*args, conversation_id=message_id, **kwargs)
+                return await func(*args, message_id=message_id, **kwargs)
             except HTTPStatusError as err:
                 match err.response.status_code:
                     case status.HTTP_403_FORBIDDEN:
