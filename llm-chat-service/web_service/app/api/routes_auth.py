@@ -3,12 +3,13 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 
 from libs.schemas.auth import LoginResponse
 from libs.schemas.user import UserPublic
-from ..core.cookie import set_auth_cookies, set_user_cookie
+from ..core.cookie import set_auth_cookies, set_user_cookie, clear_auth_cookies
 from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
 from web_service.app.schemas.config import Settings
 from web_service.app.core.exceptions import auth_usecase as usecase_errors
 from .deps.current_user import AccessTokenDep
+from .login_redirect import LOGIN_REDIRECT
 
 
 router_auth = APIRouter(prefix="/auth")
@@ -124,7 +125,15 @@ async def register_submit(
         password: str = Form(),
         password_confirm: str = Form()
 ):
-    """Обработка формы регистрации"""
+    """
+    Обработка запроса регистрации.
+
+    :param request: Запрос пользователя.
+    :param auth_usecase: Usecase для авторизации.
+    :param email: Электронная почта пользователя.
+    :param password: Пароль пользователя.
+    :param password_confirm: Подтверждение пароля.
+    """
     settings: Settings = request.app.state.settings
     try:
         await auth_usecase.register(
@@ -158,12 +167,12 @@ async def register_submit(
             status_code=status.HTTP_302_FOUND
         )
     return response
-#
-#
-# @router.get("/auth/logout", include_in_schema=False)
-# async def logout(request: Request):
-#     """Выход из системы"""
-#     response = RedirectResponse(url="/auth/login",
-#                                 status_code=status.HTTP_302_FOUND)
-#     clear_auth_cookies(response)
-#     return response
+
+
+@router_auth.get("/logout", include_in_schema=False)
+async def logout(request: Request):
+    """Выход из системы"""
+    settings: Settings = request.app.state.settings
+    response = LOGIN_REDIRECT
+    clear_auth_cookies(response, settings)
+    return response
