@@ -13,3 +13,9 @@
 Получение статуса обработки сообщения
 
 [![Статус задачи](task_status/task_status_preview.png)](https://disk.yandex.ru/i/5aqOEX74u0y9Lg)
+
+## Список диалогов
+
+Список всех диалогов всех пользователей
+
+[![Список диалогов](all_conversations/all_conversations_preview.png)](https://disk.yandex.ru/i/eYOdI-kEfUfjmQ)
