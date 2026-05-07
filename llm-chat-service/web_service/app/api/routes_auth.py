@@ -139,10 +139,10 @@ async def register_submit(
         await auth_usecase.register(
             email, password, password_confirm
         )
-    except usecase_errors.PasswordNotMatchException as err:
+    except usecase_errors.PasswordNotMatchException:
         context = {
             "settings": settings,
-            "error": str(err)
+            "error": "Пароли не совпадают"
         }
         response = settings.jinja.templates.TemplateResponse(
             request=request,
@@ -150,10 +150,10 @@ async def register_submit(
             context=context,
             status_code=status.HTTP_400_BAD_REQUEST
         )
-    except errors.UserAlreadyExistsError as err:
+    except errors.UserAlreadyExistsError:
         context = {
             "settings": settings,
-            "error": str(err)
+            "error": f"Пользователь \"{email}\" уже существует"
         }
         response = settings.jinja.templates.TemplateResponse(
             request=request,
