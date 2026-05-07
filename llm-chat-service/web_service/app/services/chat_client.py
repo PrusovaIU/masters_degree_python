@@ -471,6 +471,7 @@ class ChatAPIServiceClient(BaseClient):
         :return: Данные о статусе задачи.
 
         :raise AccessException: Если доступ запрещен.
+        :raise TaskNotFoundException: Если задача не найдена.
         :raise GetTaskStatusException: В случае ошибки получения статуса.
         """
         try:
@@ -509,3 +510,56 @@ class ChatAPIServiceClient(BaseClient):
                 "Не удалось получить статус задачи"
             )
         return CeleryTaskResponse(**resp.json())
+
+    async def admin_conversation_all(
+            self,
+            access_token: str,
+            limit: int = 20,
+            offset: int = 0
+    ) -> conv_schemas.ConversationListResponse:
+        """
+        Получение списка диалогов для администратора.
+        Выводятся все диалоги всех пользователей.
+
+        :param access_token: Access token.
+        :param limit: Лимит на количество диалогов на странице.
+        :param offset: Смещение для пагинации.
+        :return: Список диалогов.
+
+        :raise AccessException: Если доступ запрещен.
+        :raise GetConversationException: В случае ошибки получения списка.
+        """
+        try:
+            async with self._get_client(access_token) as client:
+                resp = await client.post(
+                    "/admin/conversations/all",
+                    json=PaginationRequest(
+                        limit=limit,
+                        offset=offset
+                    ).model_dump()
+                )
+                resp.raise_for_status()
+        except HTTPStatusError as err:
+            match err.response.status_code:
+                case status.HTTP_403_FORBIDDEN:
+                    logger.error(f"Доступ запрещен")
+                    raise errors.AccessException("Доступ запрещен", None)
+                case _:
+                    logger.error(
+                        f"Ошибка получения списка диалогов: "
+                        f"{err.response.text} "
+                        f"(status_code={err.response.status_code})"
+                    )
+                    raise errors.GetConversationException(
+                        "Не удалось получить список диалогов"
+                    )
+        except Exception as err:
+            logger.error(
+                f"Ошибка получения списка диалогов: "
+                f"{err} ({err.__class__.__name__})"
+            )
+            raise errors.GetConversationException(
+                "Не удалось получить список диалогов"
+            )
+        return conv_schemas.ConversationListResponse(**resp.json())
+

@@ -41,7 +41,7 @@ class GetConversationException(ConversationException):
 
 class AccessException(AppException):
     """Доступ к объекту запрещен."""
-    def __init__(self, message: str, _id: UUID):
+    def __init__(self, message: str, _id: UUID | None):
         super().__init__(message, id=_id)
 
 

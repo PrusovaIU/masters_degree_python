@@ -164,9 +164,11 @@
         .pagination {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            align-items: center;
+            gap: 8px;
             margin-top: 20px;
             padding: 20px;
+            flex-wrap: wrap;
         }
 
         .page-btn {
@@ -175,16 +177,35 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
         }
 
         .page-btn:hover {
             background: #007bff;
             color: white;
+            border-color: #007bff;
         }
 
         .page-btn.active {
             background: #007bff;
             color: white;
+            border-color: #007bff;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
         }
 
         /* Loading */
@@ -214,6 +235,32 @@
             font-size: 12px;
             margin-top: 10px;
         }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .per-page-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .per-page-selector select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -224,8 +271,8 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tasks')">📋 Статус задачи</button>
-            <button class="tab-btn" onclick="switchTab('conversations')">💬 Все диалоги</button>
+            <button class="tab-btn active" onclick="switchTab('tasks', event)">📋 Статус задачи</button>
+            <button class="tab-btn" onclick="switchTab('conversations', event)">💬 Все диалоги</button>
         </div>
 
         <!-- Tab 1: Task Status -->
@@ -242,8 +289,18 @@
         <!-- Tab 2: Conversations -->
         <div id="conversations-tab" class="tab-content">
             <div class="conversations-table">
-                <div style="padding: 20px; background: #f8f9fa; border-bottom: 1px solid #ddd;">
-                    <button class="btn" onclick="loadConversations()">🔄 Обновить список</button>
+                <div class="controls">
+                    <button class="btn" onclick="loadConversations(currentOffset)">🔄 Обновить список</button>
+                    <div class="per-page-selector">
+                        <label>Показывать:</label>
+                        <select id="perPageSelect" onchange="changePerPage()">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>записей</span>
+                    </div>
                 </div>
                 <div id="conversationsList">
                     <div class="loading">Загрузка диалогов...</div>
@@ -255,12 +312,15 @@
 
     <script>
         let currentOffset = 0;
-        const limit = 20;
+        let currentLimit = 20;
+        let currentTotal = 0;
 
-        function switchTab(tab) {
+        function switchTab(tab, event) {
             // Update buttons
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
 
             // Update content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -269,8 +329,16 @@
                 document.getElementById('tasks-tab').classList.add('active');
             } else {
                 document.getElementById('conversations-tab').classList.add('active');
-                loadConversations();
+                loadConversations(currentOffset);
             }
+        }
+
+        // Change items per page
+        function changePerPage() {
+            const select = document.getElementById('perPageSelect');
+            currentLimit = parseInt(select.value);
+            currentOffset = 0;
+            loadConversations(0);
         }
 
         // Task status check
@@ -387,11 +455,14 @@
             document.getElementById('taskResult').innerHTML += tracebackHtml;
         }
 
-        // Load conversations
+        // Load conversations with pagination
         async function loadConversations(offset = 0) {
             currentOffset = offset;
             const container = document.getElementById('conversationsList');
             container.innerHTML = '<div class="loading">⏳ Загрузка диалогов...</div>';
+
+            // Clear pagination while loading
+            document.getElementById('pagination').innerHTML = '';
 
             try {
                 const response = await fetch('/admin/conversation/all', {
@@ -400,7 +471,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        limit: limit,
+                        limit: currentLimit,
                         offset: offset
                     })
                 });
@@ -408,8 +479,13 @@
                 const data = await response.json();
 
                 if (response.ok && data.conversations) {
+                    currentTotal = data.pagination?.total || 0;
                     displayConversations(data.conversations);
-                    displayPagination(data.pagination);
+                    displayPagination(data.pagination || {
+                        limit: currentLimit,
+                        offset: offset,
+                        total: currentTotal
+                    });
                 } else {
                     container.innerHTML = `<div class="error-message">❌ Ошибка загрузки: ${data.status || 'Неизвестная ошибка'}</div>`;
                 }
@@ -440,7 +516,7 @@
                     <tbody>
                         ${conversations.map(conv => `
                             <tr>
-                                <td><code>${conv.id}</code></td>
+                                <td><code>${escapeHtml(conv.id)}</code></td>
                                 <td><strong>${escapeHtml(conv.user_id)}</strong></td>
                                 <td>${escapeHtml(conv.title || 'Без заголовка')}</td>
                                 <td>${formatDate(conv.created_at)}</td>
@@ -456,8 +532,12 @@
 
         function displayPagination(pagination) {
             const container = document.getElementById('pagination');
+
             if (!pagination || pagination.total <= pagination.limit) {
                 container.innerHTML = '';
+                if (pagination && pagination.total > 0) {
+                    container.innerHTML = `<div class="pagination-info">Всего диалогов: ${pagination.total}</div>`;
+                }
                 return;
             }
 
@@ -466,37 +546,71 @@
 
             let buttons = '<div class="pagination">';
 
+            // First page button
+            if (currentPage > 1) {
+                buttons += `<button class="page-btn" onclick="loadConversations(0)" title="Первая страница">⏮</button>`;
+            } else {
+                buttons += `<button class="page-btn" disabled>⏮</button>`;
+            }
+
             // Previous button
             if (pagination.offset > 0) {
-                buttons += `<button class="page-btn" onclick="loadConversations(${pagination.offset - pagination.limit})">← Назад</button>`;
+                buttons += `<button class="page-btn" onclick="loadConversations(${pagination.offset - pagination.limit})" title="Предыдущая">←</button>`;
+            } else {
+                buttons += `<button class="page-btn" disabled>←</button>`;
             }
 
             // Page numbers
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
+            const maxVisiblePages = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
 
             if (startPage > 1) {
                 buttons += `<button class="page-btn" onclick="loadConversations(0)">1</button>`;
-                if (startPage > 2) buttons += `<span class="page-btn" style="border: none;">...</span>`;
+                if (startPage > 2) {
+                    buttons += `<span class="page-btn" style="border: none; cursor: default;">...</span>`;
+                }
             }
 
             for (let i = startPage; i <= endPage; i++) {
                 const offset = (i - 1) * pagination.limit;
-                buttons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="loadConversations(${offset})">${i}</button>`;
+                const isActive = i === currentPage;
+                buttons += `<button class="page-btn ${isActive ? 'active' : ''}" onclick="loadConversations(${offset})">${i}</button>`;
             }
 
             if (endPage < totalPages) {
-                if (endPage < totalPages - 1) buttons += `<span class="page-btn" style="border: none;">...</span>`;
+                if (endPage < totalPages - 1) {
+                    buttons += `<span class="page-btn" style="border: none; cursor: default;">...</span>`;
+                }
                 buttons += `<button class="page-btn" onclick="loadConversations(${(totalPages - 1) * pagination.limit})">${totalPages}</button>`;
             }
 
             // Next button
             if (pagination.offset + pagination.limit < pagination.total) {
-                buttons += `<button class="page-btn" onclick="loadConversations(${pagination.offset + pagination.limit})">Вперед →</button>`;
+                buttons += `<button class="page-btn" onclick="loadConversations(${pagination.offset + pagination.limit})" title="Следующая">→</button>`;
+            } else {
+                buttons += `<button class="page-btn" disabled>→</button>`;
+            }
+
+            // Last page button
+            if (currentPage < totalPages) {
+                buttons += `<button class="page-btn" onclick="loadConversations(${(totalPages - 1) * pagination.limit})" title="Последняя страница">⏭</button>`;
+            } else {
+                buttons += `<button class="page-btn" disabled>⏭</button>`;
             }
 
             buttons += '</div>';
-            buttons += `<div style="text-align: center; margin-top: 10px; color: #666;">Всего: ${pagination.total} диалогов</div>`;
+
+            // Add info about current range
+            const startItem = pagination.offset + 1;
+            const endItem = Math.min(pagination.offset + pagination.limit, pagination.total);
+            buttons += `<div class="pagination-info">
+                Показано ${startItem} - ${endItem} из ${pagination.total} диалогов | Страница ${currentPage} из ${totalPages}
+            </div>`;
 
             container.innerHTML = buttons;
         }
@@ -517,7 +631,7 @@
 
         // Load initial conversations if on that tab
         if (document.getElementById('conversations-tab').classList.contains('active')) {
-            loadConversations();
+            loadConversations(0);
         }
     </script>
 </body>
