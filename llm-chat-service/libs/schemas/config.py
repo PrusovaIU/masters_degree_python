@@ -170,7 +170,7 @@ class RabbitMQConfig(ConfigWithPasswd):
     )
     message_queue: str = Field(
         default="messages",
-        description="Имя очереди сообщений"
+        description="Префикс имени очереди сообщений"
     )
 
     @property

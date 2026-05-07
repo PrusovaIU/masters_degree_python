@@ -66,35 +66,11 @@ class CookieSettings(BaseModel):
     )
 
 
-class SessionCookieSettings(BaseModel):
-    """Настройки сессии"""
-    name: str = Field(
-        default="session_id",
-        description="Имя куки сессии"
-    )
-    max_age: int = Field(
-        default=3600,
-        description="Максимальное время жизни куки сессии в секундах"
-    )
-    path: str = Field(
-        default="/",
-        description="Путь куки сессии"
-    )
-
-
 class JinjaSettings(BaseModel):
     """Настройки шаблонизатора"""
     dir: str = Field(
         default="./web_service/app/templates",
         description="Путь к директории с шаблонами"
-    )
-    static_dir: str = Field(
-        default="./web_service/app/static",
-        description="Путь к директории со статикой"
-    )
-    static_url: str = Field(
-        default="/static",
-        description="URL префикс для статики"
     )
 
     _templates: Jinja2Templates | None = None
@@ -109,21 +85,6 @@ class JinjaSettings(BaseModel):
     @property
     def templates(self) -> Jinja2Templates:
         return self._templates
-
-
-class PaginationSettings(BaseModel):
-    default_limit: int = Field(
-        default=20,
-        ge=1,
-        le=100,
-        description="Количество элементов на странице "
-                    "по умолчанию"
-    )
-    max_limit: int = Field(
-        default=100,
-        ge=1,
-        description="Максимальное количество элементов на странице"
-    )
 
 
 class Settings(BaseSettings):
@@ -166,19 +127,9 @@ class Settings(BaseSettings):
         description="Настройки кук"
     )
 
-    session_cookie: SessionCookieSettings = Field(
-        default_factory=SessionCookieSettings,
-        description="Настройки сессии"
-    )
-
     jinja: JinjaSettings = Field(
         default_factory=JinjaSettings,
         description="Настройки Jinja2"
-    )
-
-    pagination: PaginationSettings = Field(
-        default_factory=PaginationSettings,
-        description="Настройки пагинации"
     )
 
     rabbitmq: RabbitMQConfig = Field(

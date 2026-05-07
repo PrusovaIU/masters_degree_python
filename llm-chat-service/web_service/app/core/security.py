@@ -56,10 +56,7 @@ class AuthCookieMiddleware(BaseHTTPMiddleware):
         :param settings: Настройки приложения.
         :return: True, если запрос не требует аутентификации, иначе False.
         """
-        return (
-                request.url.path.startswith(settings.jinja.static_url) or
-                request.url.path in self.__PASS_ENDPONTS
-        )
+        return request.url.path in self.__PASS_ENDPONTS
 
     async def _get_or_refresh_token(
             self,

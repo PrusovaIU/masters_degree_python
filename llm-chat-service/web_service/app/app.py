@@ -45,7 +45,6 @@ class App:
 
     async def lifespan(self, app: FastAPI) -> AsyncGenerator:
         await self._rabbitmq_client.connect()
-        app.state.static_url = self.settings.jinja.static_url
         app.state.access_token_cookie_name = (
             self.settings.auth_cookie.access_token_cookie_name
         )
