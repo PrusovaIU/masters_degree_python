@@ -95,7 +95,6 @@ class JWTConfig(BaseModel):
         return self
 
 
-
 class OpenRouterConfig(BaseModel):
     """
     Схема настроек OpenRouter

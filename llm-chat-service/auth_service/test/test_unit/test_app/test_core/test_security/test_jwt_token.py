@@ -21,6 +21,7 @@ EXPIRES_DELTA = timedelta(minutes=15)
 SECRET_KEY = "test_secret_key"
 ALG = "HS256"
 
+
 @pytest.mark.parametrize("subject", SUBJECT_PARAMS)
 @pytest.mark.parametrize("payload", [
     pytest.param(None, id="None"),

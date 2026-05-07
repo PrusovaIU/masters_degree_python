@@ -1,11 +1,8 @@
-from unittest.mock import AsyncMock, patch
-
-import fakeredis.aioredis
 import pytest
 from fakeredis.aioredis import FakeRedis
 
 from chat_api_service.app.infra.redis import RedisClient
-from chat_api_service.app.schemas.config import RateLimitingConfig, RedisConfig
+from chat_api_service.app.schemas.config import RedisConfig
 
 
 @pytest.mark.asyncio
@@ -147,6 +144,7 @@ async def test_release_lock_does_not_clear_rate_limit_keys(
 
     await RedisClient.release_lock("some_lock_key")
     assert await fake_redis_client.zcard(rl_key) == 1
+
 
 @pytest.mark.asyncio
 async def test_release_lock_does_not_affect_idempotency_cache(

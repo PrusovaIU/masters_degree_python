@@ -5,7 +5,8 @@ from libs.base_exception import AppException
 
 class UserAlreadyExistsError(AppException):
     """
-    Ошибка, возникающая при попытке создать пользователя, который уже существует.
+    Ошибка, возникающая при попытке создать пользователя, который уже
+    существует.
     """
     @property
     def exc_status_code(self) -> int:

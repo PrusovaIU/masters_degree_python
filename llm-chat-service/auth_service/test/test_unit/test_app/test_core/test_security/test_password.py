@@ -45,6 +45,7 @@ def test_negative(pwd_context: PWDContextType):
     )
     assert success is False
 
+
 def test_hash_password_is_deterministic_for_verification(
         pwd_context: PWDContextType
 ):

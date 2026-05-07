@@ -1,6 +1,9 @@
 import os
 
-os.environ.setdefault('CELERY_CUSTOM_WORKER_POOL', 'celery_aio_pool.pool:AsyncIOPool')
+os.environ.setdefault(
+    'CELERY_CUSTOM_WORKER_POOL',
+    'celery_aio_pool.pool:AsyncIOPool'
+)
 
 from celery import Celery
 

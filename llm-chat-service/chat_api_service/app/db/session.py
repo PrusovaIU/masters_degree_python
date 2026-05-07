@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
 
 class DBSession:
     """Класс для работы с сессией БД"""
-    _engine : AsyncEngine | None = None
+    _engine: AsyncEngine | None = None
     _async_session_maker: async_sessionmaker[AsyncSession] | None = None
     _has_setup: bool = False
 

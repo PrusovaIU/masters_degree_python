@@ -11,7 +11,6 @@ ROLE = "test_role"
 PAYLOAD = {"test": "test"}
 
 
-
 class TestTokenData:
     def test_new_access_token(self):
         """

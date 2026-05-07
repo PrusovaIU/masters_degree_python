@@ -1,11 +1,8 @@
-from unittest.mock import AsyncMock, patch
-
-import fakeredis.aioredis
 import pytest
 from fakeredis.aioredis import FakeRedis
 
 from chat_api_service.app.infra.redis import RedisClient
-from chat_api_service.app.schemas.config import RateLimitingConfig, RedisConfig
+from chat_api_service.app.schemas.config import RedisConfig
 
 
 @pytest.mark.asyncio
@@ -21,6 +18,7 @@ async def test_clean_up_returns_zero_when_no_keys_exist(
     """
     result = await RedisClient.clean_up()
     assert result == 0
+
 
 @pytest.mark.asyncio
 async def test_clean_up_deletes_keys_with_ttl_greater_than_config(
@@ -73,6 +71,7 @@ async def test_clean_up_preserves_keys_with_ttl_less_or_equal_to_config(
     for key in valid_keys:
         assert await fake_redis_client.exists(key) == 1
         assert await fake_redis_client.ttl(key) > 0
+
 
 @pytest.mark.asyncio
 async def test_clean_up_boundary_exact_ttl(

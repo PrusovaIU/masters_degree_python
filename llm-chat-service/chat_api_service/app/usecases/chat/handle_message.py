@@ -28,7 +28,7 @@ class ChatNewMessageUsecase:
             idempotency_key: str,
             rabbitmq_exchange: str,
             temperature: float = 0.7,
-            logger = None
+            logger=None
     ):
         self._repo = message_repository
         self._openrouter_client = openrouter_client
@@ -284,7 +284,6 @@ class ChatNewMessageUsecase:
             message_status.model_dump_json().encode("utf-8"),
             f"{self._rabbitmq_exchange}_{self._conversation_id}"
         )
-
 
     async def _change_status(self, assistant_message_id: UUID) -> None:
         """

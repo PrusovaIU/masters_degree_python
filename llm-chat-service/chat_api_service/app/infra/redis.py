@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from json import dumps, loads
+from json import loads
 
 import redis.asyncio as aioredis
 from loguru import logger

@@ -5,7 +5,7 @@ import pytest
 from fakeredis.aioredis import FakeRedis
 
 from chat_api_service.app.infra.redis import RedisClient
-from chat_api_service.app.schemas.config import RateLimitingConfig, RedisConfig
+from chat_api_service.app.schemas.config import RedisConfig
 from libs.schemas.llm_query import LLMQueryResponse, LLMTasksStatus
 
 

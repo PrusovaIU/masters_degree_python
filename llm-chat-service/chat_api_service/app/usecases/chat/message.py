@@ -88,7 +88,7 @@ class MessageUsecase:
                 f"(сообщение не было возвращено)"
             )
             raise UpdateMessageError(
-                f"Ошибка обновления статуса сообщения",
+                "Ошибка обновления статуса сообщения",
                 message_id=message_id
             )
         return new_message

@@ -191,7 +191,6 @@ async def get_history_before(
     return history
 
 
-
 @router_conversation.patch(
     "/messages/{message_id}/status",
     response_model=MessageResponse,
@@ -293,7 +292,7 @@ async def get_message(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=err.detail_jsonable_encoder
         )
-    return MessageResponse.model_validate(message,from_attributes=True)
+    return MessageResponse.model_validate(message, from_attributes=True)
 
 
 @router_conversation.get(
@@ -342,5 +341,3 @@ async def info(
         conv_data,
         from_attributes=True
     )
-
-

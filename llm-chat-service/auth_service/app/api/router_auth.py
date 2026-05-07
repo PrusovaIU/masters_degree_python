@@ -15,6 +15,7 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+
 @router.post(
     "/register",
     response_model=auth_schemas.RegisterResponse,

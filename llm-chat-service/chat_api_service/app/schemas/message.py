@@ -9,6 +9,3 @@ class MessageCreate(BaseModel):
     content: str = Field(min_length=1, max_length=65536)
     status: MessageStatus | str
     metadata: dict | None = Field(default=None)
-
-
-
