@@ -1,5 +1,3 @@
-# tests/unit/infra/test_redis_cache_idempotency.py
-
 import json
 import pytest
 from fakeredis.aioredis import FakeRedis

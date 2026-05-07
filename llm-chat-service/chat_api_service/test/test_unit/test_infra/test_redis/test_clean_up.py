@@ -1,5 +1,3 @@
-# tests/unit/infra/test_redis_clean_up.py
-
 import pytest
 import fakeredis.aioredis
 from fakeredis.aioredis import FakeRedis

@@ -1,5 +1,3 @@
-# tests/unit/infra/test_redis_release_lock.py
-
 import pytest
 import fakeredis.aioredis
 from unittest.mock import patch, AsyncMock
