@@ -1,5 +1,4 @@
-from libs.schemas.auth import (LoginResponse, RegisterRequest,
-                               RegisterResponse)
+from libs.schemas.auth import LoginResponse, RegisterRequest, RegisterResponse
 from libs.schemas.user import UserPublic
 from web_service.app.core.exceptions import auth_usecase as usecase_errors
 from web_service.app.schemas.config import Settings

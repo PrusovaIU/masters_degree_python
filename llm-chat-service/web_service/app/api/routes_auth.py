@@ -25,7 +25,12 @@ async def login_page(
         access_token: AccessTokenDep,
         registered: bool = False
 ):
-    """Страница входа"""
+    """
+    :param request: Запрос пользователя.
+    :param access_token: Access токен.
+    :param registered: Флаг, указывающий на успешную регистрацию.
+    :return: Страница входа.
+    """
     if access_token:
         return RedirectResponse(
             url="/chat",
@@ -53,7 +58,14 @@ async def login_process(
         password: str = Form()
 ):
     """
-    Обработка POST-запроса с формой входа
+    Обработка запроса логирования.
+
+    :param request: Запрос пользователя.
+    :param auth_usecase: Usecase для авторизации.
+    :param username: Имя пользователя.
+    :param password: Пароль пользователя.
+
+    :return: Страница чата, если авторизация успешна. Иначе - страница входа.
     """
     settings: Settings = request.app.state.settings
     try:
@@ -104,7 +116,11 @@ async def register_page(
         request: Request,
         access_token: AccessTokenDep
 ):
-    """Страница регистрации"""
+    """
+    :param request: Запрос пользователя.
+    :param access_token: Токен доступа.
+    :return: Страница регистрации.
+    """
     if access_token:
         return RedirectResponse(
             url="/chat",
