@@ -134,6 +134,30 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+    /* Стили для пустого состояния чата */
+    .empty-chat-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #6c757d;
+        z-index: 1;
+        pointer-events: none;
+        width: 100%;
+        padding: 20px;
+    }
+    .empty-chat-message.hidden {
+        display: none;
+    }
+    .empty-chat-message h4 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+    .empty-chat-message p {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
 </style>
 {% endblock %}
 
@@ -152,6 +176,12 @@
         <!-- Индикатор загрузки старых сообщений -->
         <div class="load-more-indicator" id="loadMoreIndicator">
             <span class="spinner"></span>Загрузка сообщений...
+        </div>
+
+        <!-- Сообщение о пустом чате (изначально скрыто, будет показано если нет сообщений) -->
+        <div class="empty-chat-message" id="emptyChatMessage">
+            <h4>Нет сообщений</h4>
+            <p>Начните диалог, отправив первое сообщение</p>
         </div>
 
         {% if error %}
@@ -199,11 +229,6 @@
                 </div>
             </div>
             {% endfor %}
-        {% else %}
-        <div class="text-center text-muted py-5">
-            <h4>Нет сообщений</h4>
-            <p>Начните диалог, отправив первое сообщение</p>
-        </div>
         {% endif %}
 
         <!-- Индикатор печатания -->
@@ -255,12 +280,23 @@ const typingIndicator = document.getElementById('typingIndicator');
 const temperatureSlider = document.getElementById('temperature');
 const tempValue = document.getElementById('tempValue');
 const loadMoreIndicator = document.getElementById('loadMoreIndicator');
+const emptyChatMessage = document.getElementById('emptyChatMessage');
 
 // Параметры для бесконечной прокрутки
 let oldestMessageId = null;  // ID самого старого загруженного сообщения
 let isLoadingOlder = false;   // Флаг загрузки старых сообщений
 let hasMoreMessages = true;   // Есть ли ещё сообщения для загрузки
 const LOAD_BATCH_SIZE = 20;   // Количество сообщений за одну загрузку
+
+// Функция для показа/скрытия сообщения о пустом чате
+function toggleEmptyStateMessage() {
+    const messages = messagesArea.querySelectorAll('.message[data-message-id]');
+    if (messages.length === 0) {
+        emptyChatMessage.classList.remove('hidden');
+    } else {
+        emptyChatMessage.classList.add('hidden');
+    }
+}
 
 // SSE подключение для real-time обновлений
 let eventSource = null;
@@ -354,6 +390,9 @@ async function loadOlderMessages() {
         isLoadingOlder = false;
         loadMoreIndicator.classList.remove('show');
     }
+
+    // Обновляем состояние пустого чата после загрузки старых сообщений
+    toggleEmptyStateMessage();
 }
 
 // Создание элемента сообщения (универсальная функция)
@@ -598,6 +637,8 @@ function addTemporaryMessage(role, content) {
     `;
     messagesArea.insertBefore(messageDiv, loadMoreIndicator);
     scrollToBottom();
+    // Скрываем сообщение о пустом чате при добавлении первого сообщения
+    toggleEmptyStateMessage();
     return tempId;
 }
 
@@ -620,6 +661,8 @@ function addMessage(role, content, messageId = null, status = 'delivered', metad
     const messageDiv = createMessageElement(role, content, messageId, status, metadata, createdAt);
     messagesArea.insertBefore(messageDiv, loadMoreIndicator);
     scrollToBottom();
+    // Скрываем сообщение о пустом чате при добавлении сообщения
+    toggleEmptyStateMessage();
 }
 
 // Escape HTML для безопасности
@@ -633,6 +676,9 @@ function escapeHtml(text) {
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализируем самый старый ID сообщения
     initOldestMessageId();
+
+    // Показываем/скрываем сообщение о пустом чате
+    toggleEmptyStateMessage();
 
     // Подключаем обработчик прокрутки
     messagesArea.addEventListener('scroll', handleScroll);
