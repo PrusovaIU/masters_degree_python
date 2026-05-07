@@ -29,12 +29,51 @@
             border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-content {
+            flex: 1;
         }
 
         h1 {
             color: #333;
             font-size: 24px;
             margin-bottom: 10px;
+        }
+
+        .header p {
+            margin: 0;
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            padding: 10px 24px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .logout-btn:active {
+            transform: translateY(0);
         }
 
         /* Tabs */
@@ -266,8 +305,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Админ-панель чата</h1>
-            <p>Управление задачами и диалогами пользователей</p>
+            <div class="header-content">
+                <h1>Админ-панель чата</h1>
+                <p>Управление задачами и диалогами пользователей</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                🚪 Выйти в чат
+            </button>
         </div>
 
         <div class="tabs">
@@ -314,6 +358,14 @@
         let currentOffset = 0;
         let currentLimit = 20;
         let currentTotal = 0;
+
+        // Logout function - redirect to /chat
+        function logout() {
+            // Optional: Add confirmation dialog
+            if (confirm('Вы действительно хотите выйти из админ-панели и перейти в чат?')) {
+                window.location.href = '/chat';
+            }
+        }
 
         function switchTab(tab, event) {
             // Update buttons
