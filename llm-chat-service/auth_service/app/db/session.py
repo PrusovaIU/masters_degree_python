@@ -1,15 +1,14 @@
 from collections.abc import AsyncGenerator
-
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, \
-    AsyncEngine, AsyncSession
+from contextlib import asynccontextmanager
 
 from loguru import logger
-from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    async_sessionmaker, create_async_engine)
 
 
 class DBSession:
     """Класс для работы с сессией БД"""
-    _engine : AsyncEngine | None = None
+    _engine: AsyncEngine | None = None
     _async_session_maker: async_sessionmaker[AsyncSession] | None = None
     _has_setup: bool = False
 

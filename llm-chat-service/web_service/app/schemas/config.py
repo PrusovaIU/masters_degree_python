@@ -1,10 +1,10 @@
 from typing import Self
 
-from pydantic import Field, BaseModel, model_validator
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from libs.schemas.config import LogConfig, CORSSettings, RabbitMQConfig
-from fastapi.templating import Jinja2Templates
+from libs.schemas.config import CORSSettings, LogConfig, RabbitMQConfig
 
 
 class ServiceSettings(BaseModel):
@@ -93,7 +93,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         env_nested_delimiter="__",
-        env_file="/home/hex/git/masters_degree_python/llm-chat-service/web_service/.env"
+        env_file=".env"
     )
     app_name: str = Field(
         default="Chat API service",

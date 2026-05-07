@@ -1,5 +1,7 @@
-from fastapi import Request, Depends, HTTPException, status
 from typing import Annotated
+
+from fastapi import Depends, HTTPException, Request, status
+
 from web_service.app.core.cookie import get_user_cookie
 from web_service.app.schemas.config import Settings
 from web_service.app.schemas.user import User

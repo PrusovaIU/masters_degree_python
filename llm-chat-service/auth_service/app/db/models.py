@@ -1,4 +1,5 @@
-from sqlalchemy import String, Enum as SQLEnum, Integer
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from auth_service.app.consts.user_role import UserRole

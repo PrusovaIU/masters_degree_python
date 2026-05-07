@@ -4,14 +4,15 @@ from uuid import UUID
 from loguru import logger
 
 from chat_api_service.app.db.models import Conversation, Message
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 from chat_api_service.app.repositories.conversation import \
     ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
+from libs.schemas.conversation import (ConversationHistoryBeforeResponse,
+                                       ConversationHistoryResponse,
+                                       ConversationResponse)
 from libs.schemas.message import MessageResponse
-from libs.schemas.conversation import \
-    ConversationHistoryResponse, ConversationResponse, ConversationHistoryBeforeResponse
 from libs.schemas.pagination import PaginationMeta
-from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 
 
 class ConversationUsecase:

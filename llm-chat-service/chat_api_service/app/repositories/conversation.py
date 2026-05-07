@@ -2,11 +2,11 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from loguru import logger
-from sqlalchemy import select, desc, func
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from chat_api_service.app.core.exceptions.conversation import \
-    ConversationAccessDenied, ConversationNotFound
+from chat_api_service.app.core.exceptions.conversation import (
+    ConversationAccessDenied, ConversationNotFound)
 from chat_api_service.app.db.models import Conversation, Message
 
 

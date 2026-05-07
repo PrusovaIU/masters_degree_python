@@ -1,8 +1,9 @@
-from datetime import datetime, timezone, timedelta
-from json import loads, dumps
+from datetime import datetime, timedelta, timezone
+from json import loads
 
 import redis.asyncio as aioredis
 from loguru import logger
+
 from chat_api_service.app.schemas.config import RedisConfig
 from libs.schemas.llm_query import LLMQueryResponse
 

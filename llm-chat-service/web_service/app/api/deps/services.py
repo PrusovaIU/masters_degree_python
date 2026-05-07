@@ -1,7 +1,9 @@
-from web_service.app.services.auth_client import AuthClient
-from web_service.app.core.config import settings
 from typing import Annotated
+
 from fastapi import Depends
+
+from web_service.app.core.config import settings
+from web_service.app.services.auth_client import AuthClient
 from web_service.app.services.chat_client import ChatAPIServiceClient
 
 

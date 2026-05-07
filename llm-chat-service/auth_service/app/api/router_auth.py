@@ -4,17 +4,17 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from auth_service.app.api.deps import AuthUseCaseDep, UserDataDep
+from auth_service.app.consts.user_role import UserRole
 from auth_service.app.core.config import settings
 from libs.schemas import auth as auth_schemas
-from libs.schemas.user import UserPublic
-from auth_service.app.consts.user_role import UserRole
 from libs.schemas.error_detail import Detail
-
+from libs.schemas.user import UserPublic
 
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
 )
+
 
 @router.post(
     "/register",

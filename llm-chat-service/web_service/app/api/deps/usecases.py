@@ -1,14 +1,16 @@
-from web_service.app.usecases.auth import AuthUsecase
-from fastapi import Depends
 from typing import Annotated
-from .services import AuthClientDep, ChatClientDep
+
+from fastapi import Depends, Request
+
 from web_service.app.core.config import settings
-from web_service.app.usecases.chat import ChatUsecase
-from web_service.app.usecases.stream_chat import StreamChatUsecase
-from fastapi import Request
 from web_service.app.infra.rabbitmq import RabbitMQClient
 from web_service.app.schemas.config import Settings
 from web_service.app.usecases.admin import AdminUsecase
+from web_service.app.usecases.auth import AuthUsecase
+from web_service.app.usecases.chat import ChatUsecase
+from web_service.app.usecases.stream_chat import StreamChatUsecase
+
+from .services import AuthClientDep, ChatClientDep
 
 
 def auth_usecase(auth_client: AuthClientDep) -> AuthUsecase:

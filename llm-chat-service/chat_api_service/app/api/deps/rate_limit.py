@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Depends, HTTPException, Request, status
 
-from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.core.config import settings
+from chat_api_service.app.infra.redis import RedisClient
 
 
 async def rate_limit_dependency(

@@ -1,11 +1,10 @@
-from aio_pika import connect_robust, Channel, Connection
-import json
 import asyncio
+import json
+from collections.abc import AsyncGenerator, AsyncIterator
 
+from aio_pika import Channel, Connection, connect_robust
 from aio_pika.abc import AbstractIncomingMessage
 from loguru import logger
-from contextlib import asynccontextmanager, contextmanager
-from collections.abc import AsyncGenerator, AsyncIterator
 
 
 class RabbitMQClient:

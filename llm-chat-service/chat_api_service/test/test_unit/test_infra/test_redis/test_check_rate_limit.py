@@ -28,6 +28,7 @@ async def test_allows_request_under_limit(
     count = await fake_redis_client.zcard(key)
     assert count == 3
 
+
 @pytest.mark.asyncio
 async def test_blocks_request_at_limit(
         fake_redis_client: FakeRedis,
@@ -47,6 +48,7 @@ async def test_blocks_request_at_limit(
 
     result = await RedisClient.check_rate_limit(user_id)
     assert result is False, "6-й запрос должен быть заблокирован"
+
 
 @pytest.mark.asyncio
 async def test_sliding_window_removes_old_entries(
@@ -81,6 +83,7 @@ async def test_sliding_window_removes_old_entries(
     count = await fake_redis_client.zcard(key)
     assert count == 1
 
+
 @pytest.mark.asyncio
 async def test_ttl_set_on_rate_limit_key(
         fake_redis_client: FakeRedis,
@@ -103,6 +106,7 @@ async def test_ttl_set_on_rate_limit_key(
     # TTL должен быть примерно равен window + 1 (из-за expire(key, window + 1))
     assert window <= ttl <= window + 2, \
         f"Ожидался TTL ~{window + 1}, получен {ttl}"
+
 
 @pytest.mark.asyncio
 async def test_different_users_have_separate_limits(

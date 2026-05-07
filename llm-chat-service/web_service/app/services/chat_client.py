@@ -1,19 +1,19 @@
+from functools import wraps
 from typing import Type
 from uuid import UUID
 
-from httpx import HTTPStatusError, TimeoutException
 from fastapi import status
-
-from web_service.app.core.utils.httpx_client import BaseClient, error_handler_decorator
-from libs.schemas import conversation as conv_schemas
-from libs.schemas.pagination import PaginationRequest
+from httpx import HTTPStatusError, TimeoutException
 from loguru import logger
-from web_service.app.core.exceptions import chat_api_client as errors
-from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
-from functools import wraps
-from libs.schemas.message import MessageStatusUpdate
-from libs.schemas.message import MessageResponse
+
+from libs.schemas import conversation as conv_schemas
 from libs.schemas.llm import CeleryTaskResponse
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
+from libs.schemas.message import MessageResponse, MessageStatusUpdate
+from libs.schemas.pagination import PaginationRequest
+from web_service.app.core.exceptions import chat_api_client as errors
+from web_service.app.core.utils.httpx_client import (BaseClient,
+                                                     error_handler_decorator)
 
 
 def conv_error_handler(
@@ -30,7 +30,11 @@ def conv_error_handler(
         @wraps(func)
         async def wrapper(*args, conversation_id: UUID, **kwargs):
             try:
-                return await func(*args, conversation_id=conversation_id, **kwargs)
+                return await func(
+                    *args,
+                    conversation_id=conversation_id,
+                    **kwargs
+                )
             except HTTPStatusError as err:
                 match err.response.status_code:
                     case status.HTTP_403_FORBIDDEN:
@@ -130,7 +134,6 @@ def msg_error_handler(
                 )
         return wrapper
     return decorator
-
 
 
 class ChatAPIServiceClient(BaseClient):
@@ -234,7 +237,6 @@ class ChatAPIServiceClient(BaseClient):
 
         :return: Обновленное сообщение.
         """
-        title = "Ошибка изменения статуса сообщения"
         async with self._get_client(access_token) as client:
             resp = await client.patch(
                 f"/conversation/messages/{message_id}/status",
@@ -482,7 +484,7 @@ class ChatAPIServiceClient(BaseClient):
             match err.response.status_code:
                 case status.HTTP_403_FORBIDDEN:
                     logger.error(
-                        f"Доступ к эндпоинту разрешен только администраторам"
+                        "Доступ к эндпоинту разрешен только администраторам"
                     )
                     raise errors.AccessException(
                         "Доступ запрещен",
@@ -542,7 +544,7 @@ class ChatAPIServiceClient(BaseClient):
         except HTTPStatusError as err:
             match err.response.status_code:
                 case status.HTTP_403_FORBIDDEN:
-                    logger.error(f"Доступ запрещен")
+                    logger.error("Доступ запрещен")
                     raise errors.AccessException("Доступ запрещен", None)
                 case _:
                     logger.error(
@@ -562,4 +564,3 @@ class ChatAPIServiceClient(BaseClient):
                 "Не удалось получить список диалогов"
             )
         return conv_schemas.ConversationListResponse(**resp.json())
-

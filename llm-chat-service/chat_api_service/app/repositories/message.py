@@ -2,12 +2,12 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select, desc, update, func
+from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from libs.consts.message import MessageStatus
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.schemas.message import MessageCreate
+from libs.consts.message import MessageStatus
 
 
 class MessageRepository:

@@ -19,4 +19,3 @@ def chat():
         url="/chat/conversation/all",
         status_code=status.HTTP_302_FOUND
     )
-

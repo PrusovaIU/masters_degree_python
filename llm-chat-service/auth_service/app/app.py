@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
+from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 
 from auth_service.app.api import routers
@@ -8,7 +9,7 @@ from auth_service.app.core.security.password import PWDContext
 from auth_service.app.db.base import Base
 from auth_service.app.db.session import DBSession
 from auth_service.app.schemas.config import Settings
-from loguru import logger
+
 
 class App:
     def __init__(self, config: Settings):

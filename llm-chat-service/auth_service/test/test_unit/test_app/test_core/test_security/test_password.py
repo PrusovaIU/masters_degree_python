@@ -1,5 +1,6 @@
-from auth_service.app.core.security.password import PWDContext
 import pytest
+
+from auth_service.app.core.security.password import PWDContext
 
 PWDContextType = type[PWDContext]
 
@@ -43,6 +44,7 @@ def test_negative(pwd_context: PWDContextType):
         TEST_WRONG_PASSWORD, hash_password
     )
     assert success is False
+
 
 def test_hash_password_is_deterministic_for_verification(
         pwd_context: PWDContextType

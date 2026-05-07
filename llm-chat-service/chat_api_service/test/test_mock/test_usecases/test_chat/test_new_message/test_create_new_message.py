@@ -1,19 +1,16 @@
 from collections.abc import Generator
-
-import pytest
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, Mock
 from uuid import uuid4
-from datetime import datetime, timezone
 
+import pytest
 from pytest_mock import MockerFixture
 
-from chat_api_service.app.usecases.chat import new_message
-from libs.consts.message import MessageStatus, SenderType
-from libs.consts.llm_tasks import LLMTasksStatus
-from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 from chat_api_service.app.db.models import Message
-
-
+from chat_api_service.app.usecases.chat import new_message
+from libs.consts.llm_tasks import LLMTasksStatus
+from libs.consts.message import MessageStatus, SenderType
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 
 USER_ID = "test_user_123"
 CONVERSATION_ID = uuid4()

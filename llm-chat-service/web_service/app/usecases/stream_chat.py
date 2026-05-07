@@ -1,9 +1,8 @@
+from collections.abc import AsyncGenerator
 from uuid import UUID
 
-from web_service.app.services.chat_client import ChatAPIServiceClient
-
 from web_service.app.infra.rabbitmq import RabbitMQClient
-from collections.abc import AsyncGenerator
+from web_service.app.services.chat_client import ChatAPIServiceClient
 
 
 class StreamChatUsecase:
@@ -43,4 +42,3 @@ class StreamChatUsecase:
         async for message in self._rabbit_client.consume_messages(
                 queue_name=queue_name):
             yield message
-

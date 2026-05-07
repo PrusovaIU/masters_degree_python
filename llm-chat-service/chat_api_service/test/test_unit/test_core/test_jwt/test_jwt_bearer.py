@@ -1,9 +1,10 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
 from fastapi import HTTPException, Request, status
+from pytest_mock import MockerFixture
 
 from chat_api_service.app.core import jwt
-from pytest_mock import MockerFixture
 from libs.jwt_token.token_data import TokenUserData
 
 
@@ -40,7 +41,6 @@ def mock_request():
     pytest.param("Token abc123", id="wrong_scheme"),
 
 ])
-
 def test_fail_401(
         bearer_instance: jwt.JWTBearer,
         mock_request: MagicMock,

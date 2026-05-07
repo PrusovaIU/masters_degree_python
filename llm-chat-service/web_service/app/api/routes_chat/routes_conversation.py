@@ -1,14 +1,16 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+from fastapi.responses import (HTMLResponse, JSONResponse, RedirectResponse,
+                               StreamingResponse)
+from loguru import logger
 
+from libs.schemas.conversation import ConversationHistoryBeforeResponse
 from web_service.app.api.deps.current_user import AccessTokenDep
-from web_service.app.api.deps.usecases import ChatUsecaseDep, StreamChatUsecaseDep
+from web_service.app.api.deps.usecases import (ChatUsecaseDep,
+                                               StreamChatUsecaseDep)
 from web_service.app.core.exceptions import chat_api_client as errors
 from web_service.app.schemas.config import Settings
-from loguru import logger
-from libs.schemas.conversation import ConversationHistoryBeforeResponse
 
 router_conversation = APIRouter(prefix="/conversation")
 
@@ -32,7 +34,16 @@ async def conversations_list_page(
         page: int = 1,
         created: bool = False
 ):
-    """Главная страница чата — список диалогов"""
+    """
+    :param request: Запрос пользователя.
+    :param access_token: Access token пользователя.
+    :param usecase: Usecase для работы с диалогами.
+    :param limit: Лимит диалогов на странице.
+    :param page: Номер страницы.
+    :param created: Флаг, указывающий на успешное создание диалога.
+
+    :returns: Страница списка диалогов.
+    """
     conversations, total_pages, total = await usecase.conversation_all(
         access_token, limit, page
     )
@@ -61,7 +72,12 @@ async def new_conversation_page(
         request: Request,
         access_token: AccessTokenDep
 ):
-    """Страница создания нового диалога"""
+    """
+    :param request: Запрос пользователя.
+    :param access_token: Проверка авторизации пользователя.
+
+    :return: Страница создания нового диалога.
+    """
     return request.app.state.settings.jinja.templates.TemplateResponse(
         request=request,
         name=Templates.NEW_CONVERSATION,
@@ -87,6 +103,8 @@ async def new_conversation(
     :param access_token: Access token пользователя.
     :param usecase: Usecase для работы с диалогами.
     :param title: Заголовок диалога.
+
+    :return: Редирект на страницу списка диалогов.
     """
     try:
         await usecase.new_conversation(access_token, title)
@@ -103,7 +121,7 @@ async def new_conversation(
         )
     else:
         response = RedirectResponse(
-            url=f"/chat/conversation/all?created=true",
+            url="/chat/conversation/all?created=true",
             status_code=status.HTTP_302_FOUND
         )
     return response
@@ -122,7 +140,15 @@ async def conversation_page(
         limit: int = 10,
         page: int = 1
 ):
-    """Страница диалога"""
+    """
+    :param request: Запрос пользователя.
+    :param access_token: Access token пользователя.
+    :param usecase: Usecase для работы с диалогами.
+    :param conversation_id: Идентификатор диалога.
+    :param limit: Лимит сообщений на странице.
+    :param page: Номер страницы.
+    :return: Страница диалога.
+    """
     settings: Settings = request.app.state.settings
     try:
         messages, total_pages, total = await usecase.conversation_history(
@@ -180,7 +206,13 @@ async def stream_conversation_updates(
         usecase: StreamChatUsecaseDep
 ):
     """
-    SSE эндпоинт для получения real-time обновлений чата
+    SSE эндпоинт для получения real-time обновлений чата.
+
+    :param access_token: Access token пользователя.
+    :param conversation_id: Идентификатор диалога.
+    :param usecase: Usecase для работы с диалогами.
+
+    :return: StreamingResponse с событиями появления новых сообщений в чате.
     """
     try:
         event_stream = usecase.event_generator(
@@ -309,6 +341,3 @@ async def history_before(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(err)
         )
-
-
-

@@ -1,14 +1,14 @@
-from libs.jwt_token import token_data
-from libs.jwt_token.consts import TokenType
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+
 import pytest
 
+from libs.jwt_token import token_data
+from libs.jwt_token.consts import TokenType
 
 SUB = "test_sub"
 EXP = timedelta(seconds=10)
 ROLE = "test_role"
 PAYLOAD = {"test": "test"}
-
 
 
 class TestTokenData:

@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import patch
-
 from fakeredis.aioredis import FakeRedis
 
 from chat_api_service.app.infra.redis import RedisClient

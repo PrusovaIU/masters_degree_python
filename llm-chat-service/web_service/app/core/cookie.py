@@ -1,10 +1,12 @@
-from fastapi import Response, Request
+from fastapi import Request, Response
+from loguru import logger
 
 from libs.schemas.user import UserPublic
-from web_service.app.schemas.config import AuthCookieSettings, CookieSettings, Settings
+from web_service.app.schemas.config import (AuthCookieSettings, CookieSettings,
+                                            Settings)
 from web_service.app.schemas.user import User
+
 from .exceptions.cookie import CookieUnfoundException
-from loguru import logger
 
 
 def set_access_token_cookie(
@@ -147,7 +149,6 @@ def get_user_cookie(
             "Cookie не найден",
             cookie_name=str(err)
         )
-
 
 
 def clear_auth_cookies(

@@ -1,7 +1,9 @@
 from typing import Annotated
 
 from fastapi import Depends
+
 from auth_service.app.usecases.auth import AuthUseCase
+
 from .db import UserRepoDep
 
 

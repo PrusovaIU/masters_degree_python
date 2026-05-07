@@ -1,10 +1,12 @@
 from typing import Annotated
 
-from chat_api_service.app.usecases.chat.message import MessageUsecase
-from chat_api_service.app.usecases.chat.conversation import ConversationUsecase
-from .db import ConversationRepoDep, MessagesRepoDep
 from fastapi import Depends
+
 from chat_api_service.app.usecases.admin.tasks import TasksUsecase
+from chat_api_service.app.usecases.chat.conversation import ConversationUsecase
+from chat_api_service.app.usecases.chat.message import MessageUsecase
+
+from .db import ConversationRepoDep, MessagesRepoDep
 
 
 def conversation_usecase(

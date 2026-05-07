@@ -1,4 +1,4 @@
-from .security import SecurityError, AuthError
+from .security import AuthError, SecurityError
 
 
 class PasswordHashError(SecurityError):

@@ -1,9 +1,9 @@
+from math import ceil
 from uuid import UUID
 
-from web_service.app.services.chat_client import ChatAPIServiceClient
 from libs.schemas import conversation as schemas
-from math import ceil
 from libs.schemas.llm_query import LLMQueryResponse
+from web_service.app.services.chat_client import ChatAPIServiceClient
 
 
 class ChatUsecase:

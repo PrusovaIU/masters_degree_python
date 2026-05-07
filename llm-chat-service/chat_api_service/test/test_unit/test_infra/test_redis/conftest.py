@@ -1,13 +1,11 @@
-from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, AsyncMock, MagicMock
+from datetime import datetime, timezone
+from unittest.mock import patch
 
-import pytest
 import fakeredis.aioredis
-from freezegun import freeze_time
+import pytest
 
-from chat_api_service.app.schemas.config import RedisConfig, RateLimitingConfig
 from chat_api_service.app.infra.redis import RedisClient
-
+from chat_api_service.app.schemas.config import RateLimitingConfig, RedisConfig
 
 
 @pytest.fixture
@@ -83,4 +81,3 @@ def mock_datetime_now(mock_datetime_helper):
         )
 
     return _freeze
-

@@ -1,10 +1,10 @@
 from collections.abc import Callable
+from functools import wraps
+
+from loguru import logger
+from passlib.context import CryptContext
 
 from auth_service.app.core.exceptions import password as passwd_errors
-
-from passlib.context import CryptContext
-from loguru import logger
-from functools import wraps
 
 
 class PWDContext:

@@ -1,12 +1,10 @@
-# tests/unit/infra/test_redis_check_idempotency.py
-
 import json
+
 import pytest
 from fakeredis.aioredis import FakeRedis
-from unittest.mock import patch
 
-from chat_api_service.app.schemas.config import RedisConfig, RateLimitingConfig
 from chat_api_service.app.infra.redis import RedisClient
+from chat_api_service.app.schemas.config import RedisConfig
 
 
 @pytest.mark.asyncio

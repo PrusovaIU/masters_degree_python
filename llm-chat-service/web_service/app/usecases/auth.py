@@ -1,16 +1,8 @@
-from starlette.responses import RedirectResponse
-
+from libs.schemas.auth import LoginResponse, RegisterRequest, RegisterResponse
 from libs.schemas.user import UserPublic
+from web_service.app.core.exceptions import auth_usecase as usecase_errors
 from web_service.app.schemas.config import Settings
 from web_service.app.services.auth_client import AuthClient
-from fastapi import Request
-from web_service.app.services.auth_client import AuthClient
-from libs.schemas.auth import (
-    RegisterRequest, RegisterResponse, LoginResponse,
-    RefreshTokenRequest, RefreshTokenResponse
-)
-from web_service.app.core.exceptions import auth_client as errors
-from web_service.app.core.exceptions import auth_usecase as usecase_errors
 
 
 class AuthUsecase:
@@ -33,7 +25,9 @@ class AuthUsecase:
         Получение данных пользователя.
 
         :param access_token: Токен доступа.
-        :return: Данные пользователя, если пользователь авторизован, иначе None.
+
+        :return: Данные пользователя, если пользователь авторизован,
+            иначе None.
         """
         return await AuthClient.get_me(access_token)
 

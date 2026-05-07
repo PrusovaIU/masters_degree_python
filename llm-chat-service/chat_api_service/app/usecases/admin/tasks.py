@@ -1,8 +1,9 @@
 from uuid import UUID
 
 from celery.result import AsyncResult
-from libs.schemas.llm import CeleryTaskResponse
+
 from chat_api_service.app.tasks.llm_tasks import llm_request
+from libs.schemas.llm import CeleryTaskResponse
 
 
 class TasksUsecase:

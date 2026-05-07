@@ -1,5 +1,5 @@
-from fastapi.responses import RedirectResponse
 from fastapi import status
+from fastapi.responses import RedirectResponse
 
 LOGIN_REDIRECT = RedirectResponse(
     url="/auth/login",
