@@ -6,7 +6,7 @@
 
 Для пользователей с иными ролями данный функционал недоступен:
 
-[![Админка](enter/403_forbidden_preview.png)](https://disk.yandex.ru/i/TdAfeFdTRwNbew)
+[![Админка](enter/403_forbidden_preview.png)](https://disk.yandex.ru/i/-CVzBR6aBgt6-Q)
 
 ## Статус задачи по ID
 
