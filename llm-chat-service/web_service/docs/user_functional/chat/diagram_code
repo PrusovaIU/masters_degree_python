@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant Client as Клиент (Frontend)
+    participant Backend as Backend Server
+    participant RabbitMQ as RabbitMQ
+    participant API as chat_api_service
+
+    %% Установка SSE соединения
+    Client->>Backend: GET /chat/conversation/{id}/stream
+    Backend->>RabbitMQ: Subscribe to queue (conversation_id)
+    RabbitMQ-->>Backend: Connection established
+    Backend-->>Client: SSE connection opened (200 OK)
+
+    %% Отправка сообщения пользователем
+    Client->>Backend: POST /chat/conversation/{id}/query
+    Backend->>API: Сохранить сообщение пользователя
+    API-->>Backend: message_id
+    Backend-->>Client: message_id
+
+
+    API->>API: Process message
+    API->>RabbitMQ: Publish event (message_id, answer_id, conversation_id, user_id)
+    RabbitMQ-->>Backend: Event received
+
+    Backend->>API: GET /chat/message/{message_id}
+    API-->>Backend: Message data
+
+    %% Завершение генерации
+    API->>API: Update message status (status: delivered)
+    API->>RabbitMQ: Publish event (message_id, status: done)
+    RabbitMQ-->>Backend: Event received
+
+    Backend->>API: GET /chat/message/{message_id}
+    API-->>Backend: Full message with content
+    Backend-->>Client: SSE event
+
+    Note over Client: Отображаем ответ ассистента

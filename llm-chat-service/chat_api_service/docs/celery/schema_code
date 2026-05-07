@@ -1,0 +1,37 @@
+sequenceDiagram
+    participant Client as Client<br/>(Frontend)
+    participant FastAPI as FastAPI<br/>Service
+    participant Celery as Celery<br/>Worker
+    participant Redis as Redis<br/>(Lock, Rate)
+    participant PostgreSQL as PostgreSQL<br/>(Messages)
+    participant OpenRouter as OpenRouter<br/>API
+    participant RabbitMQ as RabbitMQ<br/>(Events)
+
+    Client->>FastAPI: 1. POST /chat/llm/query
+    FastAPI->>PostgreSQL: 2. Save user message (SENT)
+    FastAPI->>Celery: 3. Send task (llm_request.delay)
+    FastAPI-->>Client: 4. 202 Accepted
+
+    Celery->>Redis: 5. Check rate limit
+    Redis-->>Celery: 6. Allowed / Limited
+
+    Celery->>Redis: 7. Acquire lock (idempotency)
+    Redis-->>Celery: 8. Lock acquired
+
+    Celery->>PostgreSQL: 9. Update status (PROCESSING)
+
+    Celery->>PostgreSQL: 10. Get conversation history
+    PostgreSQL-->>Celery: 11. Last 10 messages
+
+    Celery->>OpenRouter: 12. POST /chat/completions
+    OpenRouter-->>Celery: 13. LLM response
+
+    Celery->>PostgreSQL: 14. Save assistant message
+
+    Celery->>RabbitMQ: 15. Publish message event
+    RabbitMQ-->>Client: 16. WebSocket notification
+
+    Celery->>PostgreSQL: 17. Update status (DELIVERED)
+
+    Celery->>Redis: 18. Release lock
+    Redis-->>Celery: 19. Lock released
