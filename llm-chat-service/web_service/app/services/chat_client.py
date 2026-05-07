@@ -532,7 +532,7 @@ class ChatAPIServiceClient(BaseClient):
         try:
             async with self._get_client(access_token) as client:
                 resp = await client.post(
-                    "/admin/user_functional/all",
+                    "/admin/conversations/all",
                     json=PaginationRequest(
                         limit=limit,
                         offset=offset

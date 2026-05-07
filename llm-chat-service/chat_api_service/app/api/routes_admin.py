@@ -49,7 +49,7 @@ def get_llm_task_status(
 
 
 @router_admin.post(
-    "/user_functional/all",
+    "/conversation/all",
     response_model=ConversationListResponse,
     summary="Получение списка всех диалогов",
     description="Получение списка всех диалогов с пагинацией.",
