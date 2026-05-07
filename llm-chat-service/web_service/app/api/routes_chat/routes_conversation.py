@@ -105,7 +105,7 @@ async def new_conversation(
         )
     else:
         response = RedirectResponse(
-            url=f"/chat/conversation/all?created=true",
+            url="/chat/conversation/all?created=true",
             status_code=status.HTTP_302_FOUND
         )
     return response
@@ -311,6 +311,3 @@ async def history_before(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(err)
         )
-
-
-

@@ -52,10 +52,10 @@ class AuthClient(BaseClient):
         except TimeoutException:
             logger.error(f"{title_err}: timeout error")
             raise errs.RegisterError(
-                f"timeout error", str(data.email)
+                "timeout error", str(data.email)
             )
         except Exception as err:
-            logger.error( f"{title_err}: {err} ({err.__class__.__name__})")
+            logger.error(f"{title_err}: {err} ({err.__class__.__name__})")
             raise errs.RegisterError(
                 "Ошибка регистрации", str(data.email)
             )
@@ -100,7 +100,7 @@ class AuthClient(BaseClient):
             )
         except TimeoutException:
             logger.error(f"{title_err}: timeout error")
-            raise errs.LoginError(f"timeout error", str(username))
+            raise errs.LoginError("timeout error", str(username))
         except Exception as err:
             logger.error(f"{title_err}: {err} ({err.__class__.__name__})")
             raise errs.LoginError(

@@ -42,4 +42,3 @@ class StreamChatUsecase:
         async for message in self._rabbit_client.consume_messages(
                 queue_name=queue_name):
             yield message
-

@@ -9,6 +9,7 @@ from web_service.app.core.exceptions import chat_api_client as errors
 
 router_messages = APIRouter(prefix="/message")
 
+
 @router_messages.get(
     "/{message_id}",
     response_model=MessageResponse,

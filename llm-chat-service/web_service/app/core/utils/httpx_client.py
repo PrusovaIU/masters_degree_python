@@ -56,7 +56,7 @@ class BaseClient:
     @asynccontextmanager
     async def _get_client(
             self,
-            access_token: str  | None = None
+            access_token: str | None = None
     ) -> AsyncGenerator[AsyncClient, None]:
         """
         Получение HTTP-клиента.

@@ -89,6 +89,7 @@ class GetTaskStatusException(ChatApiClientException):
     """Ошибка при получении статуса задачи."""
     pass
 
+
 class TaskNotFoundException(ChatApiClientException):
     """Задача не найдена."""
     def __init__(self, message: str, task_id: UUID):

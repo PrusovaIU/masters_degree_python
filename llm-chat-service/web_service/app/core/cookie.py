@@ -151,7 +151,6 @@ def get_user_cookie(
         )
 
 
-
 def clear_auth_cookies(
         response: Response,
         settings: Settings

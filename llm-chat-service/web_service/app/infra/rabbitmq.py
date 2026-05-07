@@ -1,7 +1,6 @@
 import asyncio
 import json
 from collections.abc import AsyncGenerator, AsyncIterator
-from contextlib import asynccontextmanager, contextmanager
 
 from aio_pika import Channel, Connection, connect_robust
 from aio_pika.abc import AbstractIncomingMessage
