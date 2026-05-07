@@ -15,12 +15,24 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/">LLM Chat Service</a>
-            {% if request.state.is_authenticated %}
-            <div class="navbar-nav ms-auto">
-                <span class="nav-item nav-link text-light">{{ request.state.user.email }}</span>
-                <a class="nav-link" href="/auth/logout">Выйти</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    {% if request.state.is_authenticated %}
+                        {% if request.state.user.role == 'admin' %}
+                            <a class="nav-link" href="/admin">
+                                <i class="bi bi-shield-lock"></i> Админ-панель
+                            </a>
+                        {% endif %}
+                        <span class="nav-item nav-link text-light">{{ request.state.user.email }}</span>
+                        <a class="nav-link" href="/auth/logout">Выйти</a>
+                    {% else %}
+                        <a class="nav-link" href="/auth/login">Войти</a>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
         </div>
     </nav>
 
