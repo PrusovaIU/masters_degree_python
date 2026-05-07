@@ -10,4 +10,6 @@
 
 ## Статус задачи по ID
 
+Получение статуса обработки сообщения
 
+[![Статус задачи](task_status/task_status_preview.png)](https://disk.yandex.ru/i/5aqOEX74u0y9Lg)
