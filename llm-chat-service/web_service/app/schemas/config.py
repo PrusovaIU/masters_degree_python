@@ -1,10 +1,10 @@
 from typing import Self
 
-from pydantic import Field, BaseModel, model_validator
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from libs.schemas.config import LogConfig, CORSSettings, RabbitMQConfig
-from fastapi.templating import Jinja2Templates
+from libs.schemas.config import CORSSettings, LogConfig, RabbitMQConfig
 
 
 class ServiceSettings(BaseModel):

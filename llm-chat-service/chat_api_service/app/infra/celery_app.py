@@ -1,10 +1,10 @@
 import os
+
 os.environ.setdefault('CELERY_CUSTOM_WORKER_POOL', 'celery_aio_pool.pool:AsyncIOPool')
 
 from celery import Celery
 
 from chat_api_service.app.core.config import settings
-
 
 celery_app = Celery(
     "chat_api_service",

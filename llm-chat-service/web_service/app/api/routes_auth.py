@@ -1,16 +1,16 @@
-from fastapi import APIRouter, Request, Form, status
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi import APIRouter, Form, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from libs.schemas.auth import LoginResponse
 from libs.schemas.user import UserPublic
-from ..core.cookie import set_auth_cookies, set_user_cookie, clear_auth_cookies
-from .deps.usecases import AuthUsecaseDep
 from web_service.app.core.exceptions import auth_client as errors
-from web_service.app.schemas.config import Settings
 from web_service.app.core.exceptions import auth_usecase as usecase_errors
-from .deps.current_user import AccessTokenDep
-from .login_redirect import LOGIN_REDIRECT
+from web_service.app.schemas.config import Settings
 
+from ..core.cookie import clear_auth_cookies, set_auth_cookies, set_user_cookie
+from .deps.current_user import AccessTokenDep
+from .deps.usecases import AuthUsecaseDep
+from .login_redirect import LOGIN_REDIRECT
 
 router_auth = APIRouter(prefix="/auth")
 

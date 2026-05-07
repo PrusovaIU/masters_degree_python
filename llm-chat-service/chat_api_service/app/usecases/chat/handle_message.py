@@ -1,19 +1,18 @@
 from uuid import UUID
 
+import loguru
 from celery import Task
 
-from libs.consts.message import MessageStatus
+from chat_api_service.app.core.exceptions import chat_new_message as errors
 from chat_api_service.app.db.models import Message
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
-from chat_api_service.app.services.openrouter_client import OpenRouterClient
 from chat_api_service.app.schemas.llm_tasks import MessageSchema
-from libs.consts.message import SenderType
-import loguru
 from chat_api_service.app.schemas.message import MessageCreate
-from chat_api_service.app.core.exceptions import chat_new_message as errors
-from chat_api_service.app.infra.rabbitmq import RabbitMQClient
 from chat_api_service.app.schemas.rabbit_mq import RabbitMQMessageStatus
+from chat_api_service.app.services.openrouter_client import OpenRouterClient
+from libs.consts.message import MessageStatus, SenderType
 
 
 class ChatNewMessageUsecase:

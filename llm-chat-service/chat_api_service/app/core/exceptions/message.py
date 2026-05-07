@@ -1,7 +1,8 @@
 from uuid import UUID
 
-from .base import AppException
 from libs.consts.message import MessageStatus
+
+from .base import AppException
 
 
 class InvalidMessageStatus(AppException):

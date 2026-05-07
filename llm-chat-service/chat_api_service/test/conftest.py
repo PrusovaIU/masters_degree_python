@@ -1,6 +1,5 @@
 from os import environ
 
-
 environ.update({
     "DB__HOST": "localhost",
     "DB__PORT": "5432",

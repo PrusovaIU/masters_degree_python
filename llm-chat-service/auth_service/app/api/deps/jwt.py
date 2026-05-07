@@ -3,9 +3,9 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from libs.jwt_token.token_data import TokenUserData
 from auth_service.app.core.config import settings
 from libs.jwt_token.get_current_user import get_user_data
+from libs.jwt_token.token_data import TokenUserData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

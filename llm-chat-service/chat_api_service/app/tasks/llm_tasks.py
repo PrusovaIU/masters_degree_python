@@ -1,3 +1,5 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from functools import wraps
 from typing import Callable
 from uuid import UUID
@@ -6,20 +8,19 @@ from celery import Task
 from celery.utils.log import get_task_logger
 
 from chat_api_service.app.core.config import settings
+from chat_api_service.app.core.exceptions import \
+    chat_new_message as chat_nm_exc
+from chat_api_service.app.core.exceptions.value import UUIDValueError
+from chat_api_service.app.db.session import DBSession
+from chat_api_service.app.infra.celery_app import celery_app
+from chat_api_service.app.infra.rabbitmq import RabbitMQClient
+from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.repositories.message import MessageRepository
 from chat_api_service.app.services.openrouter_client import OpenRouterClient
-from chat_api_service.app.infra.celery_app import celery_app
-from contextlib import asynccontextmanager
-from collections.abc import AsyncGenerator
-from libs.schemas.llm import LLMTaskStatusSchema
-from chat_api_service.app.usecases.chat.handle_message import ChatNewMessageUsecase
-from chat_api_service.app.core.exceptions.value import UUIDValueError
-from chat_api_service.app.core.exceptions import chat_new_message as chat_nm_exc
+from chat_api_service.app.usecases.chat.handle_message import \
+    ChatNewMessageUsecase
 from libs.consts.llm_tasks import LLMTasksStatus
-from chat_api_service.app.db.session import DBSession
-from chat_api_service.app.infra.redis import RedisClient
-from chat_api_service.app.infra.rabbitmq import RabbitMQClient
-
+from libs.schemas.llm import LLMTaskStatusSchema
 
 logger = get_task_logger(__name__)
 or_client = OpenRouterClient(settings.openrouter)

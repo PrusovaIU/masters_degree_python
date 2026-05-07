@@ -1,11 +1,12 @@
+from datetime import datetime, timedelta
 from time import sleep
 
-from libs import jwt_token
 import pytest
-from datetime import timedelta, datetime
+
+from libs import jwt_token
+from libs.jwt_token import exceptions as exceptions
 from libs.jwt_token.consts import TokenType
 from libs.jwt_token.token_data import AccessTokenData, RefreshTokenData
-from libs.jwt_token import exceptions as exceptions
 
 SUBJECT_STR = "test_subject"
 SUBJECT_INT = 123456

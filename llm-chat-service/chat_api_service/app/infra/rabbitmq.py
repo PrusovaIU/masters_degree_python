@@ -1,12 +1,13 @@
+import asyncio
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from aio_pika import Message, connect_robust
-from aio_pika.abc import DeliveryMode, AbstractRobustConnection, \
-    AbstractRobustChannel
-import asyncio
+from aio_pika.abc import (AbstractRobustChannel, AbstractRobustConnection,
+                          DeliveryMode)
 from loguru import logger
+
 from chat_api_service.app.core.exceptions import rabbitmq as errors
 
 

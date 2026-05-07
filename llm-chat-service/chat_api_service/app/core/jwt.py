@@ -1,7 +1,8 @@
+from fastapi import HTTPException, Request, status
+from fastapi.security import HTTPBearer
+
 from libs.jwt_token.get_current_user import get_user_data
 from libs.jwt_token.token_data import TokenUserData
-from fastapi.security import HTTPBearer
-from fastapi import Request, HTTPException, status
 
 
 class JWTBearer(HTTPBearer):

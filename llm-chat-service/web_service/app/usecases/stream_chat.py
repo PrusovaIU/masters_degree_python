@@ -1,9 +1,8 @@
+from collections.abc import AsyncGenerator
 from uuid import UUID
 
-from web_service.app.services.chat_client import ChatAPIServiceClient
-
 from web_service.app.infra.rabbitmq import RabbitMQClient
-from collections.abc import AsyncGenerator
+from web_service.app.services.chat_client import ChatAPIServiceClient
 
 
 class StreamChatUsecase:

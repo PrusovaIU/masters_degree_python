@@ -1,15 +1,14 @@
-from httpx import HTTPStatusError, TimeoutException, Response
+from httpx import HTTPStatusError, Response, TimeoutException
+from loguru import logger
 from starlette import status
 
-from libs.schemas.auth import (
-    RegisterRequest, RegisterResponse, LoginResponse,
-    RefreshTokenRequest, RefreshTokenResponse
-)
+from libs.schemas.auth import (LoginResponse, RefreshTokenRequest,
+                               RefreshTokenResponse, RegisterRequest,
+                               RegisterResponse)
 from libs.schemas.user import UserPublic
 from web_service.app.core.exceptions import auth_client as errs
-from loguru import logger
-from web_service.app.core.utils.httpx_client import error_handler_decorator, BaseClient
-
+from web_service.app.core.utils.httpx_client import (BaseClient,
+                                                     error_handler_decorator)
 
 
 class AuthClient(BaseClient):

@@ -1,15 +1,16 @@
-from libs.consts.message import MessageStatus, SenderType
+from celery.result import AsyncResult
+
 from chat_api_service.app.core.idempotency_key import generate_idempotency_key
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.infra.redis import RedisClient
+from chat_api_service.app.repositories.conversation import \
+    ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
-from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
-from libs.consts.llm_tasks import LLMTasksStatus
 from chat_api_service.app.schemas.message import MessageCreate
 from chat_api_service.app.tasks.llm_tasks import llm_request
-from celery.result import AsyncResult
-from chat_api_service.app.repositories.conversation import (
-    ConversationRepository)
+from libs.consts.llm_tasks import LLMTasksStatus
+from libs.consts.message import MessageStatus, SenderType
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
 
 
 class NewMessageUsecase:

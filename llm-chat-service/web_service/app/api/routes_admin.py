@@ -1,17 +1,17 @@
-from .deps.usecases import AdminUsecaseDep
-
-
 from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+from fastapi.responses import (HTMLResponse, JSONResponse, RedirectResponse,
+                               StreamingResponse)
 
-from web_service.app.api.deps.current_user import AdminTokenDep
-from libs.schemas.llm import CeleryTaskResponse
-from web_service.app.core.exceptions.chat_api_client import AccessException, TaskNotFoundException
 from libs.schemas.conversation import ConversationListResponse
+from libs.schemas.llm import CeleryTaskResponse
 from libs.schemas.pagination import PaginationRequest
+from web_service.app.api.deps.current_user import AdminTokenDep
+from web_service.app.core.exceptions.chat_api_client import (
+    AccessException, TaskNotFoundException)
 
+from .deps.usecases import AdminUsecaseDep
 
 router_admin = APIRouter(prefix="/admin")
 

@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_api_service.app.core.config import settings
 from chat_api_service.app.db.session import DBSession
+from chat_api_service.app.repositories.conversation import \
+    ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
-from chat_api_service.app.repositories.conversation import (
-    ConversationRepository)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

@@ -2,8 +2,9 @@ from datetime import timedelta
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from libs.schemas.config import JWTSecret, DatabaseConfig, CORSSettings, \
-    LogConfig
+
+from libs.schemas.config import (CORSSettings, DatabaseConfig, JWTSecret,
+                                 LogConfig)
 
 
 class JWTConfig(BaseModel):

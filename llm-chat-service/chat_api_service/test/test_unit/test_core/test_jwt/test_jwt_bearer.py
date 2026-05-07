@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi import HTTPException, Request, status
+from pytest_mock import MockerFixture
 
 from chat_api_service.app.core import jwt
-from pytest_mock import MockerFixture
 from libs.jwt_token.token_data import TokenUserData
 
 

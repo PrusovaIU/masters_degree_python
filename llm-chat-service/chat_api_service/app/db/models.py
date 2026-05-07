@@ -1,16 +1,16 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import (
-    String, Text, DateTime, Enum, ForeignKey
-)
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from libs.consts.message import MessageStatus, SenderType, VALID_TRANSITIONS
-from .base import Base
 from chat_api_service.app.core.exceptions.message import InvalidMessageStatus
+from libs.consts.message import VALID_TRANSITIONS, MessageStatus, SenderType
+
+from .base import Base
 
 
 class Conversation(Base):

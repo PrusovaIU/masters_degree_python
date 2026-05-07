@@ -1,5 +1,6 @@
-from libs.base_exception import AppException
 from fastapi import status
+
+from libs.base_exception import AppException
 
 
 class UserAlreadyExistsError(AppException):

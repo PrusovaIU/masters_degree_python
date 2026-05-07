@@ -1,14 +1,16 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+from fastapi.responses import (HTMLResponse, JSONResponse, RedirectResponse,
+                               StreamingResponse)
+from loguru import logger
 
+from libs.schemas.conversation import ConversationHistoryBeforeResponse
 from web_service.app.api.deps.current_user import AccessTokenDep
-from web_service.app.api.deps.usecases import ChatUsecaseDep, StreamChatUsecaseDep
+from web_service.app.api.deps.usecases import (ChatUsecaseDep,
+                                               StreamChatUsecaseDep)
 from web_service.app.core.exceptions import chat_api_client as errors
 from web_service.app.schemas.config import Settings
-from loguru import logger
-from libs.schemas.conversation import ConversationHistoryBeforeResponse
 
 router_conversation = APIRouter(prefix="/conversation")
 

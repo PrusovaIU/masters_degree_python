@@ -1,10 +1,9 @@
 import pytest
+from fastapi import status
 from httpx import AsyncClient, Response
 
-from auth_service.app.consts.user_role import UserRole
-from fastapi import status
 from auth_service.app.app import App
-
+from auth_service.app.consts.user_role import UserRole
 
 EMAIL = "test@test.com"
 PASSWORD = "P@ssword123"

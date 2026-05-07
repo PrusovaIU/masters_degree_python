@@ -1,13 +1,14 @@
-import pytest
-import httpx
-from fastapi import FastAPI
-from auth_service.app.schemas import config
-from asgi_lifespan import LifespanManager
-from libs.consts.db import DBType
-from auth_service.app.db.session import DBSession
-from auth_service.app.db.base import Base
 from os import environ
 
+import httpx
+import pytest
+from asgi_lifespan import LifespanManager
+from fastapi import FastAPI
+
+from auth_service.app.db.base import Base
+from auth_service.app.db.session import DBSession
+from auth_service.app.schemas import config
+from libs.consts.db import DBType
 
 environ.update({
     "JWT__ACCESS_SECRET__DATA": "test_access_secret",

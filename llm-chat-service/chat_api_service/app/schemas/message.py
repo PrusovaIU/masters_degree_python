@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 from libs.consts.message import MessageStatus, SenderType
 
 
-
 class MessageCreate(BaseModel):
     """Модель для создания сообщения"""
     sender_type: SenderType | str

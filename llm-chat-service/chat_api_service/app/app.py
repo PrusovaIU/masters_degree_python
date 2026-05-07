@@ -1,13 +1,13 @@
 from fastapi import FastAPI
+from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 
+from chat_api_service.app.api import routers
 from chat_api_service.app.db.base import Base
 from chat_api_service.app.db.session import DBSession
-from chat_api_service.app.schemas.config import Settings
-from loguru import logger
-from chat_api_service.app.api import routers
-from chat_api_service.app.infra.redis import RedisClient
 from chat_api_service.app.infra.rabbitmq import RabbitMQClient
+from chat_api_service.app.infra.redis import RedisClient
+from chat_api_service.app.schemas.config import Settings
 
 
 class App:

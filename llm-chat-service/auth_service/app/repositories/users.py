@@ -1,8 +1,8 @@
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth_service.app.db.models import User
 from auth_service.app.consts.user_role import UserRole
+from auth_service.app.db.models import User
 
 
 class UserRepository:

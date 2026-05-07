@@ -1,12 +1,12 @@
 import json
-import pytest
-from fakeredis.aioredis import FakeRedis
 from uuid import uuid4
 
-from chat_api_service.app.schemas.config import RedisConfig, RateLimitingConfig
-from libs.schemas.llm_query import LLMTasksStatus
-from libs.schemas.llm_query import LLMQueryResponse
+import pytest
+from fakeredis.aioredis import FakeRedis
+
 from chat_api_service.app.infra.redis import RedisClient
+from chat_api_service.app.schemas.config import RateLimitingConfig, RedisConfig
+from libs.schemas.llm_query import LLMQueryResponse, LLMTasksStatus
 
 
 @pytest.fixture

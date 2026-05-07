@@ -1,10 +1,12 @@
 from typing import Self
 
-from pydantic import Field, computed_field, BaseModel, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from libs.schemas.config import LogConfig, DatabaseConfig, JWTSecret, \
-    CORSSettings, ConfigWithPasswd, RabbitMQConfig
+
 from chat_api_service.app.core.jwt import JWTBearer
+from libs.schemas.config import (ConfigWithPasswd, CORSSettings,
+                                 DatabaseConfig, JWTSecret, LogConfig,
+                                 RabbitMQConfig)
 
 
 class RateLimitingConfig(BaseModel):

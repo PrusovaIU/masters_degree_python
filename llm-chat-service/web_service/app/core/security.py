@@ -1,17 +1,17 @@
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from web_service.app.services.auth_client import AuthClient
-from libs.schemas.auth import RefreshTokenResponse
 from loguru import logger
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from .cookie import set_access_token_cookie, get_user_cookie
-from .exceptions.security import NotAuthenticated
-
-from web_service.app.schemas.config import Settings, CookieSettings
+from libs.schemas.auth import RefreshTokenResponse
 from web_service.app.api.login_redirect import LOGIN_REDIRECT
+from web_service.app.schemas.config import CookieSettings, Settings
 from web_service.app.schemas.user import User
+from web_service.app.services.auth_client import AuthClient
+
+from .cookie import (clear_auth_cookies, get_user_cookie,
+                     set_access_token_cookie)
 from .exceptions.cookie import CookieUnfoundException
-from .cookie import clear_auth_cookies
+from .exceptions.security import NotAuthenticated
 
 
 class AuthCookieMiddleware(BaseHTTPMiddleware):

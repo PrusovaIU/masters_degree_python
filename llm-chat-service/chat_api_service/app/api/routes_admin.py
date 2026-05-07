@@ -2,13 +2,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 
-from libs.schemas.error_detail import Detail
-from .deps.jwt import AdminDep
-from libs.schemas.llm import CeleryTaskResponse
-from .deps.usecases import TasksUsecaseDep, ConversationUsecaseDep
-from ..core.exceptions.task import TaskNotFound
 from libs.schemas.conversation import ConversationListResponse
-from libs.schemas.pagination import PaginationRequest, PaginationMeta
+from libs.schemas.error_detail import Detail
+from libs.schemas.llm import CeleryTaskResponse
+from libs.schemas.pagination import PaginationMeta, PaginationRequest
+
+from ..core.exceptions.task import TaskNotFound
+from .deps.jwt import AdminDep
+from .deps.usecases import ConversationUsecaseDep, TasksUsecaseDep
 
 router_admin = APIRouter(prefix="/admin", tags=["admin"])
 

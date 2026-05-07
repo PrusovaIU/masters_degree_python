@@ -1,19 +1,19 @@
+from functools import wraps
 from typing import Type
 from uuid import UUID
 
-from httpx import HTTPStatusError, TimeoutException
 from fastapi import status
-
-from web_service.app.core.utils.httpx_client import BaseClient, error_handler_decorator
-from libs.schemas import conversation as conv_schemas
-from libs.schemas.pagination import PaginationRequest
+from httpx import HTTPStatusError, TimeoutException
 from loguru import logger
-from web_service.app.core.exceptions import chat_api_client as errors
-from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
-from functools import wraps
-from libs.schemas.message import MessageStatusUpdate
-from libs.schemas.message import MessageResponse
+
+from libs.schemas import conversation as conv_schemas
 from libs.schemas.llm import CeleryTaskResponse
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
+from libs.schemas.message import MessageResponse, MessageStatusUpdate
+from libs.schemas.pagination import PaginationRequest
+from web_service.app.core.exceptions import chat_api_client as errors
+from web_service.app.core.utils.httpx_client import (BaseClient,
+                                                     error_handler_decorator)
 
 
 def conv_error_handler(

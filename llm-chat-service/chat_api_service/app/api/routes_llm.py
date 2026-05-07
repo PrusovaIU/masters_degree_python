@@ -1,14 +1,16 @@
 from typing import Annotated
 
-from fastapi import APIRouter, status, Header, HTTPException
-from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
+from fastapi import APIRouter, Header, HTTPException, status
+
+from chat_api_service.app.core.exceptions.conversation import (
+    ConversationAccessDenied, ConversationNotFound)
+from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
 from libs.schemas.error_detail import Detail
+from libs.schemas.llm_query import LLMQueryRequest, LLMQueryResponse
+
+from .deps.db import ConversationRepoDep, MessagesRepoDep
 from .deps.jwt import UserDataDep
 from .deps.rate_limit import RateLimitDep
-from .deps.db import MessagesRepoDep, ConversationRepoDep
-from chat_api_service.app.usecases.chat.new_message import NewMessageUsecase
-from chat_api_service.app.core.exceptions.conversation import (
-    ConversationNotFound, ConversationAccessDenied)
 
 router_llm = APIRouter(prefix="/chat/llm", tags=["llm"])
 

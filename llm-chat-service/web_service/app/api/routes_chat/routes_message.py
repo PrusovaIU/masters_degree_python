@@ -2,10 +2,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 
+from libs.schemas.message import MessageResponse
 from web_service.app.api.deps.current_user import AccessTokenDep
 from web_service.app.api.deps.usecases import ChatUsecaseDep
 from web_service.app.core.exceptions import chat_api_client as errors
-from libs.schemas.message import MessageResponse
 
 router_messages = APIRouter(prefix="/message")
 

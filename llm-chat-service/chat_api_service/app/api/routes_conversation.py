@@ -1,21 +1,20 @@
 from uuid import UUID
 
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 
 import libs.schemas.pagination
 from chat_api_service.app.api.deps.jwt import UserDataDep
-from libs.schemas import conversation
-from chat_api_service.app.db.models import Conversation
 from chat_api_service.app.api.deps.usecases import ConversationUsecaseDep
-from libs.schemas.message import MessageStatusUpdate, MessageResponse
-from libs.schemas.pagination import PaginationRequest
 from chat_api_service.app.core.exceptions import conversation as errs
 from chat_api_service.app.core.exceptions import message as msg_errs
+from chat_api_service.app.db.models import Conversation, Message
+from libs.schemas import conversation
 from libs.schemas.error_detail import Detail
-from fastapi.encoders import jsonable_encoder
-from .deps.usecases import MessageUsecaseDep
-from chat_api_service.app.db.models import Message
+from libs.schemas.message import MessageResponse, MessageStatusUpdate
+from libs.schemas.pagination import PaginationRequest
 
+from .deps.usecases import MessageUsecaseDep
 
 router_conversation = APIRouter(prefix="/conversation", tags=["chat"])
 

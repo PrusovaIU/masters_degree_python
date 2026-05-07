@@ -1,13 +1,15 @@
 from uuid import UUID
 
-from libs.consts.message import MessageStatus
+from loguru import logger
+
+from chat_api_service.app.core.exceptions import message as errors
+from chat_api_service.app.core.exceptions.message import (MessageNotFound,
+                                                          UpdateMessageError)
 from chat_api_service.app.db.models import Message
 from chat_api_service.app.repositories.conversation import \
     ConversationRepository
 from chat_api_service.app.repositories.message import MessageRepository
-from chat_api_service.app.core.exceptions.message import MessageNotFound, UpdateMessageError
-from loguru import logger
-from chat_api_service.app.core.exceptions import message as errors
+from libs.consts.message import MessageStatus
 
 
 class MessageUsecase:

@@ -1,10 +1,12 @@
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from functools import wraps
 from typing import Type
+
 from httpx import AsyncClient, HTTPStatusError, Timeout, TimeoutException
 from loguru import logger
+
 from web_service.app.core.exceptions.base import AppException
-from contextlib import asynccontextmanager
 
 
 def error_handler_decorator(err_type: Type[AppException], title: str):

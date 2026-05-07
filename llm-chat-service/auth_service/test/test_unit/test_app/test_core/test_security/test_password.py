@@ -1,5 +1,6 @@
-from auth_service.app.core.security.password import PWDContext
 import pytest
+
+from auth_service.app.core.security.password import PWDContext
 
 PWDContextType = type[PWDContext]
 

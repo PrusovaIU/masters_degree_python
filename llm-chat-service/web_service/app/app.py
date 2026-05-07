@@ -1,12 +1,13 @@
 from collections.abc import AsyncGenerator
 
-from web_service.app.core.config import Settings
-from loguru import logger
 from fastapi import FastAPI, Request, status
-from starlette.middleware.cors import CORSMiddleware
-from web_service.app.api import routers
-from web_service.app.core.security import AuthCookieMiddleware
 from fastapi.responses import RedirectResponse
+from loguru import logger
+from starlette.middleware.cors import CORSMiddleware
+
+from web_service.app.api import routers
+from web_service.app.core.config import Settings
+from web_service.app.core.security import AuthCookieMiddleware
 from web_service.app.infra.rabbitmq import RabbitMQClient
 
 
