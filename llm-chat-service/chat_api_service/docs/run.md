@@ -27,7 +27,6 @@ uv sync
 uv run uvicorn chat_api_service.app.main:app --reload --host 0.0.0.0 --port 8001 --env-file .env
 ```
 
-
 **Параметры запуска**
 
 | Параметр | Описание                        | Значение по умолчанию |
