@@ -43,7 +43,7 @@ async def conversations_list_page(
         name=Templates.CONVERSATION_LIST,
         context={
             "settings": request.app.state.settings,
-            "conversations": conversations,
+            "user_functional": conversations,
             "page": page,
             "total_pages": total_pages,
             "total": total,

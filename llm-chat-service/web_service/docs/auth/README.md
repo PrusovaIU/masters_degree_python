@@ -4,4 +4,4 @@
 
 Процесс авторизации показан на видео:
 
-[![Название видео](preview.png)](https://disk.yandex.ru/i/UT8LaT7E4wabCA)
+[![Авторизация](preview.png)](https://disk.yandex.ru/i/UT8LaT7E4wabCA)
