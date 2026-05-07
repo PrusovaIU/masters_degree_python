@@ -7,4 +7,5 @@ Server-side rendering фронтенда, админ-панель, агрега�
 1. [Конфигурация](docs/config.md);
 2. [Запуск](docs/run.md);
 3. [Авторизация](docs/auth/README.md);
-4. [Функционал пользователя](docs/user_functional/README.md);
+4. [Регистрация нового пользователя](docs/register/README.md);
+5. [Функционал пользователя](docs/user_functional/README.md);
