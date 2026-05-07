@@ -61,10 +61,10 @@ async def login_process(
             username, password
         )
         me_data: UserPublic = await auth_usecase.me(login_data.access_token)
-    except errors.LoginError as err:
+    except errors.LoginError:
         context = {
             "settings": settings,
-            "error": str(err),
+            "error": "Неверный логин или пароль",
             "form_data": {"username": username}
         }
         response = settings.jinja.templates.TemplateResponse(
