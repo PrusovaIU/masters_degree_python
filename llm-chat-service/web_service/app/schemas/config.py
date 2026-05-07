@@ -93,7 +93,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         env_nested_delimiter="__",
-        env_file="/home/hex/git/masters_degree_python/llm-chat-service/web_service/.env"
+        env_file=".env"
     )
     app_name: str = Field(
         default="Chat API service",
